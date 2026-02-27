@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Nombre de la app -->
+    <string name="app_name">NotasApp</string>
+
+    <!-- Autenticación -->
+    <string name="login_title">Iniciar sesión</string>
+    <string name="login_google_button">Iniciar sesión con Google</string>
+    <string name="login_subtitle">Gestiona tus notas académicas de forma inteligente</string>
+    <string name="login_privacy_note">Tus datos se guardan localmente. La sincronización con Google Sheets es opcional.</string>
+
+    <!--
+         IMPORTANTE: Reemplazar con tu client_id real de Google Cloud Console.
+         No hardcodear en código fuente. Ver documentación:
+         https://developers.google.com/identity/sign-in/android
+    -->
+    <string name="default_web_client_id" translatable="false">TU_CLIENT_ID_AQUI.apps.googleusercontent.com</string>
+
+    <!-- Home -->
+    <string name="home_title">Mis Materias</string>
+    <string name="home_empty">Aún no tienes materias</string>
+    <string name="home_empty_hint">Toca el botón + para agregar tu primera materia</string>
+    <string name="home_fab_add">Nueva materia</string>
+
+    <!-- Crear Materia -->
+    <string name="create_materia_title">Nueva Materia</string>
+    <string name="create_materia_step_format">Paso %1$d/3</string>
+    <string name="campo_nombre">Nombre de la materia *</string>
+    <string name="campo_periodo">Semestre / Período *</string>
+    <string name="campo_profesor">Profesor (opcional)</string>
+    <string name="btn_siguiente">Siguiente</string>
+    <string name="btn_guardar_materia">Guardar materia</string>
+    <string name="btn_agregar_componente">Agregar componente</string>
+
+    <!-- Validaciones -->
+    <string name="error_nombre_obligatorio">El nombre de la materia es obligatorio</string>
+    <string name="error_porcentajes">Los porcentajes deben sumar 100%</string>
+    <string name="error_nota_invalida">La nota debe estar entre 0 y %1$.1f</string>
+
+    <!-- Detalle de Materia -->
+    <string name="promedio_actual">Promedio actual</string>
+    <string name="estado_aprobado">APROBADO</string>
+    <string name="estado_en_riesgo">EN RIESGO</string>
+    <string name="nota_minima">Min: %1$.1f</string>
+    <string name="aporte_label">Aporte: %1$.2f</string>
+
+    <!-- Exportación -->
+    <string name="export_title">Exportar / Sincronizar</string>
+    <string name="export_excel_btn">Exportar a Excel (.xlsx)</string>
+    <string name="export_sheets_btn">Sincronizar con Google Sheets</string>
+    <string name="export_excel_hint">Descarga el archivo al almacenamiento de tu dispositivo</string>
+    <string name="export_sheets_hint">Crea o actualiza una hoja de cálculo en tu Google Drive</string>
+    <string name="export_success">Archivo Excel guardado correctamente</string>
+
+    <!-- Errores generales -->
+    <string name="error_generic">Ocurrió un error inesperado. Por favor intenta nuevamente.</string>
+    <string name="error_no_internet">Sin conexión a internet. Operando en modo offline.</string>
+</resources>

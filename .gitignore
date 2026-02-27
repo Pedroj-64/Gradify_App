@@ -1,0 +1,31 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Archivos Android Studio
+*.hprof
+.navigation
+
+# Signing configs (NUNCA subir al repositorio)
+keystore.jks
+*.keystore
+signing.properties
+
+# Logs
+*.log
+
+# Carpeta de build
+**/build/
+
+# Carpeta de schemas de Room (opcional mantener en el repo para historial)
+# app/schemas/
+
+# Node modules (si se usa alguna herramienta npm)
+node_modules/

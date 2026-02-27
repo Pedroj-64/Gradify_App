@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Tema base de la app (Material You) -->
+    <style name="Theme.NotasApp" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Configuración básica de color (se sobrescribe con Dynamic Color en código Compose) -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <!--
+        Tema del SplashScreen.
+        Usa el API de SplashScreen de AndroidX para el splash nativo de Android 12+.
+        Se aplica en el AndroidManifest a la MainActivity antes de que cargue Compose.
+    -->
+    <style name="Theme.NotasApp.SplashScreen" parent="Theme.NotasApp">
+        <!-- Icono del splash (reemplazar con vector del logo de la app) -->
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <!-- Duración del splash: 0 = auto (sistema lo decide) -->
+        <item name="postSplashScreenTheme">@style/Theme.NotasApp</item>
+    </style>
+
+</resources>

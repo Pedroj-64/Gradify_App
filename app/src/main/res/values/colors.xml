@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colores base (Material You los reemplaza dinámicamente en Android 12+) -->
+
+    <!-- Primario -->
+    <color name="primary">#1565C0</color>
+    <color name="primary_light">#42A5F5</color>
+    <color name="on_primary">#FFFFFF</color>
+
+    <!-- Secundario (aprobado) -->
+    <color name="secondary">#2E7D32</color>
+    <color name="on_secondary">#FFFFFF</color>
+
+    <!-- Error (reprobado) -->
+    <color name="error">#B00020</color>
+
+    <!-- Fondos -->
+    <color name="background">#FAFAFA</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="splash_background">#1565C0</color>
+
+    <!-- Texto -->
+    <color name="on_background">#1A1C1E</color>
+    <color name="on_surface_variant">#43474E</color>
+</resources>

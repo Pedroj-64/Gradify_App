@@ -1,0 +1,93 @@
+package com.notasapp.data.mapper
+
+import com.notasapp.data.local.entities.ComponenteEntity
+import com.notasapp.data.local.entities.MateriaEntity
+import com.notasapp.data.local.entities.SubNotaEntity
+import com.notasapp.data.local.relations.ComponenteConSubNotas
+import com.notasapp.data.local.relations.MateriaConComponentes
+import com.notasapp.domain.model.Componente
+import com.notasapp.domain.model.Materia
+import com.notasapp.domain.model.SubNota
+import com.notasapp.domain.model.TipoEscala
+
+/**
+ * Funciones de conversión entre entidades Room y modelos de dominio.
+ *
+ * Mantener la transformación aquí (capa de datos) permite que el dominio
+ * permanezca limpio y sin dependencias de Room.
+ */
+
+// ── SubNota ──────────────────────────────────────────────────────
+
+fun SubNotaEntity.toDomain(): SubNota = SubNota(
+    id = id,
+    componenteId = componenteId,
+    descripcion = descripcion,
+    porcentajeDelComponente = porcentajeDelComponente,
+    valor = valor
+)
+
+fun SubNota.toEntity(): SubNotaEntity = SubNotaEntity(
+    id = id,
+    componenteId = componenteId,
+    descripcion = descripcion,
+    porcentajeDelComponente = porcentajeDelComponente,
+    valor = valor
+)
+
+// ── Componente ───────────────────────────────────────────────────
+
+fun ComponenteConSubNotas.toDomain(): Componente = Componente(
+    id = componente.id,
+    materiaId = componente.materiaId,
+    nombre = componente.nombre,
+    porcentaje = componente.porcentaje,
+    orden = componente.orden,
+    subNotas = subNotas.map { it.toDomain() }
+)
+
+fun Componente.toEntity(): ComponenteEntity = ComponenteEntity(
+    id = id,
+    materiaId = materiaId,
+    nombre = nombre,
+    porcentaje = porcentaje,
+    orden = orden
+)
+
+// ── Materia ──────────────────────────────────────────────────────
+
+fun MateriaConComponentes.toDomain(): Materia = Materia(
+    id = materia.id,
+    usuarioId = materia.usuarioId,
+    nombre = materia.nombre,
+    periodo = materia.periodo,
+    profesor = materia.profesor,
+    escalaMin = materia.escalaMin,
+    escalaMax = materia.escalaMax,
+    notaAprobacion = materia.notaAprobacion,
+    tipoEscala = tipoEscalaFromString(materia.tipoEscala),
+    googleSheetsId = materia.googleSheetsId,
+    componentes = componentesConSubNotas.sortedBy { it.componente.orden }.map { it.toDomain() }
+)
+
+fun Materia.toEntity(): MateriaEntity = MateriaEntity(
+    id = id,
+    usuarioId = usuarioId,
+    nombre = nombre,
+    periodo = periodo,
+    profesor = profesor,
+    escalaMin = escalaMin,
+    escalaMax = escalaMax,
+    notaAprobacion = notaAprobacion,
+    tipoEscala = tipoEscala.name,
+    googleSheetsId = googleSheetsId
+)
+
+// ── Helpers ──────────────────────────────────────────────────────
+
+private fun tipoEscalaFromString(value: String): TipoEscala =
+    try {
+        TipoEscala.valueOf(value)
+    } catch (e: IllegalArgumentException) {
+        TipoEscala.NUMERICO_5
+    }

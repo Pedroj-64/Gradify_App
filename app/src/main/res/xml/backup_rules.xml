@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Reglas de backup de Android (Auto Backup).
+
+    Excluimos:
+    - La base de datos Room: se sincroniza opcionalmente con Google Sheets,
+      no mediante el sistema de backup de Android.
+    - Las preferencias encriptadas: contienen tokens de autenticación.
+
+    Referencia: https://developer.android.com/guide/topics/data/autobackup
+-->
+<full-backup-content>
+    <!-- Excluir base de datos Room -->
+    <exclude domain="database" path="notas_app.db" />
+    <exclude domain="database" path="notas_app.db-shm" />
+    <exclude domain="database" path="notas_app.db-wal" />
+
+    <!-- Excluir preferencias encriptadas (tokens) -->
+    <exclude domain="sharedpref" path="encrypted_prefs.xml" />
+</full-backup-content>
