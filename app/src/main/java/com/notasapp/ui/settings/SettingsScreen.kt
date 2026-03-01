@@ -3,6 +3,7 @@ package com.notasapp.ui.settings
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,18 +22,22 @@ import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -44,7 +49,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -52,6 +59,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.notasapp.domain.model.ConfiguracionNota
+import com.notasapp.domain.model.ModoRedondeo
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -150,6 +159,16 @@ fun SettingsScreen(
                     onClick     = {
                         openFileLauncher.launch(arrayOf("application/json", "*/*"))
                     }
+                )
+            }
+
+            HorizontalDivider()
+
+            // ── Sección: Notas y Redondeo ──────────────────────────────────
+            SettingsSection(title = "Notas y Redondeo") {
+                RedondeoConfigCard(
+                    config = uiState.configuracionNota,
+                    onConfigChange = { viewModel.updateConfiguracionNota(it) }
                 )
             }
 
@@ -374,3 +393,88 @@ private fun SettingsActionCard(
 
 private fun formatDate(ms: Long): String =
     SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date(ms))
+
+// ── Configuración de redondeo ──────────────────────────────────────────────
+
+@Composable
+private fun RedondeoConfigCard(
+    config: ConfiguracionNota,
+    onConfigChange: (ConfiguracionNota) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Tune,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Redondeo de notas",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+
+            // Decimales
+            Text(
+                text = "Decimales a mostrar",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(Modifier.height(4.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(1, 2, 3).forEach { dec ->
+                    OutlinedButton(
+                        onClick = { onConfigChange(config.copy(decimales = dec)) },
+                        colors = if (config.decimales == dec)
+                            ButtonDefaults.outlinedButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        else ButtonDefaults.outlinedButtonColors()
+                    ) {
+                        Text("$dec")
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Modo de redondeo
+            Text(
+                text = "Modo de redondeo",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(Modifier.height(4.dp))
+            ModoRedondeo.entries.forEach { modo ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onConfigChange(config.copy(modoRedondeo = modo)) }
+                        .padding(vertical = 4.dp)
+                ) {
+                    RadioButton(
+                        selected = config.modoRedondeo == modo,
+                        onClick = { onConfigChange(config.copy(modoRedondeo = modo)) }
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = modo.displayName,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+    }
+}

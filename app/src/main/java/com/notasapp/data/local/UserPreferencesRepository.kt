@@ -4,8 +4,11 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.notasapp.domain.model.ConfiguracionNota
+import com.notasapp.domain.model.ModoRedondeo
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -22,6 +25,7 @@ private val Context.dataStore: DataStore<Preferences>
  * Almacena datos ligeros de configuración que no requieren SQL:
  *  - Email del usuario activo (usado por GoogleAccountCredential para Sheets)
  *  - Última sync exitosa (timestamp)
+ *  - Configuración de redondeo de notas
  */
 @Singleton
 class UserPreferencesRepository @Inject constructor(
@@ -29,8 +33,10 @@ class UserPreferencesRepository @Inject constructor(
 ) {
 
     companion object {
-        private val KEY_USER_EMAIL    = stringPreferencesKey("user_email")
-        private val KEY_LAST_SYNC_MS  = stringPreferencesKey("last_sync_ms")
+        private val KEY_USER_EMAIL        = stringPreferencesKey("user_email")
+        private val KEY_LAST_SYNC_MS      = stringPreferencesKey("last_sync_ms")
+        private val KEY_REDONDEO_DECIMALES = intPreferencesKey("redondeo_decimales")
+        private val KEY_REDONDEO_MODO      = stringPreferencesKey("redondeo_modo")
     }
 
     // ── Email del usuario activo ─────────────────────────────────
@@ -59,6 +65,27 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun touchLastSync() {
         context.dataStore.edit { prefs ->
             prefs[KEY_LAST_SYNC_MS] = System.currentTimeMillis().toString()
+        }
+    }
+
+    // ── Configuración de redondeo ────────────────────────────────
+
+    /** Flow de la configuración de redondeo de notas. */
+    val configuracionNota: Flow<ConfiguracionNota> = context.dataStore.data
+        .map { prefs ->
+            ConfiguracionNota(
+                decimales = prefs[KEY_REDONDEO_DECIMALES] ?: 2,
+                modoRedondeo = prefs[KEY_REDONDEO_MODO]?.let {
+                    try { ModoRedondeo.valueOf(it) } catch (_: Exception) { ModoRedondeo.MATEMATICO }
+                } ?: ModoRedondeo.MATEMATICO
+            )
+        }
+
+    /** Guarda la configuración de redondeo. */
+    suspend fun setConfiguracionNota(config: ConfiguracionNota) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_REDONDEO_DECIMALES] = config.decimales
+            prefs[KEY_REDONDEO_MODO] = config.modoRedondeo.name
         }
     }
 }

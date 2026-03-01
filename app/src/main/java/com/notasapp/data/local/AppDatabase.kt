@@ -34,7 +34,7 @@ import com.notasapp.data.local.entities.UsuarioEntity
         SubNotaEntity::class,
         SubNotaDetailEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true     // genera JSON en /schemas para historial de migraciones
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -86,6 +86,18 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         /**
+         * Migración v3 → v4: agrega la columna `creditos` a la tabla `materias`.
+         * Permite calcular promedios ponderados por créditos académicos.
+         */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE materias ADD COLUMN creditos INTEGER NOT NULL DEFAULT 0"
+                )
+            }
+        }
+
+        /**
          * Crea la instancia de Room.
          * Llamado únicamente desde [DatabaseModule] (Hilt).
          * No llamar directamente desde código de producto.
@@ -96,7 +108,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 DATABASE_NAME
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .fallbackToDestructiveMigration() // fallback de seguridad para dev
                 .build()
     }

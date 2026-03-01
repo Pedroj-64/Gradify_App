@@ -8,6 +8,7 @@ import com.notasapp.domain.model.SubNota
 import com.notasapp.domain.model.SubNotaDetalle
 import com.notasapp.domain.usecase.CalcularNotaNecesariaUseCase
 import com.notasapp.domain.usecase.GetMateriaConPromedioUseCase
+import com.notasapp.domain.usecase.SimularNotaUseCase
 import com.notasapp.domain.repository.MateriaRepository
 import com.notasapp.navigation.Screen
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +32,7 @@ class MateriaDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     getMateriaConPromedio: GetMateriaConPromedioUseCase,
     private val calcularNotaNecesaria: CalcularNotaNecesariaUseCase,
+    private val simularNota: SimularNotaUseCase,
     private val materiaRepository: MateriaRepository
 ) : ViewModel() {
 
@@ -57,6 +59,13 @@ class MateriaDetailViewModel @Inject constructor(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    // ── Simulador "¿Qué pasa si saco X?" ──────────────────────
+
+    private val _simuladorResult =
+        MutableStateFlow<SimularNotaUseCase.Resultado?>(null)
+    val simuladorResult: StateFlow<SimularNotaUseCase.Resultado?> =
+        _simuladorResult.asStateFlow()
 
     // ── Acciones ───────────────────────────────────────────────
 
@@ -184,4 +193,65 @@ class MateriaDetailViewModel @Inject constructor(
 
     fun clearError() { _error.value = null }
     fun clearCalculadora() { _notaNecesariaResult.value = null }
+    fun clearSimulador() { _simuladorResult.value = null }
+
+    /**
+     * Simula la nota final con notas hipotéticas.
+     *
+     * @param notasHipoteticas Mapa de componenteId → nota hipotética.
+     */
+    fun simularNota(notasHipoteticas: Map<Long, Float>) {
+        val materiaActual = materia.value ?: return
+        _simuladorResult.value = simularNota(
+            componentes = materiaActual.componentes,
+            notasHipoteticas = notasHipoteticas
+        )
+    }
+
+    /**
+     * Duplica la materia actual con un nuevo nombre.
+     */
+    fun duplicarMateria(nuevoNombre: String? = null) {
+        viewModelScope.launch {
+            try {
+                val original = materia.value ?: return@launch
+                val nombre = nuevoNombre ?: "${original.nombre} (copia)"
+                val nueva = original.copy(
+                    id = 0,
+                    nombre = nombre,
+                    googleSheetsId = null,
+                    componentes = original.componentes.map { comp ->
+                        comp.copy(
+                            id = 0,
+                            subNotas = comp.subNotas.map { sn ->
+                                sn.copy(id = 0, valor = null, detalles = sn.detalles.map { d ->
+                                    d.copy(id = 0, valor = null)
+                                })
+                            }
+                        )
+                    }
+                )
+                val newMateriaId = materiaRepository.insertMateria(nueva)
+                nueva.componentes.forEachIndexed { _, comp ->
+                    val newCompId = materiaRepository.insertComponente(
+                        comp.copy(materiaId = newMateriaId)
+                    )
+                    comp.subNotas.forEach { sn ->
+                        val newSnId = materiaRepository.insertSubNota(
+                            sn.copy(componenteId = newCompId)
+                        )
+                        sn.detalles.forEach { det ->
+                            materiaRepository.insertSubNotaDetalle(
+                                det.copy(subNotaId = newSnId)
+                            )
+                        }
+                    }
+                }
+                Timber.i("Materia duplicada: $nombre (id=$newMateriaId)")
+            } catch (e: Exception) {
+                Timber.e(e, "Error al duplicar materia")
+                _error.value = "No se pudo duplicar la materia"
+            }
+        }
+    }
 }

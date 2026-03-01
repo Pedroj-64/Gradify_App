@@ -50,6 +50,9 @@ data class MateriaEntity(
     /** Nota mínima para aprobar la materia, ej: 3.0. */
     val notaAprobacion: Float = 3f,
 
+    /** Créditos académicos de la materia (para promedio ponderado). */
+    val creditos: Int = 0,
+
     /**
      * Tipo de escala:
      * - "NUMERICO_5"   → 0-5 (tipo Colombia)

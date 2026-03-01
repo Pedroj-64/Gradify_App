@@ -89,6 +89,7 @@ fun MateriaConComponentes.toDomain(): Materia = Materia(
     escalaMin = materia.escalaMin,
     escalaMax = materia.escalaMax,
     notaAprobacion = materia.notaAprobacion,
+    creditos = materia.creditos,
     tipoEscala = tipoEscalaFromString(materia.tipoEscala),
     googleSheetsId = materia.googleSheetsId,
     componentes = componentesConSubNotas.sortedBy { it.componente.orden }.map { it.toDomain() }
@@ -103,6 +104,7 @@ fun Materia.toEntity(): MateriaEntity = MateriaEntity(
     escalaMin = escalaMin,
     escalaMax = escalaMax,
     notaAprobacion = notaAprobacion,
+    creditos = creditos,
     tipoEscala = tipoEscala.name,
     googleSheetsId = googleSheetsId
 )

@@ -18,6 +18,9 @@ keystore.jks
 *.keystore
 signing.properties
 
+# Google Services (contiene API keys, OAuth client IDs, SHA-1)
+google-services.json
+
 # Logs
 *.log
 

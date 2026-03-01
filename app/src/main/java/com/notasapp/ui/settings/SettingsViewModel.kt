@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notasapp.data.local.AppDatabase
 import com.notasapp.data.local.UserPreferencesRepository
+import com.notasapp.domain.model.ConfiguracionNota
 import com.notasapp.utils.BackupManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -37,7 +38,8 @@ data class SettingsUiState(
     val shareIntent:      Intent? = null,
     val lastSyncMs:       Long?   = null,
     val showLogoutDialog: Boolean = false,
-    val loggedOut:        Boolean = false
+    val loggedOut:        Boolean = false,
+    val configuracionNota: ConfiguracionNota = ConfiguracionNota()
 )
 
 /**
@@ -63,6 +65,12 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             userPrefsRepository.lastSyncMs.collect { ms ->
                 _uiState.update { it.copy(lastSyncMs = ms) }
+            }
+        }
+        // Observar la configuración de redondeo
+        viewModelScope.launch {
+            userPrefsRepository.configuracionNota.collect { config ->
+                _uiState.update { it.copy(configuracionNota = config) }
             }
         }
     }
@@ -132,6 +140,15 @@ class SettingsViewModel @Inject constructor(
     fun clearMessages() {
         _uiState.update {
             it.copy(successMessage = null, errorMessage = null, shareIntent = null)
+        }
+    }
+
+    // ── Configuración de redondeo ─────────────────────────────────────────────
+
+    /** Actualiza la configuración de redondeo de notas. */
+    fun updateConfiguracionNota(config: ConfiguracionNota) {
+        viewModelScope.launch {
+            userPrefsRepository.setConfiguracionNota(config)
         }
     }
 

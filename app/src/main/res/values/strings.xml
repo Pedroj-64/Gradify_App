@@ -10,11 +10,10 @@
     <string name="login_privacy_note">Tus datos se guardan localmente. La sincronización con Google Sheets es opcional.</string>
 
     <!--
-         IMPORTANTE: Reemplazar con tu client_id real de Google Cloud Console.
-         No hardcodear en código fuente. Ver documentación:
-         https://developers.google.com/identity/sign-in/android
+         default_web_client_id se genera automáticamente desde google-services.json
+         por el plugin com.google.gms.google-services. No hardcodear aquí.
+         El BuildConfig.GOOGLE_CLIENT_ID se lee desde local.properties.
     -->
-    <string name="default_web_client_id" translatable="false">436447649656-39c75unpvr28s62ocg8aporvnieful3a.apps.googleusercontent.com</string>
 
     <!-- Home -->
     <string name="home_title">Mis Materias</string>

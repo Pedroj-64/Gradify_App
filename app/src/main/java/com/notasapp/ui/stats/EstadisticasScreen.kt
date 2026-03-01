@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,13 +18,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -45,15 +46,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.notasapp.domain.model.Materia
+import com.notasapp.domain.model.Semestre
 import com.notasapp.ui.components.PromedioGauge
 import kotlinx.coroutines.delay
+
+/** CompositionLocal holder to pass stats down without threading params. */
+private val LocalStatsHolder = androidx.compose.runtime.staticCompositionLocalOf<EstadisticasSemestre?> { null }
 
 /**
  * Pantalla de estadísticas del semestre.
@@ -114,6 +125,7 @@ private fun EstadisticasContent(
         visible = true
     }
 
+    androidx.compose.runtime.CompositionLocalProvider(LocalStatsHolder provides stats) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -177,7 +189,35 @@ private fun EstadisticasContent(
                 }
             }
         }
+
+        // Gráfico de barras de rendimiento
+        if (stats.barrasRendimiento.isNotEmpty()) {
+            item {
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = fadeIn(tween(800)) + slideInVertically(tween(800)) { -it / 3 }
+                ) {
+                    RendimientoBarChart(
+                        datos = stats.barrasRendimiento,
+                        escalaMax = stats.materiasMejorNota.firstOrNull()?.escalaMax ?: 5f
+                    )
+                }
+            }
+        }
+
+        // Historial por semestre
+        if (stats.semestres.size > 1) {
+            item {
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = fadeIn(tween(900)) + slideInVertically(tween(900)) { -it / 3 }
+                ) {
+                    SemestresHistorialCard(semestres = stats.semestres)
+                }
+            }
+        }
     }
+    } // CompositionLocalProvider
 }
 
 // ── Gauge promedio general ──────────────────────────────────────────────────
@@ -188,6 +228,7 @@ private fun PromedioGeneralCard(
     totalMaterias: Int,
     modifier: Modifier = Modifier
 ) {
+    val stats = (LocalStatsHolder.current)
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -218,11 +259,28 @@ private fun PromedioGeneralCard(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
+            // Promedio ponderado por créditos
+            if (stats?.promedioPonderado != null && stats.promedioPonderado != promedioGeneral) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Ponderado por créditos: ${"%.2f".format(stats.promedioPonderado)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
             Text(
                 text = "$totalMaterias materia(s) registrada(s)",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (stats != null && stats.totalCreditos > 0) {
+                Text(
+                    text = "${stats.creditosAprobados}/${stats.totalCreditos} créditos aprobados",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -408,6 +466,167 @@ private fun MateriaRankingRow(
                 color = fillColor,
                 trackColor = trackColor
             )
+        }
+    }
+}
+
+// ── Gráfico de barras de rendimiento ─────────────────────────────────────────
+
+@Composable
+private fun RendimientoBarChart(
+    datos: List<Pair<String, Float>>,
+    escalaMax: Float,
+    modifier: Modifier = Modifier
+) {
+    val barColor = MaterialTheme.colorScheme.primary
+    val trackColor = MaterialTheme.colorScheme.surfaceVariant
+    val textColor = MaterialTheme.colorScheme.onSurface
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.BarChart,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Rendimiento por materia",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height((datos.size * 40 + 16).dp)
+            ) {
+                val barHeight = 24.dp.toPx()
+                val spacing = 16.dp.toPx()
+                val leftMargin = 0f
+                val maxWidth = size.width - leftMargin
+
+                datos.forEachIndexed { index, (nombre, valor) ->
+                    val y = index * (barHeight + spacing)
+                    val progress = (valor / escalaMax).coerceIn(0f, 1f)
+
+                    // Track
+                    drawRoundRect(
+                        color = trackColor,
+                        topLeft = Offset(leftMargin, y),
+                        size = Size(maxWidth, barHeight),
+                        cornerRadius = CornerRadius(8f, 8f)
+                    )
+
+                    // Bar
+                    if (progress > 0f) {
+                        drawRoundRect(
+                            color = barColor,
+                            topLeft = Offset(leftMargin, y),
+                            size = Size(maxWidth * progress, barHeight),
+                            cornerRadius = CornerRadius(8f, 8f)
+                        )
+                    }
+
+                    // Text
+                    drawContext.canvas.nativeCanvas.apply {
+                        val paint = android.graphics.Paint().apply {
+                            color = textColor.hashCode()
+                            textSize = 11.sp.toPx()
+                            isAntiAlias = true
+                        }
+                        val label = if (nombre.length > 15) "${nombre.take(13)}.." else nombre
+                        drawText(
+                            "$label: ${"%.2f".format(valor)}",
+                            leftMargin + 8.dp.toPx(),
+                            y + barHeight * 0.7f,
+                            paint
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ── Historial de semestres ───────────────────────────────────────────────────
+
+@Composable
+private fun SemestresHistorialCard(
+    semestres: List<Semestre>,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.School,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Historial por semestre",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            semestres.forEach { semestre ->
+                SemestreRow(semestre = semestre)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SemestreRow(semestre: Semestre) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = semestre.periodo,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${semestre.totalMaterias} materias · ${semestre.totalCreditos} créditos",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = semestre.promedioPonderadoDisplay,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "${semestre.aprobadas}/${semestre.materiasConNotas.size} aprobadas",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

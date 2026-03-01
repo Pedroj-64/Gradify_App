@@ -49,6 +49,7 @@ class MateriaRepositoryImpl @Inject constructor(
                     escalaMin = entity.escalaMin,
                     escalaMax = entity.escalaMax,
                     notaAprobacion = entity.notaAprobacion,
+                    creditos = entity.creditos,
                     googleSheetsId = entity.googleSheetsId
                 )
             }

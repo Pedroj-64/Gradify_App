@@ -42,6 +42,7 @@ class CreateMateriaViewModel @Inject constructor(
     fun updateNombre(nombre: String) = _wizardState.update { it.copy(nombre = nombre) }
     fun updatePeriodo(periodo: String) = _wizardState.update { it.copy(periodo = periodo) }
     fun updateProfesor(profesor: String) = _wizardState.update { it.copy(profesor = profesor) }
+    fun updateCreditos(creditos: Int) = _wizardState.update { it.copy(creditos = creditos) }
     fun goToStep2() = _wizardState.update { it.copy(currentStep = 2) }
 
     // ── Paso 2: Escala de calificación ─────────────────────────
@@ -122,6 +123,7 @@ class CreateMateriaViewModel @Inject constructor(
                     escalaMin = state.escalaMin,
                     escalaMax = state.escalaMax,
                     notaAprobacion = state.notaAprobacion,
+                    creditos = state.creditos,
                     tipoEscala = state.tipoEscala
                 )
                 val materiaId = materiaRepository.insertMateria(materia)
@@ -171,6 +173,7 @@ data class WizardState(
     val nombre: String = "",
     val periodo: String = "",
     val profesor: String = "",
+    val creditos: Int = 3,
     // Paso 2
     val tipoEscala: TipoEscala = TipoEscala.NUMERICO_5,
     val escalaMin: Float = 0f,

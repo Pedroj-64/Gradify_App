@@ -26,6 +26,7 @@ data class Materia(
     val escalaMin: Float = 0f,
     val escalaMax: Float = 5f,
     val notaAprobacion: Float = 3f,
+    val creditos: Int = 0,
     val tipoEscala: TipoEscala = TipoEscala.NUMERICO_5,
     val googleSheetsId: String? = null,
     val componentes: List<Componente> = emptyList()

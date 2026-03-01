@@ -7,6 +7,7 @@ import androidx.core.content.FileProvider
 import com.notasapp.data.local.AppDatabase
 import com.notasapp.data.local.entities.ComponenteEntity
 import com.notasapp.data.local.entities.MateriaEntity
+import com.notasapp.data.local.entities.SubNotaDetailEntity
 import com.notasapp.data.local.entities.SubNotaEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONArray
@@ -28,18 +29,25 @@ import javax.inject.Singleton
  * Llama a [importFromUri] con la URI del archivo seleccionado por el usuario via SAF.
  * Las materias importadas se insertan con nuevos IDs; no se eliminan datos locales.
  *
- * ## Formato del archivo JSON
+ * ## Formato del archivo JSON v2
  * ```json
  * {
- *   "version": 1,
+ *   "version": 2,
  *   "exportedAt": 1740000000000,
+ *   "appVersion": "1.1.0",
  *   "usuarioId": "...",
  *   "materias": [
  *     {
- *       "nombre": "Matemáticas", "periodo": "2026-1", ...
+ *       "nombre": "Matemáticas", "periodo": "2026-1", "creditos": 3, ...
  *       "componentes": [
  *         { "nombre": "Primer corte", "porcentaje": 0.3, ...
- *           "subNotas": [ { "descripcion": "Taller 1", "valor": 4.0, ... } ]
+ *           "subNotas": [
+ *             { "descripcion": "Taller 1", "valor": 4.0,
+ *               "detalles": [
+ *                 { "descripcion": "Parte 1", "porcentaje": 0.5, "valor": 4.2 }
+ *               ]
+ *             }
+ *           ]
  *         }
  *       ]
  *     }
@@ -53,8 +61,11 @@ class BackupManager @Inject constructor(
 ) {
 
     companion object {
-        private const val BACKUP_VERSION   = 1
+        private const val BACKUP_VERSION   = 2
         private const val AUTHORITY_SUFFIX = ".provider"
+        private val REQUIRED_MATERIA_FIELDS = listOf("nombre", "periodo")
+        private val REQUIRED_COMPONENTE_FIELDS = listOf("nombre", "porcentaje")
+        private val REQUIRED_SUBNOTA_FIELDS = listOf("descripcion", "porcentajeDelComponente")
     }
 
     // ── Export ────────────────────────────────────────────────────────────────
@@ -112,6 +123,7 @@ class BackupManager @Inject constructor(
         val root = JSONObject().apply {
             put("version",    BACKUP_VERSION)
             put("exportedAt", System.currentTimeMillis())
+            put("appVersion", "1.1.0")
             put("usuarioId",  usuarioId)
         }
 
@@ -124,6 +136,7 @@ class BackupManager @Inject constructor(
                 put("nombre",              m.nombre)
                 put("periodo",             m.periodo)
                 put("profesor",            m.profesor ?: JSONObject.NULL)
+                put("creditos",            m.creditos)
                 put("escalaMin",           m.escalaMin)
                 put("escalaMax",           m.escalaMax)
                 put("notaAprobacion",      m.notaAprobacion)
@@ -145,22 +158,26 @@ class BackupManager @Inject constructor(
                 val snArr = JSONArray()
                 for (snConDet in ccs.subNotas) {
                     val sn = snConDet.subNota
-                    // Calcular valor efectivo: si tiene detalles, es la suma ponderada
-                    val valorEfectivo: Float? = if (snConDet.detalles.isNotEmpty()) {
-                        if (snConDet.detalles.all { it.valor != null }) {
-                            val totalPct = snConDet.detalles.sumOf { it.porcentaje.toDouble() }
-                            if (totalPct > 0)
-                                snConDet.detalles.sumOf { ((it.valor!! * it.porcentaje) / totalPct).toDouble() }.toFloat()
-                            else null
-                        } else null
-                    } else {
-                        sn.valor
-                    }
-                    snArr.put(JSONObject().apply {
+                    val snObj = JSONObject().apply {
                         put("descripcion",              sn.descripcion)
                         put("porcentajeDelComponente",  sn.porcentajeDelComponente)
-                        put("valor",                    valorEfectivo ?: JSONObject.NULL)
-                    })
+                        put("valor",                    sn.valor ?: JSONObject.NULL)
+                    }
+
+                    // Exportar detalles de sub-notas compuestas
+                    if (snConDet.detalles.isNotEmpty()) {
+                        val detArr = JSONArray()
+                        for (det in snConDet.detalles) {
+                            detArr.put(JSONObject().apply {
+                                put("descripcion", det.descripcion)
+                                put("porcentaje",  det.porcentaje)
+                                put("valor",       det.valor ?: JSONObject.NULL)
+                            })
+                        }
+                        snObj.put("detalles", detArr)
+                    }
+
+                    snArr.put(snObj)
                 }
                 cObj.put("subNotas", snArr)
                 compArr.put(cObj)
@@ -180,18 +197,30 @@ class BackupManager @Inject constructor(
         usuarioId: String
     ): Int {
         return try {
-            val root          = JSONObject(jsonStr)
+            val root = JSONObject(jsonStr)
+
+            // Schema validation
+            validateSchema(root)
+
+            val version = root.optInt("version", 1)
             val materiasArray = root.getJSONArray("materias")
-            var count         = 0
+            var count = 0
 
             for (i in 0 until materiasArray.length()) {
-                val mObj     = materiasArray.getJSONObject(i)
+                val mObj = materiasArray.getJSONObject(i)
+
+                // Validate required fields
+                REQUIRED_MATERIA_FIELDS.forEach { field ->
+                    require(mObj.has(field)) { "Campo '$field' faltante en materia #${i + 1}" }
+                }
+
                 val matEntity = MateriaEntity(
                     usuarioId            = usuarioId,
                     nombre               = mObj.getString("nombre"),
                     periodo              = mObj.getString("periodo"),
                     profesor             = mObj.optString("profesor")
                         .takeIf { it.isNotBlank() && it != "null" },
+                    creditos             = mObj.optInt("creditos", 0),
                     escalaMin            = mObj.getDouble("escalaMin").toFloat(),
                     escalaMax            = mObj.getDouble("escalaMax").toFloat(),
                     notaAprobacion       = mObj.getDouble("notaAprobacion").toFloat(),
@@ -206,7 +235,14 @@ class BackupManager @Inject constructor(
 
                 val compArray = mObj.getJSONArray("componentes")
                 for (j in 0 until compArray.length()) {
-                    val cObj     = compArray.getJSONObject(j)
+                    val cObj = compArray.getJSONObject(j)
+
+                    REQUIRED_COMPONENTE_FIELDS.forEach { field ->
+                        require(cObj.has(field)) {
+                            "Campo '$field' faltante en componente #${j + 1} de materia '${matEntity.nombre}'"
+                        }
+                    }
+
                     val compEntity = ComponenteEntity(
                         materiaId   = newMateriaId,
                         nombre      = cObj.getString("nombre"),
@@ -220,7 +256,14 @@ class BackupManager @Inject constructor(
                     val snArray = cObj.getJSONArray("subNotas")
                     for (k in 0 until snArray.length()) {
                         val snObj = snArray.getJSONObject(k)
-                        db.subNotaDao().insert(
+
+                        REQUIRED_SUBNOTA_FIELDS.forEach { field ->
+                            require(snObj.has(field)) {
+                                "Campo '$field' faltante en sub-nota #${k + 1}"
+                            }
+                        }
+
+                        val newSnId = db.subNotaDao().insert(
                             SubNotaEntity(
                                 componenteId            = newCompId,
                                 descripcion             = snObj.getString("descripcion"),
@@ -230,17 +273,55 @@ class BackupManager @Inject constructor(
                                                           else snObj.getDouble("valor").toFloat()
                             )
                         )
+
+                        // Import sub-nota details (v2+)
+                        if (snObj.has("detalles") && !snObj.isNull("detalles")) {
+                            val detArray = snObj.getJSONArray("detalles")
+                            for (l in 0 until detArray.length()) {
+                                val detObj = detArray.getJSONObject(l)
+                                db.subNotaDetailDao().insert(
+                                    SubNotaDetailEntity(
+                                        subNotaId   = newSnId,
+                                        descripcion = detObj.getString("descripcion"),
+                                        porcentaje  = detObj.getDouble("porcentaje").toFloat(),
+                                        valor       = if (detObj.isNull("valor")) null
+                                                      else detObj.getDouble("valor").toFloat()
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
                 count++
             }
 
-            Timber.i("Backup importado exitosamente: $count materia(s)")
+            Timber.i("Backup v$version importado exitosamente: $count materia(s)")
             count
 
+        } catch (e: IllegalArgumentException) {
+            Timber.e(e, "Error de validación en backup JSON")
+            throw IllegalStateException("Archivo de backup inválido: ${e.message}", e)
         } catch (e: Exception) {
             Timber.e(e, "Error al parsear backup JSON")
             throw e
+        }
+    }
+
+    /**
+     * Valida la estructura básica del JSON de backup.
+     * @throws IllegalArgumentException si la estructura es inválida.
+     */
+    private fun validateSchema(root: JSONObject) {
+        require(root.has("materias")) {
+            "El archivo no contiene el campo 'materias'. ¿Es un backup válido de NotasApp?"
+        }
+        val version = root.optInt("version", 0)
+        require(version in 1..BACKUP_VERSION) {
+            "Versión de backup no soportada: $version (máximo soportado: $BACKUP_VERSION)"
+        }
+        val materias = root.getJSONArray("materias")
+        require(materias.length() > 0) {
+            "El backup no contiene ninguna materia"
         }
     }
 }

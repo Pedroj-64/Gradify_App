@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notasapp.data.local.dao.UsuarioDao
 import com.notasapp.domain.model.Materia
+import com.notasapp.domain.model.Semestre
 import com.notasapp.domain.repository.MateriaRepository
+import com.notasapp.domain.usecase.AgruparPorSemestreUseCase
+import com.notasapp.domain.usecase.CalcularPromedioPonderadoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -34,8 +36,14 @@ data class EstadisticasSemestre(
     val reprobadas: Int = 0,
     val sinNotas: Int = 0,
     val promedioGeneral: Float? = null,
+    val promedioPonderado: Float? = null,
+    val totalCreditos: Int = 0,
+    val creditosAprobados: Int = 0,
     val materiasMejorNota: List<Materia> = emptyList(),
     val materiasPeorNota: List<Materia> = emptyList(),
+    val semestres: List<Semestre> = emptyList(),
+    /** Datos para gráfico de barras: nombre → promedio */
+    val barrasRendimiento: List<Pair<String, Float>> = emptyList()
 )
 
 /**
@@ -47,7 +55,9 @@ data class EstadisticasSemestre(
 @HiltViewModel
 class EstadisticasViewModel @Inject constructor(
     usuarioDao: UsuarioDao,
-    materiaRepository: MateriaRepository
+    materiaRepository: MateriaRepository,
+    private val agruparPorSemestre: AgruparPorSemestreUseCase,
+    private val calcularPromedioPonderado: CalcularPromedioPonderadoUseCase
 ) : ViewModel() {
 
     private val materias: StateFlow<List<Materia>> = usuarioDao
@@ -88,6 +98,15 @@ class EstadisticasViewModel @Inject constructor(
         val promedioGeneral = if (conNotas.isEmpty()) null
         else conNotas.mapNotNull { it.promedio }.average().toFloat()
 
+        // Promedio ponderado por créditos
+        val resultadoPonderado = calcularPromedioPonderado(materias)
+
+        // Agrupar por semestres
+        val semestres = agruparPorSemestre(materias)
+
+        // Datos para gráfico de barras
+        val barras = conNotas.take(10).map { it.nombre to (it.promedio ?: 0f) }
+
         val sorted         = conNotas.sortedByDescending { it.promedio }
         val mejoresNota    = sorted.take(3)
         val peoresNota     = sorted.takeLast(3).reversed()
@@ -99,8 +118,13 @@ class EstadisticasViewModel @Inject constructor(
             reprobadas        = reprobadas,
             sinNotas          = sinNotas,
             promedioGeneral   = promedioGeneral,
+            promedioPonderado = resultadoPonderado.promedioPonderado,
+            totalCreditos     = resultadoPonderado.totalCreditos,
+            creditosAprobados = resultadoPonderado.creditosAprobados,
             materiasMejorNota = mejoresNota,
-            materiasPeorNota  = if (peoresNota == mejoresNota) emptyList() else peoresNota
+            materiasPeorNota  = if (peoresNota == mejoresNota) emptyList() else peoresNota,
+            semestres         = semestres,
+            barrasRendimiento = barras
         )
     }
 
