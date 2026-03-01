@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Permisos de red para Google Sheets API y Sign-In -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -9,6 +10,11 @@
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
+
+    <!-- Permiso para enviar notificaciones locales (requerido en Android 13+) -->
+    <uses-permission
+        android:name="android.permission.POST_NOTIFICATIONS"
+        android:minSdkVersion="33" />
 
     <application
         android:name=".NotasApp"
@@ -44,6 +50,30 @@
             <meta-data
                 android:name="androidx.work.WorkManagerInitializer"
                 android:value="androidx.startup" />
+        </provider>
+
+        <!-- Widget: Promedio del Semestre en la pantalla de inicio -->
+        <receiver
+            android:name=".widget.PromedioWidgetProvider"
+            android:exported="true"
+            android:label="Promedio del Semestre">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_promedio_info" />
+        </receiver>
+
+        <!-- FileProvider: comparte el backup JSON sin permisos de almacenamiento -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
         </provider>
 
     </application>

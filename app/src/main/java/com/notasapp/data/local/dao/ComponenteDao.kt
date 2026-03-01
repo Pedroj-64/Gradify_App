@@ -60,6 +60,16 @@ interface ComponenteDao {
     suspend fun deleteByMateria(materiaId: Long)
 
     /**
+     * Retorna los componentes cuya [fechaLimite] está entre [nowMs] y [limitMs].
+     * Se usa en [ReminderWorker] para enviar notificaciones de evaluaciones próximas.
+     *
+     * @param nowMs   Timestamp actual en milisegundos.
+     * @param limitMs Timestamp límite (ej: ahora + 7 días).
+     */
+    @Query("SELECT * FROM componentes WHERE fechaLimite IS NOT NULL AND fechaLimite BETWEEN :nowMs AND :limitMs ORDER BY fechaLimite ASC")
+    suspend fun getComponentesConFechaProxima(nowMs: Long, limitMs: Long): List<ComponenteEntity>
+
+    /**
      * Actualiza el orden de un componente específico.
      * Se llama después de un drag & drop.
      */

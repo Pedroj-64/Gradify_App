@@ -126,16 +126,25 @@ class CreateMateriaViewModel @Inject constructor(
                 )
                 val materiaId = materiaRepository.insertMateria(materia)
 
-                // Crear componentes con sub-nota vacía por defecto
-                val componentes = state.componentes.mapIndexed { index, input ->
-                    Componente(
-                        materiaId = materiaId,
-                        nombre = input.nombre,
-                        porcentaje = input.porcentaje,
-                        orden = index
+                // Crear componentes, cada uno con una sub-nota por defecto (100% del corte)
+                state.componentes.forEachIndexed { index, input ->
+                    val componenteId = materiaRepository.insertComponente(
+                        Componente(
+                            materiaId = materiaId,
+                            nombre = input.nombre,
+                            porcentaje = input.porcentaje,
+                            orden = index
+                        )
+                    )
+                    // Sub-nota por defecto: representa el 100% del componente
+                    materiaRepository.insertSubNota(
+                        SubNota(
+                            componenteId = componenteId,
+                            descripcion = "Nota ${input.nombre}",
+                            porcentajeDelComponente = 1.0f
+                        )
                     )
                 }
-                materiaRepository.insertComponentes(componentes)
 
                 Timber.i("Materia creada: ${state.nombre} (id=$materiaId)")
                 _saveState.value = SaveState.Success

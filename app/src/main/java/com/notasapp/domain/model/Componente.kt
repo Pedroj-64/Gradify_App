@@ -18,7 +18,9 @@ data class Componente(
     val nombre: String,
     val porcentaje: Float,
     val orden: Int = 0,
-    val subNotas: List<SubNota> = emptyList()
+    val subNotas: List<SubNota> = emptyList(),
+    /** Epoch ms de la fecha límite de evaluación. Null = sin fecha. */
+    val fechaLimite: Long? = null
 ) {
     /**
      * Promedio ponderado de las sub-notas **ingresadas** de este componente.
@@ -31,7 +33,7 @@ data class Componente(
             val ingresadas = subNotas.filter { it.ingresada }
             if (ingresadas.isEmpty()) return null
             return ingresadas.sumOf {
-                (it.valor!! * it.porcentajeDelComponente).toDouble()
+                (it.valorEfectivo!! * it.porcentajeDelComponente).toDouble()
             }.toFloat()
         }
 
@@ -50,4 +52,25 @@ data class Componente(
      * Porcentaje (0–100) del componente expresado en entero, para la UI.
      */
     val porcentajeDisplay: Int get() = (porcentaje * 100).toInt()
+
+    /**
+     * Porcentaje de sub-notas ya ingresadas dentro de este componente (0.0 – 1.0).
+     */
+    val porcentajeIngresado: Float
+        get() {
+            if (subNotas.isEmpty()) return 0f
+            return subNotas.filter { it.ingresada }
+                .sumOf { it.porcentajeDelComponente.toDouble() }
+                .toFloat()
+        }
+
+    /**
+     * Texto de progreso del componente: «2 de 4 evaluados».
+     */
+    val progresoDisplay: String
+        get() {
+            val total = subNotas.size
+            val ingresados = subNotas.count { it.ingresada }
+            return "$ingresados de $total evaluado${if (total != 1) "s" else ""}"
+        }
 }

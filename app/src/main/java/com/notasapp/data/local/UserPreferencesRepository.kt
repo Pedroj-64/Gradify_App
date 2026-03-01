@@ -1,0 +1,64 @@
+package com.notasapp.data.local
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/** Extension property para crear el DataStore una sola vez por proceso. */
+private val Context.dataStore: DataStore<Preferences>
+        by preferencesDataStore(name = "notas_app_prefs")
+
+/**
+ * Repositorio de preferencias del usuario usando DataStore.
+ *
+ * Almacena datos ligeros de configuración que no requieren SQL:
+ *  - Email del usuario activo (usado por GoogleAccountCredential para Sheets)
+ *  - Última sync exitosa (timestamp)
+ */
+@Singleton
+class UserPreferencesRepository @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
+
+    companion object {
+        private val KEY_USER_EMAIL    = stringPreferencesKey("user_email")
+        private val KEY_LAST_SYNC_MS  = stringPreferencesKey("last_sync_ms")
+    }
+
+    // ── Email del usuario activo ─────────────────────────────────
+
+    /** Flow del email del usuario activo, o null si nadie ha iniciado sesión. */
+    val userEmail: Flow<String?> = context.dataStore.data
+        .map { prefs -> prefs[KEY_USER_EMAIL] }
+
+    /** Guarda el email del usuario activo. */
+    suspend fun setUserEmail(email: String) {
+        context.dataStore.edit { prefs -> prefs[KEY_USER_EMAIL] = email }
+    }
+
+    /** Borra el email activo (logout). */
+    suspend fun clearUserEmail() {
+        context.dataStore.edit { prefs -> prefs.remove(KEY_USER_EMAIL) }
+    }
+
+    // ── Timestamp de última sync ─────────────────────────────────
+
+    /** Flow de la última sync exitosa como milisegundos epoch. */
+    val lastSyncMs: Flow<Long?> = context.dataStore.data
+        .map { prefs -> prefs[KEY_LAST_SYNC_MS]?.toLongOrNull() }
+
+    /** Actualiza el timestamp de la última sync. */
+    suspend fun touchLastSync() {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_LAST_SYNC_MS] = System.currentTimeMillis().toString()
+        }
+    }
+}

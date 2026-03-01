@@ -1,5 +1,6 @@
 package com.notasapp.data.local.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -45,5 +46,13 @@ data class ComponenteEntity(
      * Posición en la lista (0-indexed).
      * Se usa para mantener el orden cuando el usuario hace drag & drop.
      */
-    val orden: Int = 0
+    val orden: Int = 0,
+
+    /**
+     * Timestamp epoch (ms) de la fecha límite de este componente.
+     * Null si no se ha definido fecha. Usado por ReminderWorker para
+     * enviar recordatorios cuando faltan ≤ 7 días.
+     */
+    @ColumnInfo(defaultValue = "NULL")
+    val fechaLimite: Long? = null
 )

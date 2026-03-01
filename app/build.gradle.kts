@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -18,6 +19,11 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField(
+            "String",
+            "GOOGLE_CLIENT_ID",
+            "\"${project.findProperty("GOOGLE_CLIENT_ID") ?: "YOUR_WEB_CLIENT_ID_HERE"}\""
+        )
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -33,7 +39,6 @@ android {
             )
         }
         debug {
-            applicationIdSuffix = ".debug"
             isDebuggable = true
         }
     }
@@ -68,6 +73,11 @@ android {
     }
 }
 
+// Exportar schema de Room a /schemas para historial de migraciones
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     // AndroidX Core
     implementation(libs.androidx.core.ktx)
@@ -95,6 +105,7 @@ dependencies {
     // Hilt (Inyeccion de Dependencias)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler)   // requerido para @HiltWorker / @HiltViewModel (androidx.hilt)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.hilt.work)
 

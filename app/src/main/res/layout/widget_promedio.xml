@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Layout RemoteViews del widget de promedio del semestre.
+    Columnas: título → promedio grande → subtítulo (nº de materias).
+    Fondo degradado definido en @drawable/widget_background.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="16dp"
+    android:gravity="center">
+
+    <TextView
+        android:id="@+id/tv_widget_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Promedio del Semestre"
+        android:textSize="12sp"
+        android:textColor="#FFFFFFFF"
+        android:alpha="0.75" />
+
+    <TextView
+        android:id="@+id/tv_widget_promedio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="--"
+        android:textSize="40sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFFFF"
+        android:layout_marginTop="4dp" />
+
+    <TextView
+        android:id="@+id/tv_widget_materias"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0 materias"
+        android:textSize="11sp"
+        android:textColor="#FFFFFFFF"
+        android:alpha="0.65"
+        android:layout_marginTop="2dp" />
+
+</LinearLayout>

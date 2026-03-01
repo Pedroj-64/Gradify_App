@@ -55,6 +55,54 @@ data class Materia(
     val aprobado: Boolean get() = (promedio ?: 0f) >= notaAprobacion
 
     /**
+     * Puntos acumulados hasta ahora hacia la nota final.
+     * A diferencia de [promedio], solo suma lo que ya fue evaluado (sin proyectar).
+     */
+    val acumulado: Float
+        get() = componentes
+            .mapNotNull { it.aporteAlFinal }
+            .sumOf { it.toDouble() }
+            .toFloat()
+
+    /**
+     * Porcentaje del curso que ya fue evaluado (0.0 – 1.0).
+     * Considera un componente "evaluado" si tiene al menos una sub-nota ingresada.
+     */
+    val porcentajeEvaluado: Float
+        get() = componentes
+            .filter { it.promedio != null }
+            .sumOf { it.porcentaje.toDouble() }
+            .toFloat()
+
+    /**
+     * Acumulado redondeado a 2 decimales, para la UI.
+     */
+    val acumuladoDisplay: String
+        get() = if (acumulado > 0f) "%.2f".format(acumulado) else "--"
+
+    /**
+     * True si los puntos acumulados **ya** superan la nota mínima de
+     * aprobación, independientemente de cuánto falta por evaluar.
+     * Sirve para felicitar al estudiante.
+     */
+    val yaAprobo: Boolean
+        get() = acumulado >= notaAprobacion
+
+    /**
+     * Nota que el estudiante necesitaría promediar en lo restante
+     * para alcanzar justo la nota de aprobación.  Null si ya aprobó
+     * o no queda porcentaje por evaluar.
+     */
+    val notaNecesariaParaAprobar: Float?
+        get() {
+            if (yaAprobo) return null
+            val restante = 1f - porcentajeEvaluado
+            if (restante <= 0f) return null
+            val necesita = (notaAprobacion - acumulado) / restante
+            return if (necesita in 0f..escalaMax) necesita else null
+        }
+
+    /**
      * True si la materia tiene vinculación con Google Sheets.
      */
     val sincronizadaConSheets: Boolean get() = googleSheetsId != null
@@ -65,4 +113,10 @@ data class Materia(
      */
     val sumaPorcentajes: Float
         get() = componentes.sumOf { it.porcentaje.toDouble() }.toFloat()
+
+    /**
+     * True si todos los componentes están completos (todas las sub-notas ingresadas).
+     */
+    val completa: Boolean
+        get() = componentes.isNotEmpty() && componentes.all { it.completo }
 }

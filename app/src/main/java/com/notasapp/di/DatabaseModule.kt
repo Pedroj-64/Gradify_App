@@ -6,6 +6,7 @@ import com.notasapp.data.local.AppDatabase
 import com.notasapp.data.local.dao.ComponenteDao
 import com.notasapp.data.local.dao.MateriaDao
 import com.notasapp.data.local.dao.SubNotaDao
+import com.notasapp.data.local.dao.SubNotaDetailDao
 import com.notasapp.data.local.dao.UsuarioDao
 import dagger.Module
 import dagger.Provides
@@ -40,4 +41,7 @@ object DatabaseModule {
 
     @Provides
     fun provideSubNotaDao(db: AppDatabase): SubNotaDao = db.subNotaDao()
+
+    @Provides
+    fun provideSubNotaDetailDao(db: AppDatabase): SubNotaDetailDao = db.subNotaDetailDao()
 }

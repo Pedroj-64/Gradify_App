@@ -2,10 +2,9 @@ package com.notasapp.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import com.notasapp.data.local.entities.UsuarioEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -18,10 +17,12 @@ import kotlinx.coroutines.flow.Flow
 interface UsuarioDao {
 
     /**
-     * Inserta o reemplaza al usuario. Se usa al hacer login exitoso
-     * para actualizar nombre/foto si cambiaron en Google.
+     * Inserta o actualiza el usuario sin borrarlo.
+     * @Upsert usa INSERT ... ON CONFLICT DO UPDATE, evitando el
+     * DELETE+INSERT de OnConflictStrategy.REPLACE que dispararía
+     * el ON DELETE CASCADE y eliminaría todas las materias.
      */
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertOrUpdate(usuario: UsuarioEntity)
 
     @Update

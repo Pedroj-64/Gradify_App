@@ -3,11 +3,13 @@ package com.notasapp.data.repository
 import com.notasapp.data.local.dao.ComponenteDao
 import com.notasapp.data.local.dao.MateriaDao
 import com.notasapp.data.local.dao.SubNotaDao
+import com.notasapp.data.local.dao.SubNotaDetailDao
 import com.notasapp.data.mapper.toEntity
 import com.notasapp.data.mapper.toDomain
 import com.notasapp.domain.model.Componente
 import com.notasapp.domain.model.Materia
 import com.notasapp.domain.model.SubNota
+import com.notasapp.domain.model.SubNotaDetalle
 import com.notasapp.domain.repository.MateriaRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -27,7 +29,8 @@ import javax.inject.Singleton
 class MateriaRepositoryImpl @Inject constructor(
     private val materiaDao: MateriaDao,
     private val componenteDao: ComponenteDao,
-    private val subNotaDao: SubNotaDao
+    private val subNotaDao: SubNotaDao,
+    private val subNotaDetailDao: SubNotaDetailDao
 ) : MateriaRepository {
 
     // ── Materias ────────────────────────────────────────────────
@@ -77,6 +80,9 @@ class MateriaRepositoryImpl @Inject constructor(
         componenteDao.insertAll(componentes.map { it.toEntity() })
     }
 
+    override suspend fun insertComponente(componente: Componente): Long =
+        componenteDao.insert(componente.toEntity())
+
     override suspend fun updateComponentes(componentes: List<Componente>) {
         componenteDao.updateAll(componentes.map { it.toEntity() })
     }
@@ -91,12 +97,34 @@ class MateriaRepositoryImpl @Inject constructor(
         subNotaDao.insertAll(subNotas.map { it.toEntity() })
     }
 
+    override suspend fun insertSubNota(subNota: SubNota): Long =
+        subNotaDao.insert(subNota.toEntity())
+
     override suspend fun updateSubNotaValor(subNotaId: Long, valor: Float?) {
         subNotaDao.updateValor(subNotaId, valor)
     }
 
     override suspend fun deleteSubNotasByComponente(componenteId: Long) {
         subNotaDao.deleteByComponente(componenteId)
+    }
+
+    override suspend fun deleteSubNota(subNotaId: Long) {
+        val entity = subNotaDao.getSubNotaById(subNotaId) ?: return
+        subNotaDao.delete(entity)
+    }
+
+    // ── Sub-Nota Detalles ────────────────────────────────────────
+
+    override suspend fun insertSubNotaDetalle(detalle: SubNotaDetalle): Long =
+        subNotaDetailDao.insert(detalle.toEntity())
+
+    override suspend fun updateSubNotaDetalleValor(detalleId: Long, valor: Float?) {
+        subNotaDetailDao.updateValor(detalleId, valor)
+    }
+
+    override suspend fun deleteSubNotaDetalle(detalleId: Long) {
+        val entity = subNotaDetailDao.getById(detalleId) ?: return
+        subNotaDetailDao.delete(entity)
     }
 
     // ── Sheets ID ────────────────────────────────────────────────

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DragHandle
@@ -83,13 +84,12 @@ fun EditPorcentajesScreen(
         mutableStateListOf(*uiState.componentes.toTypedArray())
     }
 
-    val reorderState = rememberReorderableLazyListState(
-        onMove = { from, to ->
-            val moved = componentes.removeAt(from.index)
-            componentes.add(to.index, moved)
-            viewModel.onReorder(componentes.toList())
-        }
-    )
+    val lazyListState = rememberLazyListState()
+    val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
+        val moved = componentes.removeAt(from.index)
+        componentes.add(to.index, moved)
+        viewModel.onReorder(componentes.toList())
+    }
 
     Scaffold(
         topBar = {
@@ -137,7 +137,7 @@ fun EditPorcentajesScreen(
             )
 
             LazyColumn(
-                state = reorderState.lazyListState,
+                state = lazyListState,
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -146,7 +146,7 @@ fun EditPorcentajesScreen(
                     key = { _, item -> item.id }
                 ) { _, componente ->
                     ReorderableItem(
-                        reorderableLazyListState = reorderState,
+                        state = reorderState,
                         key = componente.id
                     ) { isDragging ->
                         // Elevación animada: sube mientras se arrastra

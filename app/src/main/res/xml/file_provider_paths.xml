@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Rutas expuestas a través de FileProvider.
+
+    cache-path (backup_files):    archivos JSON de backup en context.cacheDir.
+    external-files-path (excel):  archivos .xlsx en context.getExternalFilesDir(DOCUMENTS).
+    Ninguna requiere permisos WRITE_EXTERNAL_STORAGE.
+-->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path
+        name="backup_files"
+        path="." />
+    <external-files-path
+        name="excel_files"
+        path="Documents/" />
+</paths>

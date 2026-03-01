@@ -1,7 +1,17 @@
 package com.notasapp.ui.auth
 
+import android.content.Context
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.notasapp.BuildConfig
+import com.notasapp.data.local.UserPreferencesRepository
 import com.notasapp.data.local.dao.UsuarioDao
 import com.notasapp.data.local.entities.UsuarioEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,12 +25,16 @@ import javax.inject.Inject
 /**
  * ViewModel de la pantalla de Login.
  *
- * Gestiona el estado del proceso de Sign-In con Google y persiste
- * el usuario en Room al completar el login exitosamente.
+ * Gestiona el flujo completo de Google Sign-In usando Credential Manager API:
+ *  1. Lanza el selector de cuentas Google desde [signInWithGoogle].
+ *  2. Parsea el [GoogleIdTokenCredential] recibido.
+ *  3. Persiste el usuario en Room y su email en DataStore
+ *     (para uso posterior en [SheetsService]).
  */
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val usuarioDao: UsuarioDao
+    private val usuarioDao: UsuarioDao,
+    private val userPrefsRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     // ── Estado de UI ───────────────────────────────────────────
@@ -28,45 +42,93 @@ class LoginViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    // ── Acciones ───────────────────────────────────────────────
+    // ── Acciones públicas ──────────────────────────────────────
 
     /**
-     * Llamado cuando Google Sign-In devuelve los datos del usuario.
+     * Inicia el flujo de Google Sign-In con Credential Manager.
      *
-     * @param googleId    Sub del JWT de Google.
-     * @param nombre      Nombre completo del usuario.
-     * @param email       Email de la cuenta Google.
-     * @param fotoUrl     URL del avatar (puede ser null).
+     * Requiere el [Context] de la Activity/Composable porque Credential Manager
+     * necesita lanzar el selector de cuentas como diálogo del sistema.
+     *
+     * Esto reemplaza el antiguo `signInLauncher` legacy basado en PendingIntent.
      */
-    fun onGoogleSignInSuccess(
+    fun signInWithGoogle(context: Context) {
+        viewModelScope.launch {
+            _uiState.value = LoginUiState.Loading
+            try {
+                val credentialManager = CredentialManager.create(context)
+
+                // Pedir cualquier cuenta Google guardada de este dispositivo
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)   // Muestra TODAS las cuentas
+                    .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
+                    .setAutoSelectEnabled(false)            // Forzar selector explícito
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                val result = credentialManager.getCredential(
+                    context = context,
+                    request = request
+                )
+
+                // Parsear el credential devuelto
+                val credential = result.credential
+                if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                    val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                    persistUser(
+                        googleId = googleCredential.id,
+                        nombre   = googleCredential.displayName ?: googleCredential.id,
+                        email    = googleCredential.id,
+                        fotoUrl  = googleCredential.profilePictureUri?.toString()
+                    )
+                } else {
+                    Timber.w("Tipo de credencial inesperado: ${credential.type}")
+                    _uiState.value = LoginUiState.Error("Tipo de credencial no soportado")
+                }
+
+            } catch (e: GetCredentialCancellationException) {
+                // El usuario cerró el selector — no es un error grave
+                Timber.d("Login cancelado por el usuario")
+                _uiState.value = LoginUiState.Idle
+            } catch (e: NoCredentialException) {
+                // No hay ninguna cuenta Google en el dispositivo
+                Timber.w(e, "Sin cuentas Google disponibles")
+                _uiState.value = LoginUiState.Error("Agrega una cuenta Google en los ajustes del dispositivo")
+            } catch (e: GetCredentialException) {
+                Timber.e(e, "GetCredentialException")
+                _uiState.value = LoginUiState.Error("No se pudo iniciar sesión: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    // ── Helpers privados ───────────────────────────────────────
+
+    private suspend fun persistUser(
         googleId: String,
         nombre: String,
         email: String,
         fotoUrl: String?
     ) {
-        viewModelScope.launch {
-            _uiState.value = LoginUiState.Loading
-            try {
-                usuarioDao.insertOrUpdate(
-                    UsuarioEntity(
-                        googleId = googleId,
-                        nombre = nombre,
-                        email = email,
-                        fotoUrl = fotoUrl
-                    )
+        try {
+            usuarioDao.insertOrUpdate(
+                UsuarioEntity(
+                    googleId = googleId,
+                    nombre   = nombre,
+                    email    = email,
+                    fotoUrl  = fotoUrl
                 )
-                Timber.i("Login exitoso: $email")
-                _uiState.value = LoginUiState.Success
-            } catch (e: Exception) {
-                Timber.e(e, "Error al guardar usuario en Room")
-                _uiState.value = LoginUiState.Error("Error al iniciar sesión: ${e.localizedMessage}")
-            }
+            )
+            // Guardar email en DataStore para GoogleAccountCredential (Sheets API)
+            userPrefsRepository.setUserEmail(email)
+            Timber.i("Login exitoso: $email")
+            _uiState.value = LoginUiState.Success
+        } catch (e: Exception) {
+            Timber.e(e, "Error al guardar usuario")
+            _uiState.value = LoginUiState.Error("Error al guardar sesión: ${e.localizedMessage}")
         }
-    }
-
-    fun onSignInError(message: String) {
-        Timber.w("Error de Google Sign-In: $message")
-        _uiState.value = LoginUiState.Error(message)
     }
 
     fun resetError() {
@@ -77,7 +139,7 @@ class LoginViewModel @Inject constructor(
 // ── Estados de UI ──────────────────────────────────────────────
 
 sealed class LoginUiState {
-    data object Idle : LoginUiState()
+    data object Idle    : LoginUiState()
     data object Loading : LoginUiState()
     data object Success : LoginUiState()
     data class Error(val message: String) : LoginUiState()

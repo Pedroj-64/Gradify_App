@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Icono de primer plano del adaptive launcher icon.
+    Grafico de barras ascendentes con estrella - representa progreso academico.
+    Disenado para la zona segura 66x66dp dentro del marco de 108x108dp.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Barra 1: corta, izquierda -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M26,73 L26,61 Q26,58 29,58 L35,58 Q38,58 38,61 L38,73 Z" />
+
+    <!-- Barra 2: mediana, centro -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M46,73 L46,49 Q46,46 49,46 L55,46 Q58,46 58,49 L58,73 Z" />
+
+    <!-- Barra 3: alta, derecha -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M66,73 L66,35 Q66,32 69,32 L75,32 Q78,32 78,35 L78,73 Z" />
+
+    <!-- Linea base -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M22,73 L86,73" />
+
+    <!-- Estrella dorada sobre la barra 3 -->
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M72,17 L74.2,22.5 L80,22.5 L75.4,25.9 L77.6,31.4 L72,28 L66.4,31.4 L68.6,25.9 L64,22.5 L69.8,22.5 Z" />
+
+</vector>

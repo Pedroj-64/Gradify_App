@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "436447649656",
+    "project_id": "notasapp-7d9a7",
+    "storage_bucket": "notasapp-7d9a7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:436447649656:android:feb261e5ad14ad5515728d",
+        "android_client_info": {
+          "package_name": "com.notasapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "436447649656-ij85ftbngfhhblva3q4nhaq1ovjgoc7g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.notasapp",
+            "certificate_hash": "56f01c271bb9da444d52bc67bb41d24e5393b433"
+          }
+        },
+        {
+          "client_id": "436447649656-39c75unpvr28s62ocg8aporvnieful3a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjb8Cfak4fqux5H5ENejWeGuieaqfgb2w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "436447649656-39c75unpvr28s62ocg8aporvnieful3a.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

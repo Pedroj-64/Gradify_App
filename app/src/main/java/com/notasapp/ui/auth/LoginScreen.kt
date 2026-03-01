@@ -1,9 +1,5 @@
 package com.notasapp.ui.auth
 
-import android.app.Activity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
@@ -31,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -40,18 +37,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.notasapp.R
 import com.notasapp.ui.theme.NotasAppTheme
+import kotlinx.coroutines.launch
 
 /**
  * Pantalla de login con Google Sign-In.
  *
- * Usa Credential Manager API (Android Jetpack) para el flujo moderno
- * de autenticación con Google.
+ * Usa la nueva Credential Manager API (Jetpack) para el flujo de autenticación.
+ * El botón "Iniciar sesión con Google" lanza el selector de cuentas del sistema.
+ *
+ * **Configuración requerida**: sustituir el valor de `GOOGLE_CLIENT_ID` en
+ * `gradle.properties` (o `local.properties`) con el Web Client ID de tu proyecto
+ * en Google Cloud Console → APIs & Services → Credentials.
  *
  * @param onLoginSuccess Callback al completar el login exitosamente.
- * @param viewModel      inyectado por Hilt.
  */
 @Composable
 fun LoginScreen(
@@ -61,25 +61,16 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    // Reaccionar al estado de login exitoso
     LaunchedEffect(uiState) {
         when (uiState) {
             is LoginUiState.Success -> onLoginSuccess()
-            is LoginUiState.Error -> {
+            is LoginUiState.Error   -> {
                 snackbarHostState.showSnackbar((uiState as LoginUiState.Error).message)
                 viewModel.resetError()
             }
             else -> Unit
-        }
-    }
-
-    // Launcher para One Tap Sign-In (legacy fallback)
-    val signInLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartIntentSenderForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            // Procesar resultado en el ViewModel —implementación futura
         }
     }
 
@@ -135,8 +126,8 @@ fun LoginScreen(
             } else {
                 Button(
                     onClick = {
-                        // Se implementa en LoginActivity/Credential Manager
-                        // El ViewModel expone el resultado mediante callbacks
+                        // Lanzar Credential Manager desde el contexto de la composición
+                        scope.launch { viewModel.signInWithGoogle(context) }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -155,9 +146,24 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Tus datos se guardan localmente.\nLa sincronización con Google Sheets es opcional.",
+                text = "🔒 Tus datos se guardan localmente en tu dispositivo.\nLa sincronización con Google Sheets es opcional y siempre bajo tu control.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            Text(
+                text = "Gradify v1.0.7",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "Hecho con ♥ por MargaDev-Society",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center
             )
         }

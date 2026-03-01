@@ -6,9 +6,10 @@ import com.notasapp.data.local.entities.ComponenteEntity
 import com.notasapp.data.local.entities.SubNotaEntity
 
 /**
- * Relación Room: un [ComponenteEntity] con todas sus [SubNotaEntity].
+ * Relación Room: un [ComponenteEntity] con todas sus sub-notas (cada una
+ * con sus propios detalles, si los tiene).
  *
- * Room genera la JOIN automáticamente; solo se usa en @Transaction queries.
+ * Room genera las JOINs automáticamente; solo se usa en @Transaction queries.
  */
 data class ComponenteConSubNotas(
 
@@ -17,7 +18,8 @@ data class ComponenteConSubNotas(
 
     @Relation(
         parentColumn = "id",
-        entityColumn = "componenteId"
+        entityColumn = "componenteId",
+        entity = SubNotaEntity::class
     )
-    val subNotas: List<SubNotaEntity>
+    val subNotas: List<SubNotaConDetalles>
 )

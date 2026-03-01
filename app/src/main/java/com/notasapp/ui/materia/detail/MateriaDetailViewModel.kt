@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notasapp.domain.model.Materia
+import com.notasapp.domain.model.SubNota
+import com.notasapp.domain.model.SubNotaDetalle
 import com.notasapp.domain.usecase.CalcularNotaNecesariaUseCase
 import com.notasapp.domain.usecase.GetMateriaConPromedioUseCase
 import com.notasapp.domain.repository.MateriaRepository
@@ -71,6 +73,98 @@ class MateriaDetailViewModel @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Error al actualizar sub-nota $subNotaId")
                 _error.value = "No se pudo guardar la nota"
+            }
+        }
+    }
+
+    /**
+     * Agrega una nueva sub-nota a un componente.
+     *
+     * @param componenteId             ID del componente padre.
+     * @param descripcion              Nombre de la actividad, ej: "Parcial 1".
+     * @param porcentajeDelComponente  Peso dentro del componente (0.0 a 1.0).
+     */
+    fun agregarSubNota(componenteId: Long, descripcion: String, porcentajeDelComponente: Float) {
+        viewModelScope.launch {
+            try {
+                materiaRepository.insertSubNota(
+                    SubNota(
+                        componenteId = componenteId,
+                        descripcion = descripcion,
+                        porcentajeDelComponente = porcentajeDelComponente
+                    )
+                )
+            } catch (e: Exception) {
+                Timber.e(e, "Error al agregar sub-nota al componente $componenteId")
+                _error.value = "No se pudo agregar la nota"
+            }
+        }
+    }
+
+    /**
+     * Elimina una sub-nota por su ID.
+     */
+    fun eliminarSubNota(subNotaId: Long) {
+        viewModelScope.launch {
+            try {
+                materiaRepository.deleteSubNota(subNotaId)
+            } catch (e: Exception) {
+                Timber.e(e, "Error al eliminar sub-nota $subNotaId")
+                _error.value = "No se pudo eliminar la nota"
+            }
+        }
+    }
+
+    // ── Sub-nota Detalles (notas compuestas) ───────────────────
+
+    /**
+     * Agrega un detalle a una sub-nota compuesta.
+     *
+     * @param subNotaId    ID de la sub-nota padre.
+     * @param descripcion  Nombre del detalle, ej: "Primer intento".
+     * @param porcentaje   Peso dentro de la sub-nota (0.0 a 1.0).
+     */
+    fun agregarDetalle(subNotaId: Long, descripcion: String, porcentaje: Float) {
+        viewModelScope.launch {
+            try {
+                materiaRepository.insertSubNotaDetalle(
+                    SubNotaDetalle(
+                        subNotaId = subNotaId,
+                        descripcion = descripcion,
+                        porcentaje = porcentaje
+                    )
+                )
+            } catch (e: Exception) {
+                Timber.e(e, "Error al agregar detalle a sub-nota $subNotaId")
+                _error.value = "No se pudo agregar el detalle"
+            }
+        }
+    }
+
+    /**
+     * Actualiza el valor de un detalle.
+     */
+    fun actualizarDetalle(detalleId: Long, valor: Float?) {
+        viewModelScope.launch {
+            try {
+                materiaRepository.updateSubNotaDetalleValor(detalleId, valor)
+            } catch (e: Exception) {
+                Timber.e(e, "Error al actualizar detalle $detalleId")
+                _error.value = "No se pudo guardar el detalle"
+            }
+        }
+    }
+
+    /**
+     * Elimina un detalle por su ID.
+     */
+    fun eliminarDetalle(detalleId: Long) {
+        viewModelScope.launch {
+            try {
+                materiaRepository.deleteSubNotaDetalle(detalleId)
+            } catch (e: Exception) {
+                Timber.e(e, "Error al eliminar detalle $detalleId")
+                _error.value = "No se pudo eliminar el detalle"
             }
         }
     }

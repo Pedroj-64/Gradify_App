@@ -15,9 +15,10 @@
         Usa el API de SplashScreen de AndroidX para el splash nativo de Android 12+.
         Se aplica en el AndroidManifest a la MainActivity antes de que cargue Compose.
     -->
-    <style name="Theme.NotasApp.SplashScreen" parent="Theme.NotasApp">
+    <style name="Theme.NotasApp.SplashScreen" parent="Theme.SplashScreen">
         <!-- Icono del splash (reemplazar con vector del logo de la app) -->
-        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
         <!-- Duración del splash: 0 = auto (sistema lo decide) -->
         <item name="postSplashScreenTheme">@style/Theme.NotasApp</item>
     </style>

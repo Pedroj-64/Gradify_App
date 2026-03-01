@@ -206,8 +206,9 @@ private fun PromedioGeneralCard(
             Spacer(Modifier.height(16.dp))
             PromedioGauge(
                 promedio = promedioGeneral ?: 0f,
+                escalaMin = 0f,
                 escalaMax = 10f,
-                notaAprobacion = 6f,
+                aprobacion = 6f,
                 modifier = Modifier.size(150.dp)
             )
             Spacer(Modifier.height(8.dp))

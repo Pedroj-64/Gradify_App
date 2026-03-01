@@ -118,16 +118,17 @@ app/
 - [x] Componentes reutilizables (ShimmerLoading, PromedioGauge, SwipeToDeleteWrapper, GradeBadges)
 - [x] Shimmer skeleton en carga de Home y Detalle
 
-### 📅 Fase 3 - Cloud & Export
-- [ ] Exportar a .xlsx (Apache POI - parcialmente implementado)
-- [ ] Integración Google Sheets API
-- [ ] WorkManager para sync automático
-- [ ] Manejo de errores offline-first
+### ✅ Fase 3 - Cloud & Export
+- [x] Exportar a .xlsx (Apache POI)
+- [x] Integración Google Sheets API
+- [x] WorkManager para sync automático
+- [x] Manejo de errores offline-first
 
-### 📅 Fase 4 - Extras
-- [ ] Notificaciones recordatorio
-- [ ] Widget en pantalla principal
-- [ ] Backup/Restore desde Google Drive
+### ✅ Fase 4 - Extras
+- [x] Notificaciones recordatorio (con fechas límite por componente + ReminderWorker)
+- [x] Widget en pantalla principal con promedio del semestre
+- [x] Compartir hoja de notas (link de Google Sheets via Intent)
+- [x] Backup/Restore desde archivo JSON (FileProvider + SAF file picker)
 
 ---
 

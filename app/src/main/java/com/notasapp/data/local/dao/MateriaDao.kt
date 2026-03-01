@@ -62,4 +62,12 @@ interface MateriaDao {
     /** Actualiza el timestamp de última modificación. */
     @Query("UPDATE materias SET ultimaModificacionMs = :ts WHERE id = :id")
     suspend fun touchUltimaModificacion(id: Long, ts: Long = System.currentTimeMillis())
+
+    /**
+     * Retorna todas las materias del usuario con sus componentes y sub-notas.
+     * Una sola lectura (suspend), sin Flow. Se usa en el Widget y en BackupManager.
+     */
+    @Transaction
+    @Query("SELECT * FROM materias WHERE usuarioId = :usuarioId ORDER BY periodo DESC, nombre ASC")
+    suspend fun getMateriasConComponentesOnce(usuarioId: String): List<MateriaConComponentes>
 }

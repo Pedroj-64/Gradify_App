@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Nombre de la app -->
-    <string name="app_name">NotasApp</string>
+    <string name="app_name">Gradify</string>
 
     <!-- Autenticación -->
     <string name="login_title">Iniciar sesión</string>
@@ -14,7 +14,7 @@
          No hardcodear en código fuente. Ver documentación:
          https://developers.google.com/identity/sign-in/android
     -->
-    <string name="default_web_client_id" translatable="false">TU_CLIENT_ID_AQUI.apps.googleusercontent.com</string>
+    <string name="default_web_client_id" translatable="false">436447649656-39c75unpvr28s62ocg8aporvnieful3a.apps.googleusercontent.com</string>
 
     <!-- Home -->
     <string name="home_title">Mis Materias</string>
@@ -55,4 +55,7 @@
     <!-- Errores generales -->
     <string name="error_generic">Ocurrió un error inesperado. Por favor intenta nuevamente.</string>
     <string name="error_no_internet">Sin conexión a internet. Operando en modo offline.</string>
+    <!-- Widget -->
+    <string name="widget_description" translatable="false">Muestra el promedio del semestre en tu pantalla de inicio</string>
+
 </resources>
