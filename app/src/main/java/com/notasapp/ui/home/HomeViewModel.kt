@@ -6,6 +6,8 @@ import com.notasapp.data.local.dao.UsuarioDao
 import com.notasapp.domain.model.Materia
 import com.notasapp.domain.repository.MateriaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -52,12 +54,13 @@ class HomeViewModel @Inject constructor(
     val filtroSemestre: StateFlow<String?> = _filtroSemestre.asStateFlow()
 
     private val _orden = MutableStateFlow(OrdenMateria.NOMBRE)
+    private val _hiddenIds = MutableStateFlow<Set<Long>>(emptySet())
     val orden: StateFlow<OrdenMateria> = _orden.asStateFlow()
 
     // ── Datos base ─────────────────────────────────────────────
 
-    /** Todas las materias del usuario (sin filtrar). */
-    private val allMaterias: StateFlow<List<Materia>> = usuarioDao
+    /** Todas las materias del usuario, también las de semestres cerrados. */
+    private val todas: StateFlow<List<Materia>> = usuarioDao
         .getUsuarioActivo()
         .flatMapLatest { usuario ->
             if (usuario == null) flowOf(emptyList())
@@ -69,11 +72,30 @@ class HomeViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    private val _verArchivadas = MutableStateFlow(false)
+    /** true = Inicio muestra los semestres cerrados en lugar de los activos. */
+    val verArchivadas: StateFlow<Boolean> = _verArchivadas.asStateFlow()
+
+    /** Hay algún semestre cerrado (para mostrar el chip "Archivados"). */
+    val hayArchivadas: StateFlow<Boolean> = todas
+        .map { lista -> lista.any { it.archivada } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    /** Semestres activos: base de las métricas del resumen (los cerrados no cuentan como "en riesgo"). */
+    private val allMaterias: StateFlow<List<Materia>> = todas
+        .map { lista -> lista.filter { !it.archivada } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Lo que se está viendo: activos o cerrados. */
+    private val visibles: StateFlow<List<Materia>> = combine(todas, _verArchivadas) { lista, archivadas ->
+        lista.filter { it.archivada == archivadas }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     /** Materias filtradas, buscadas y ordenadas. */
     val materias: StateFlow<List<Materia>> = combine(
-        allMaterias, _searchQuery, _filtroSemestre, _orden
-    ) { all, query, semestre, sort ->
-        var result = all
+        visibles, _searchQuery, _filtroSemestre, _orden, _hiddenIds
+    ) { all, query, semestre, sort, hidden ->
+        var result = all.filter { it.id !in hidden }
 
         // Filtro por semestre
         if (!semestre.isNullOrBlank()) {
@@ -104,7 +126,7 @@ class HomeViewModel @Inject constructor(
         )
 
     /** Semestres disponibles para el filtro. */
-    val semestresDisponibles: StateFlow<List<String>> = allMaterias
+    val semestresDisponibles: StateFlow<List<String>> = visibles
         .map { materias -> materias.map { it.periodo }.distinct().sorted() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -131,9 +153,27 @@ class HomeViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-    /** ID de materia pendiente de confirmación de borrado. */
-    private val _pendingDeleteId = MutableStateFlow<Long?>(null)
-    val pendingDeleteId: StateFlow<Long?> = _pendingDeleteId.asStateFlow()
+    // ── Semestres cerrados ─────────────────────────────────────
+
+    fun toggleArchivadas() {
+        _verArchivadas.update { !it }
+        _filtroSemestre.value = null
+    }
+
+    /** Cierra (archivado = true) o reabre un semestre completo. */
+    fun setSemestreArchivado(periodo: String, archivado: Boolean) {
+        viewModelScope.launch {
+            val usuario = usuarioDao.getUsuarioActivoOnce() ?: return@launch
+            try {
+                materiaRepository.setPeriodoArchivado(usuario.googleId, periodo, archivado)
+                _filtroSemestre.value = null
+                if (!archivado) _verArchivadas.value = false
+            } catch (e: Exception) {
+                Timber.e(e, "Error al cambiar el estado del semestre")
+                _error.value = "No se pudo actualizar el semestre"
+            }
+        }
+    }
 
     // ── Acciones de filtro ─────────────────────────────────────
 
@@ -141,34 +181,38 @@ class HomeViewModel @Inject constructor(
     fun updateFiltroSemestre(semestre: String?) = _filtroSemestre.update { semestre }
     fun updateOrden(orden: OrdenMateria) = _orden.update { orden }
 
-    // ── Acciones de borrado con confirmación ───────────────────
+    // ── Borrado con "Deshacer" ─────────────────────────────────
+    // La materia se oculta al instante y se borra de verdad tras UNDO_WINDOW_MS,
+    // salvo que el usuario pulse Deshacer.
+    private val deleteJobs = mutableMapOf<Long, Job>()
 
-    /** Solicita confirmación para eliminar una materia. */
-    fun requestDelete(materiaId: Long) {
-        _pendingDeleteId.value = materiaId
-    }
-
-    /** Cancela la solicitud de borrado pendiente. */
-    fun cancelDelete() {
-        _pendingDeleteId.value = null
-    }
-
-    /** Confirma y ejecuta el borrado. */
-    fun confirmDelete() {
-        val id = _pendingDeleteId.value ?: return
-        _pendingDeleteId.value = null
-        viewModelScope.launch {
+    fun softDelete(materiaId: Long) {
+        _hiddenIds.update { it + materiaId }
+        deleteJobs[materiaId] = viewModelScope.launch {
+            delay(UNDO_WINDOW_MS)
             try {
-                materiaRepository.deleteMateria(id)
-                Timber.i("Materia $id eliminada")
+                materiaRepository.deleteMateria(materiaId)
+                Timber.i("Materia $materiaId eliminada")
             } catch (e: Exception) {
                 Timber.e(e, "Error al eliminar materia")
                 _error.value = "No se pudo eliminar la materia"
+            } finally {
+                _hiddenIds.update { it - materiaId }
+                deleteJobs.remove(materiaId)
             }
         }
     }
 
+    fun undoDelete(materiaId: Long) {
+        deleteJobs.remove(materiaId)?.cancel()
+        _hiddenIds.update { it - materiaId }
+    }
+
     fun clearError() {
         _error.value = null
+    }
+
+    private companion object {
+        const val UNDO_WINDOW_MS = 5_000L
     }
 }

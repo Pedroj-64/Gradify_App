@@ -14,9 +14,17 @@ local.properties
 .navigation
 
 # Signing configs (NUNCA subir al repositorio)
-keystore.jks
-*.keystore
+key.properties
 signing.properties
+keystore.jks
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.b64
+.env
+.env.*
 
 # Google Services (contiene API keys, OAuth client IDs, SHA-1)
 google-services.json
@@ -32,3 +40,9 @@ google-services.json
 
 # Node modules (si se usa alguna herramienta npm)
 node_modules/
+
+# Kotlin sessions
+.kotlin/
+
+# graphify
+graphify-out/

@@ -52,29 +52,8 @@
 -keepclassmembers class com.google.api.services.calendar.model.** { *; }
 -dontwarn com.google.api.services.calendar.**
 
-# ── Google Generative AI (Gemini SDK) ────────────────────────────
-# El SDK usa Ktor + kotlinx.serialization internamente; sin estas
-# reglas, R8 elimina clases internas y la generación de contenido
-# falla en runtime con ClassNotFoundException / NoSuchMethodError.
--keep class com.google.ai.client.generativeai.** { *; }
--keep class com.google.ai.client.generativeai.type.** { *; }
--keep class com.google.ai.client.generativeai.internal.** { *; }
--dontwarn com.google.ai.client.generativeai.**
-
-# ── Ktor (dependencia del Gemini SDK) ───────────────────────────
--keep class io.ktor.** { *; }
--dontwarn io.ktor.**
-
-# ── Kotlinx Serialization (dependencia del Gemini SDK) ──────────
--keep class kotlinx.serialization.** { *; }
--keepclassmembers class * {
-    @kotlinx.serialization.Serializable <methods>;
-}
--dontwarn kotlinx.serialization.**
-
-# ── Kotlin Coroutines ───────────────────────────────────────────
--keep class kotlin.coroutines.** { *; }
--keep class kotlinx.coroutines.** { *; }
+# (Se quitaron las reglas del SDK de Gemini, Ktor y kotlinx.serialization: la app ya no los usa;
+#  la IA se llama por REST. Tampoco hace falta conservar todo kotlinx.coroutines.)
 -dontwarn kotlin.coroutines.**
 -dontwarn kotlinx.coroutines.**
 

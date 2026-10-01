@@ -57,7 +57,8 @@ class ExamAlarmReceiver : BroadcastReceiver() {
 
         val tipoEvento = TipoEvento.fromString(type)
 
-        // Consultar datos de la materia para notificación personalizada
+        // goAsync: sin esto el proceso puede morir antes de mostrar la notificación
+        val pending = goAsync()
         scope.launch {
             try {
                 val materia = if (materiaId > 0) {
@@ -95,6 +96,8 @@ class ExamAlarmReceiver : BroadcastReceiver() {
                     else "Tienes un evento académico próximamente",
                     notificationId = (REQUEST_CODE_BASE + eventId).toInt()
                 )
+            } finally {
+                pending.finish()
             }
         }
     }

@@ -64,7 +64,7 @@ object GradeCalculator {
     fun displayOrDash(
         valor: Float?,
         config: ConfiguracionNota = DEFAULT_CONFIG
-    ): String = if (valor != null && valor != 0f) display(valor, config) else "--"
+    ): String = if (valor != null) display(valor, config) else "--"   // un 0 real SÍ se muestra
 
     // ── Cálculos de promedio ────────────────────────────────────
 
@@ -117,13 +117,14 @@ object GradeCalculator {
         porcentajeRestante: Float,
         meta: Float,
         escalaMax: Float,
-        config: ConfiguracionNota = DEFAULT_CONFIG
+        config: ConfiguracionNota = DEFAULT_CONFIG,
+        escalaMin: Float = 0f
     ): Float? {
         if (porcentajeRestante <= 0f) return null
         val necesita = (meta.toBigDecimal() - aporteExistente.toBigDecimal())
             .divide(porcentajeRestante.toBigDecimal(), 10, RoundingMode.HALF_UP)
         val resultado = redondearBD(necesita, config).toFloat()
-        return if (resultado in 0f..escalaMax) resultado else null
+        return if (resultado in escalaMin..escalaMax) resultado else null
     }
 
     // ── Simulación "¿Qué pasa si saco X?" ─────────────────────

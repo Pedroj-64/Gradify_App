@@ -9,7 +9,7 @@
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <cache-path
         name="backup_files"
-        path="." />
+        path="backups/" />
     <external-files-path
         name="excel_files"
         path="Documents/" />

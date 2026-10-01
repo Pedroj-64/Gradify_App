@@ -33,6 +33,7 @@ data class Materia(
     val googleSheetsId: String? = null,
     val notaMeta: Float? = null,
     val notas: String? = null,
+    val archivada: Boolean = false,
     val componentes: List<Componente> = emptyList()
 ) {
     /**
@@ -104,7 +105,7 @@ data class Materia(
             val restante = 1f - porcentajeEvaluado
             if (restante <= 0f) return null
             val necesita = (notaAprobacion - acumulado) / restante
-            return if (necesita in 0f..escalaMax) necesita else null
+            return if (necesita in escalaMin..escalaMax) necesita else null
         }
 
     /**

@@ -80,4 +80,25 @@ class CalcularNotaNecesariaUseCaseTest {
         val result = useCase(comps, metaFinal = 3.0f, escalaMax = 5.0f)
         assertTrue(result is CalcularNotaNecesariaUseCase.Resultado.MetaYaAlcanzada)
     }
+
+    @Test
+    fun `error cuando los porcentajes de los cortes no suman 100`() {
+        val comps = listOf(
+            componente(1, 0.3f, listOf(subNotaConValor(4.0f))),
+            componente(2, 0.3f)   // suma 0.6
+        )
+        val result = useCase(comps, metaFinal = 3.0f, escalaMax = 5.0f)
+        assertTrue(result is CalcularNotaNecesariaUseCase.Resultado.Error)
+    }
+
+    @Test
+    fun `con escala minima distinta de cero la meta baja del minimo ya esta alcanzada`() {
+        // Escala 1-7: aporte 6.0*0.5 = 3.0; meta 3.5 -> necesita (3.5-3.0)/0.5 = 1.0 = el mínimo de la escala
+        val comps = listOf(
+            componente(1, 0.5f, listOf(subNotaConValor(6.0f))),
+            componente(2, 0.5f)
+        )
+        val result = useCase(comps, metaFinal = 3.5f, escalaMax = 7.0f, escalaMin = 1.0f)
+        assertTrue(result is CalcularNotaNecesariaUseCase.Resultado.MetaYaAlcanzada)
+    }
 }

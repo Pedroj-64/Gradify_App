@@ -53,7 +53,7 @@ class EditPorcentajesViewModel @Inject constructor(
 
     /**
      * Actualiza el porcentaje de un componente específico.
-     * La validación de suma al 100% se hace en la UI.
+     * La suma al 100 % se avisa en la UI y además se exige al guardar ([guardar]).
      */
     fun onPorcentajeChange(componenteId: Long, nuevoPorcentaje: Float) {
         // Redondear a múltiplos de 1% para evitar imprecisión de punto flotante
@@ -85,6 +85,10 @@ class EditPorcentajesViewModel @Inject constructor(
      * Persiste los cambios de porcentajes y orden en Room.
      */
     fun guardar() {
+        if (!sumaEs100(_uiState.value.componentes)) {
+            _uiState.update { it.copy(error = "Los porcentajes deben sumar exactamente 100 %") }
+            return
+        }
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
             try {
@@ -104,6 +108,12 @@ class EditPorcentajesViewModel @Inject constructor(
     }
 
     fun clearError() = _uiState.update { it.copy(error = null) }
+
+    companion object {
+        /** True si los pesos suman 100 % (tolerancia de medio punto por el redondeo a centésimas). */
+        internal fun sumaEs100(componentes: List<Componente>): Boolean =
+            kotlin.math.abs(componentes.sumOf { it.porcentaje.toDouble() } - 1.0) <= 0.005
+    }
 }
 
 data class EditPorcentajesUiState(

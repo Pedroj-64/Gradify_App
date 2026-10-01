@@ -76,6 +76,9 @@ data class MateriaEntity(
     /** Notas o comentarios del usuario sobre la materia. */
     val notas: String? = null,
 
+    /** true = semestre cerrado: sale de Inicio pero sigue contando en el promedio acumulado. */
+    val archivada: Boolean = false,
+
     // ── Timestamps ────────────────────────────────────────────
 
     /** Timestamp (ms) de la última vez que se actualizó la materia. */

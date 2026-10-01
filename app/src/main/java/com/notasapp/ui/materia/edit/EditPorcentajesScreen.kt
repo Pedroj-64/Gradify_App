@@ -1,5 +1,8 @@
 package com.notasapp.ui.materia.edit
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.SliderDefaults
+import com.notasapp.ui.components.ScreenHeader
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,7 +35,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
@@ -65,7 +68,7 @@ fun EditPorcentajesScreen(
     onBack: () -> Unit,
     viewModel: EditPorcentajesViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val haptic = LocalHapticFeedback.current
 
@@ -92,19 +95,7 @@ fun EditPorcentajesScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Editar porcentajes") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Regresar")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
+        topBar = { ScreenHeader(title = "Editar porcentajes", onBack = onBack) },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
@@ -151,21 +142,22 @@ fun EditPorcentajesScreen(
                     ) { isDragging ->
                         // Elevación animada: sube mientras se arrastra
                         val elevation by animateDpAsState(
-                            targetValue = if (isDragging) 8.dp else 1.dp,
+                            targetValue = if (isDragging) 6.dp else 0.dp,
                             label = "drag_elevation"
                         )
 
                         Card(
                             modifier = Modifier.fillMaxWidth(),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = elevation),
                             colors = CardDefaults.cardColors(
                                 containerColor = if (isDragging)
-                                    MaterialTheme.colorScheme.surfaceVariant
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
                                 else
-                                    MaterialTheme.colorScheme.surface
+                                    MaterialTheme.colorScheme.surfaceContainerLow
                             )
                         ) {
-                            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -215,6 +207,11 @@ fun EditPorcentajesScreen(
                                     },
                                     valueRange = 0f..1f,
                                     steps = 99,
+                                    colors = SliderDefaults.colors(
+                                        inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                        activeTickColor = Color.Transparent,
+                                        inactiveTickColor = Color.Transparent
+                                    ),
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }

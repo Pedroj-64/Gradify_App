@@ -1,5 +1,6 @@
 package com.notasapp.utils
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -86,6 +87,7 @@ class NotificationHelper @Inject constructor(
      * @param notificationId ID único; usar el mismo valor para actualizar
      *                       una notificación ya emitida.
      */
+    @SuppressLint("MissingPermission") // notify() va dentro de runCatching
     fun sendReminder(title: String, message: String, notificationId: Int) {
         val pendingIntent = PendingIntent.getActivity(
             context,
@@ -116,6 +118,7 @@ class NotificationHelper @Inject constructor(
      * Envía una notificación de recordatorio de examen/evento académico.
      * Usa el canal de alta prioridad [CHANNEL_EXAMS].
      */
+    @SuppressLint("MissingPermission") // notify() va dentro de runCatching
     fun sendExamReminder(title: String, message: String, notificationId: Int) {
         val pendingIntent = PendingIntent.getActivity(
             context,

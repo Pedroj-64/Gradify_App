@@ -1,5 +1,8 @@
 package com.notasapp.ui.calendar
 
+import com.notasapp.ui.components.MenuAction
+import com.notasapp.ui.components.RowMenu
+import com.notasapp.ui.components.ScreenHeader
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -63,7 +66,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -105,9 +108,9 @@ fun CalendarScreen(
     onBack: () -> Unit,
     viewModel: CalendarViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val formState by viewModel.formState.collectAsState()
-    val materias by viewModel.materias.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val formState by viewModel.formState.collectAsStateWithLifecycle()
+    val materias by viewModel.materias.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val calendarAuthLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -130,37 +133,11 @@ fun CalendarScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            FloatingActionButton(
+                onClick = { viewModel.showCreateDialog() },
+                containerColor = MaterialTheme.colorScheme.primary
             ) {
-                // Botón para importar de Google Calendar
-                FloatingActionButton(
-                    onClick = { viewModel.showGoogleCalendarDialog() },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    if (uiState.isImportingGoogleCalendar) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    } else {
-                        Icon(
-                            Icons.Default.CloudDownload,
-                            contentDescription = stringResource(R.string.calendar_import_gcal),
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                }
-                // Botón principal para crear evento
-                FloatingActionButton(
-                    onClick = { viewModel.showCreateDialog() },
-                    containerColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.calendar_add_event))
-                }
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.calendar_add_event))
             }
         }
     ) { paddingValues ->
@@ -172,9 +149,11 @@ fun CalendarScreen(
             // ── Header: mes + navegación ────────────────────────────────
             MonthHeader(
                 currentMonth = uiState.currentMonth,
+                importing = uiState.isImportingGoogleCalendar,
                 onPrevious = viewModel::goToPreviousMonth,
                 onNext = viewModel::goToNextMonth,
-                onToday = viewModel::goToToday
+                onToday = viewModel::goToToday,
+                onImport = viewModel::showGoogleCalendarDialog
             )
 
             // ── Grid del calendario ─────────────────────────────────────
@@ -185,7 +164,6 @@ fun CalendarScreen(
                 onDateSelected = viewModel::selectDate
             )
 
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
             // ── Eventos del día seleccionado ────────────────────────────
             DayEventsList(
@@ -242,45 +220,36 @@ fun CalendarScreen(
 @Composable
 private fun MonthHeader(
     currentMonth: YearMonth,
+    importing: Boolean,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
-    onToday: () -> Unit
+    onToday: () -> Unit,
+    onImport: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        IconButton(onClick = onPrevious) {
-            Icon(Icons.Default.ChevronLeft, stringResource(R.string.calendar_prev_month))
-        }
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
-                    .replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = currentMonth.year.toString(),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        Row {
-            IconButton(onClick = onToday) {
-                Icon(Icons.Default.Today, stringResource(R.string.calendar_go_today),
-                    tint = MaterialTheme.colorScheme.primary)
+    val mes = currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
+        .replaceFirstChar { it.uppercase() }
+    ScreenHeader(
+        title = mes,
+        subtitle = currentMonth.year.toString(),
+        actions = {
+            IconButton(onClick = onPrevious) {
+                Icon(Icons.Default.ChevronLeft, stringResource(R.string.calendar_prev_month))
             }
             IconButton(onClick = onNext) {
                 Icon(Icons.Default.ChevronRight, stringResource(R.string.calendar_next_month))
             }
+            if (importing) {
+                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+            } else {
+                RowMenu(
+                    items = listOf(
+                        MenuAction(stringResource(R.string.calendar_go_today)) { onToday() },
+                        MenuAction(stringResource(R.string.calendar_import_gcal)) { onImport() }
+                    )
+                )
+            }
         }
-    }
+    )
 }
 
 @Composable
@@ -311,7 +280,7 @@ private fun CalendarGrid(
     // Map de fechas con eventos
     val eventDates = events.groupBy { it.fecha }
 
-    Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+    Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
         // Días de la semana header
         Row(modifier = Modifier.fillMaxWidth()) {
             daysOfWeek.forEach { day ->
@@ -393,7 +362,7 @@ private fun DayCell(
         modifier = modifier
             .aspectRatio(1f)
             .padding(2.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(CircleShape)
             .background(bgColor)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
@@ -451,8 +420,8 @@ private fun DayEventsList(
                 text = selectedDate.format(
                     DateTimeFormatter.ofPattern("d MMMM", Locale.getDefault())
                 ).replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
             )
             if (events.isEmpty()) {
                 TextButton(onClick = onAddEvent) {
@@ -466,27 +435,12 @@ private fun DayEventsList(
         Spacer(Modifier.height(8.dp))
 
         if (events.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.Event,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.calendar_no_events),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            Text(
+                text = stringResource(R.string.calendar_no_events),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
         } else {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -513,69 +467,64 @@ private fun EventCard(
     val context = LocalContext.current
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .clickable(onClick = onEdit)
+            .padding(start = 14.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Indicador de color por tipo
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(eventTypeColor(event.tipoEvento))
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .height(44.dp)
+                .clip(CircleShape)
+                .background(eventTypeColor(event.tipoEvento))
+        )
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = event.titulo,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
-
-            Spacer(Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "${event.tipoEvento.emoji} ${event.titulo}",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+            Text(
+                text = buildString {
+                    append(event.tipoEvento.name.lowercase().replaceFirstChar { it.uppercase() })
+                    append(" · ")
+                    append(event.horaDisplay)
+                    if (event.materiaNombre.isNotBlank()) append(" · ${event.materiaNombre}")
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (event.descripcion.isNotBlank()) {
                 Text(
-                    text = event.horaDisplay,
+                    text = event.descripcion,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (event.descripcion.isNotBlank()) {
-                    Text(
-                        text = event.descripcion,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                Text(
-                    text = getRecordatorioDisplay(context, event.recordatorioMinutos),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-
-            IconButton(onClick = onEdit) {
-                Icon(Icons.Default.Edit, stringResource(R.string.calendar_edit), Modifier.size(18.dp))
-            }
-            IconButton(onClick = { showDeleteConfirm = true }) {
-                Icon(
-                    Icons.Default.Delete, stringResource(R.string.btn_delete),
-                    Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
+            Text(
+                text = getRecordatorioDisplay(context, event.recordatorioMinutos),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
+        RowMenu(
+            items = listOf(
+                MenuAction(stringResource(R.string.calendar_edit)) { onEdit() },
+                MenuAction(stringResource(R.string.btn_delete), destructive = true) { showDeleteConfirm = true }
+            )
+        )
     }
 
     if (showDeleteConfirm) {
@@ -899,11 +848,8 @@ private fun GoogleCalendarImportDialog(
 
 @Composable
 private fun eventTypeColor(tipo: TipoEvento): Color = when (tipo) {
-    TipoEvento.PARCIAL -> MaterialTheme.colorScheme.error
-    TipoEvento.FINAL -> Color(0xFFD32F2F) // Rojo oscuro
+    TipoEvento.PARCIAL, TipoEvento.FINAL -> MaterialTheme.colorScheme.error
     TipoEvento.QUIZ -> MaterialTheme.colorScheme.tertiary
-    TipoEvento.TAREA -> MaterialTheme.colorScheme.primary
-    TipoEvento.PROYECTO -> Color(0xFF7B1FA2) // Morado
-    TipoEvento.EXPOSICION -> Color(0xFFF57C00) // Naranja
+    TipoEvento.TAREA, TipoEvento.PROYECTO, TipoEvento.EXPOSICION -> MaterialTheme.colorScheme.primary
     TipoEvento.OTRO -> MaterialTheme.colorScheme.outline
 }

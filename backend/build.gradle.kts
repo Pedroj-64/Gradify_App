@@ -22,9 +22,6 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
-    // Google Generative AI - SDK servidor
-    implementation("com.google.cloud:google-cloud-aiplatform:3.44.0")
-
     // OkHttp para llamadas HTTP directas a la REST API de Gemini
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
@@ -32,9 +29,10 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
 
     // Rate limiting
-    implementation("io.github.bucket4j:bucket4j-core:8.10.1")
+    implementation("com.bucket4j:bucket4j_jdk17-core:8.14.0")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
@@ -45,4 +43,10 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
 }

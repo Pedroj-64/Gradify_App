@@ -1,5 +1,9 @@
 package com.notasapp.ui.main
 
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -74,13 +78,30 @@ fun MainScaffold(
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                tonalElevation = 0.dp
+            ) {
                 bottomNavItems.forEach { item ->
                     val label = stringResource(item.labelResId)
+                    val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
                     NavigationBarItem(
                         icon = { Icon(item.icon, contentDescription = label) },
-                        label = { Text(label) },
-                        selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
+                        label = {
+                            Text(
+                                label,
+                                maxLines = 1,
+                                softWrap = false,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            selectedTextColor = MaterialTheme.colorScheme.primary
+                        ),
+                        selected = selected,
                         onClick = {
                             innerNavController.navigate(item.route) {
                                 // Al volver al inicio del back-stack se preserva el estado
@@ -128,6 +149,12 @@ fun MainScaffold(
 
                 composable(Screen.Recomendaciones.route) {
                     RecomendacionesScreen(
+                        onOpenSettings = {
+                            innerNavController.navigate(Screen.Settings.route) {
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
                         onBack = {
                             innerNavController.navigate(Screen.Home.route) {
                                 launchSingleTop = true

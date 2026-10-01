@@ -34,6 +34,10 @@ class UserPreferencesRepository @Inject constructor(
 ) {
 
     companion object {
+        private val KEY_BACKUP_FOLDER     = stringPreferencesKey("backup_folder_uri")
+        private val KEY_LOCAL_MODE        = booleanPreferencesKey("local_mode")
+        private val KEY_DYNAMIC_COLOR     = booleanPreferencesKey("dynamic_color")
+        private val KEY_GEMINI_API_KEY    = stringPreferencesKey("gemini_api_key")
         private val KEY_USER_EMAIL        = stringPreferencesKey("user_email")
         private val KEY_LAST_SYNC_MS      = stringPreferencesKey("last_sync_ms")
         private val KEY_LAST_BACKUP_MS    = stringPreferencesKey("last_backup_ms")
@@ -41,6 +45,50 @@ class UserPreferencesRepository @Inject constructor(
         private val KEY_REDONDEO_MODO      = stringPreferencesKey("redondeo_modo")
         private val KEY_HAS_SEEN_ONBOARDING       = booleanPreferencesKey("has_seen_onboarding")
         private val KEY_HAS_EXPLAINED_NOTIFICATIONS = booleanPreferencesKey("has_explained_notifications")
+    }
+
+    // ── Carpeta de respaldos automáticos (SAF) ──────────────────────
+
+    /** URI (árbol SAF) de la carpeta elegida, o null si aún no eligió una. */
+    val backupFolderUri: Flow<String?> = context.dataStore.data
+        .map { prefs -> prefs[KEY_BACKUP_FOLDER] }
+
+    suspend fun setBackupFolderUri(uri: String?) {
+        context.dataStore.edit { prefs ->
+            if (uri == null) prefs.remove(KEY_BACKUP_FOLDER) else prefs[KEY_BACKUP_FOLDER] = uri
+        }
+    }
+
+    // ── Modo local (sin cuenta Google) ───────────────────────────
+
+    /** true = el usuario eligió usar la app sin iniciar sesión. */
+    val isLocalMode: Flow<Boolean> = context.dataStore.data
+        .map { prefs -> prefs[KEY_LOCAL_MODE] ?: false }
+
+    suspend fun setLocalMode(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[KEY_LOCAL_MODE] = enabled }
+    }
+
+    // ── Apariencia ───────────────────────────────────────────────
+
+    /** true = Material You (colores del fondo de pantalla); false = paleta de Gradify. */
+    val useDynamicColor: Flow<Boolean> = context.dataStore.data
+        .map { prefs -> prefs[KEY_DYNAMIC_COLOR] ?: false }
+
+    suspend fun setUseDynamicColor(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[KEY_DYNAMIC_COLOR] = enabled }
+    }
+
+    // ── Clave de Gemini del propio usuario (BYOK) ────────────────
+
+    /** API key de Gemini pegada por el usuario en Ajustes ("" si no hay). */
+    val geminiApiKey: Flow<String> = context.dataStore.data
+        .map { prefs -> prefs[KEY_GEMINI_API_KEY].orEmpty() }
+
+    suspend fun setGeminiApiKey(key: String) {
+        context.dataStore.edit { prefs ->
+            if (key.isBlank()) prefs.remove(KEY_GEMINI_API_KEY) else prefs[KEY_GEMINI_API_KEY] = key.trim()
+        }
     }
 
     // ── Email del usuario activo ─────────────────────────────────

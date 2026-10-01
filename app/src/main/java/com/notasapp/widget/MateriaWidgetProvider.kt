@@ -30,19 +30,25 @@ class MateriaWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        appWidgetIds.forEach { widgetId ->
-            updateWidget(context, appWidgetManager, widgetId)
+        // goAsync: sin esto el sistema puede matar el proceso antes de que el widget termine de dibujarse.
+        val pending = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                appWidgetIds.forEach { updateWidget(context, appWidgetManager, it) }
+            } finally {
+                pending.finish()
+            }
         }
     }
 
     companion object {
 
-        fun updateWidget(
+        suspend fun updateWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int
         ) {
-            CoroutineScope(Dispatchers.IO).launch {
+            run {
                 try {
                     val entryPoint = EntryPointAccessors.fromApplication(
                         context.applicationContext,
@@ -57,6 +63,7 @@ class MateriaWidgetProvider : AppWidgetProvider() {
                         val materias = db.materiaDao()
                             .getMateriasConComponentesOnce(usuario.googleId)
                             .map { it.toDomain() }
+                            .filter { !it.archivada }
                             .filter { it.promedio != null }
 
                         if (materias.isNotEmpty()) {

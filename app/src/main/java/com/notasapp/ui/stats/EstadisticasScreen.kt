@@ -1,5 +1,15 @@
 package com.notasapp.ui.stats
 
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.background
+import com.notasapp.ui.components.gradeStyle
+import com.notasapp.ui.components.color
+import com.notasapp.ui.components.Tone
+import com.notasapp.ui.components.StatPair
+import com.notasapp.ui.components.SurfaceCard
+import com.notasapp.ui.components.ScreenHeader
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -39,7 +49,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -87,23 +97,13 @@ fun EstadisticasScreen(
     onNavigateBack: () -> Unit,
     viewModel: EstadisticasViewModel = hiltViewModel()
 ) {
-    val stats by viewModel.estadisticas.collectAsState()
+    val stats by viewModel.estadisticas.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.stats_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.stats_back)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+            ScreenHeader(
+                title = stringResource(R.string.stats_title),
+                subtitle = stringResource(R.string.stats_subtitle)
             )
         }
     ) { paddingValues ->
@@ -134,8 +134,8 @@ private fun EstadisticasContent(
     androidx.compose.runtime.CompositionLocalProvider(LocalStatsHolder provides stats) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // Gauge + promedio general
         item {
@@ -181,7 +181,7 @@ private fun EstadisticasContent(
             }
         }
 
-        if (stats.materiasPeorNota.isNotEmpty()) {
+        if (stats.materiasPeorNota.any { !it.aprobado }) {
             item {
                 AnimatedVisibility(
                     visible = visible,
@@ -189,23 +189,8 @@ private fun EstadisticasContent(
                 ) {
                     MateriaRankingCard(
                         titulo = stringResource(R.string.stats_needs_attention),
-                        materias = stats.materiasPeorNota,
+                        materias = stats.materiasPeorNota.filter { !it.aprobado },
                         esPositivo = false
-                    )
-                }
-            }
-        }
-
-        // Gráfico de barras de rendimiento
-        if (stats.barrasRendimiento.isNotEmpty()) {
-            item {
-                AnimatedVisibility(
-                    visible = visible,
-                    enter = fadeIn(tween(800)) + slideInVertically(tween(800)) { -it / 3 }
-                ) {
-                    RendimientoBarChart(
-                        datos = stats.barrasRendimiento,
-                        escalaMax = stats.materiasMejorNota.firstOrNull()?.escalaMax ?: 5f
                     )
                 }
             }
@@ -238,7 +223,7 @@ private fun EstadisticasContent(
     } // CompositionLocalProvider
 }
 
-// ── Gauge promedio general ──────────────────────────────────────────────────
+// ── Promedio general (protagonista, sin tarjeta) ─────────────────────────────
 
 @Composable
 private fun PromedioGeneralCard(
@@ -246,64 +231,42 @@ private fun PromedioGeneralCard(
     totalMaterias: Int,
     modifier: Modifier = Modifier
 ) {
-    val stats = (LocalStatsHolder.current)
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+    val stats = LocalStatsHolder.current
+    val escala = stats?.materiasMejorNota?.firstOrNull()?.escalaMax
+        ?: stats?.materiasPeorNota?.firstOrNull()?.escalaMax ?: 5f
+
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 6.dp)) {
+        Text(
+            text = stringResource(R.string.stats_general_avg),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Row(verticalAlignment = Alignment.Bottom) {
             Text(
-                text = stringResource(R.string.stats_general_avg),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                text = promedioGeneral?.let { "%.2f".format(it) } ?: "--",
+                style = gradeStyle(64)
             )
-            Spacer(Modifier.height(16.dp))
-            PromedioGauge(
-                promedio = promedioGeneral ?: 0f,
-                escalaMin = 0f,
-                escalaMax = 10f,
-                aprobacion = 6f,
-                modifier = Modifier.size(150.dp)
-            )
-            Spacer(Modifier.height(8.dp))
             Text(
-                text = if (promedioGeneral != null) "${"%.2f".format(promedioGeneral)}" else stringResource(R.string.stats_no_grades),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                text = " / ${escala.toInt()}",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 10.dp)
             )
-            // Promedio ponderado por créditos
-            if (stats?.promedioPonderado != null && stats.promedioPonderado != promedioGeneral) {
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "Ponderado por créditos: ${"%.2f".format(stats.promedioPonderado)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.tertiary
-                )
+        }
+        Spacer(Modifier.height(14.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
+            StatPair(value = totalMaterias.toString(), label = stringResource(R.string.stats_subjects_label))
+            if (stats?.promedioPonderado != null) {
+                StatPair(value = "%.2f".format(stats.promedioPonderado), label = stringResource(R.string.stats_weighted))
             }
-            Text(
-                text = "$totalMaterias materia(s) registrada(s)",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
             if (stats != null && stats.totalCreditos > 0) {
-                Text(
-                    text = "${stats.creditosAprobados}/${stats.totalCreditos} créditos aprobados",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                StatPair(value = "${stats.creditosAprobados}/${stats.totalCreditos}", label = stringResource(R.string.stats_credits))
             }
         }
     }
 }
 
-// ── Grid de estados ──────────────────────────────────────────────────────────
+// ── Distribución de estados: una barra segmentada + leyenda ──────────────────
 
 @Composable
 private fun EstadoGrid(
@@ -313,90 +276,54 @@ private fun EstadoGrid(
     sinNotas: Int,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val total = (aprobadas + enRiesgo + reprobadas + sinNotas).coerceAtLeast(1)
+    val rows = listOf(
+        Triple(stringResource(R.string.stats_passing), aprobadas, Tone.OK),
+        Triple(stringResource(R.string.stats_at_risk), enRiesgo, Tone.WARN),
+        Triple(stringResource(R.string.stats_failing), reprobadas, Tone.BAD),
+        Triple(stringResource(R.string.stats_no_grades), sinNotas, Tone.NONE)
+    )
+    SurfaceCard(modifier = modifier) {
         Text(
             stringResource(R.string.stats_subject_status),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            EstadoTile(
-                label = stringResource(R.string.stats_passing),
-                count = aprobadas,
-                icon = Icons.Default.CheckCircle,
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                onContainerColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.weight(1f)
-            )
-            EstadoTile(
-                label = stringResource(R.string.stats_at_risk),
-                count = enRiesgo,
-                icon = Icons.Default.Warning,
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                onContainerColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                modifier = Modifier.weight(1f)
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            EstadoTile(
-                label = stringResource(R.string.stats_failing),
-                count = reprobadas,
-                icon = Icons.Default.Error,
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                onContainerColor = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.weight(1f)
-            )
-            @Suppress("DEPRECATION")
-            EstadoTile(
-                label = stringResource(R.string.stats_no_grades),
-                count = sinNotas,
-                icon = Icons.Default.HelpOutline,
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                onContainerColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun EstadoTile(
-    label: String,
-    count: Int,
-    icon: ImageVector,
-    containerColor: androidx.compose.ui.graphics.Color,
-    onContainerColor: androidx.compose.ui.graphics.Color,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = containerColor)
-    ) {
-        Column(
-            modifier = Modifier
+        Spacer(Modifier.height(14.dp))
+        Row(
+            Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .height(10.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = onContainerColor,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = count.toString(),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = onContainerColor
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = onContainerColor.copy(alpha = 0.8f),
-                textAlign = TextAlign.Center
-            )
+            rows.filter { it.second > 0 }.forEach { (_, n, tone) ->
+                Box(
+                    Modifier
+                        .weight(n.toFloat() / total)
+                        .fillMaxHeight()
+                        .background(if (tone == Tone.NONE) MaterialTheme.colorScheme.outline else tone.color())
+                )
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        rows.forEach { (label, n, tone) ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 5.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(if (tone == Tone.NONE) MaterialTheme.colorScheme.outline else tone.color())
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                Text(n.toString(), style = gradeStyle(18))
+            }
         }
     }
 }
@@ -410,19 +337,15 @@ private fun MateriaRankingCard(
     esPositivo: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                text = titulo,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            materias.forEachIndexed { index, materia ->
-                MateriaRankingRow(materia = materia, rank = index + 1, esPositivo = esPositivo)
-            }
+    SurfaceCard(modifier = modifier) {
+        Text(
+            text = titulo,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(Modifier.height(8.dp))
+        materias.forEachIndexed { index, materia ->
+            MateriaRankingRow(materia = materia, rank = index + 1, esPositivo = esPositivo)
         }
     }
 }
@@ -433,143 +356,44 @@ private fun MateriaRankingRow(
     rank: Int,
     esPositivo: Boolean
 ) {
-    val promedio   = materia.promedio ?: return
-    val progress   = (promedio / materia.escalaMax).coerceIn(0f, 1f)
-    val trackColor = if (esPositivo)
-        MaterialTheme.colorScheme.secondaryContainer
-    else
-        MaterialTheme.colorScheme.errorContainer
+    val promedio = materia.promedio ?: return
+    val progress = (promedio / materia.escalaMax).coerceIn(0f, 1f)
+    val tone = if (materia.aprobado) Tone.OK else Tone.BAD
 
-    val fillColor  = if (esPositivo)
-        MaterialTheme.colorScheme.secondary
-    else
-        MaterialTheme.colorScheme.error
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(
-            text = "$rank.",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(24.dp)
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = materia.nombre,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = "${"%.2f".format(promedio)} / ${"%.0f".format(materia.escalaMax)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(Modifier.height(4.dp))
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp),
-                color = fillColor,
-                trackColor = trackColor
+    Column(Modifier.fillMaxWidth().padding(vertical = 7.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "$rank",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.width(22.dp)
             )
+            Text(
+                text = materia.nombre,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(text = "%.2f".format(promedio), style = gradeStyle(18), color = tone.color())
         }
-    }
-}
-
-// ── Gráfico de barras de rendimiento ─────────────────────────────────────────
-
-@Composable
-private fun RendimientoBarChart(
-    datos: List<Pair<String, Float>>,
-    escalaMax: Float,
-    modifier: Modifier = Modifier
-) {
-    val barColor = MaterialTheme.colorScheme.primary
-    val trackColor = MaterialTheme.colorScheme.surfaceVariant
-    val textColor = MaterialTheme.colorScheme.onSurface
-
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Default.BarChart,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.stats_performance),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            Spacer(Modifier.height(16.dp))
-            Canvas(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height((datos.size * 40 + 16).dp)
-            ) {
-                val barHeight = 24.dp.toPx()
-                val spacing = 16.dp.toPx()
-                val leftMargin = 0f
-                val maxWidth = size.width - leftMargin
-
-                datos.forEachIndexed { index, (nombre, valor) ->
-                    val y = index * (barHeight + spacing)
-                    val progress = (valor / escalaMax).coerceIn(0f, 1f)
-
-                    // Track
-                    drawRoundRect(
-                        color = trackColor,
-                        topLeft = Offset(leftMargin, y),
-                        size = Size(maxWidth, barHeight),
-                        cornerRadius = CornerRadius(8f, 8f)
-                    )
-
-                    // Bar
-                    if (progress > 0f) {
-                        drawRoundRect(
-                            color = barColor,
-                            topLeft = Offset(leftMargin, y),
-                            size = Size(maxWidth * progress, barHeight),
-                            cornerRadius = CornerRadius(8f, 8f)
-                        )
-                    }
-
-                    // Text
-                    drawContext.canvas.nativeCanvas.apply {
-                        val paint = android.graphics.Paint().apply {
-                            color = textColor.hashCode()
-                            textSize = 11.sp.toPx()
-                            isAntiAlias = true
-                        }
-                        val label = if (nombre.length > 15) "${nombre.take(13)}.." else nombre
-                        drawText(
-                            "$label: ${"%.2f".format(valor)}",
-                            leftMargin + 8.dp.toPx(),
-                            y + barHeight * 0.7f,
-                            paint
-                        )
-                    }
-                }
-            }
+        Spacer(Modifier.height(6.dp))
+        Box(
+            Modifier
+                .padding(start = 22.dp)
+                .fillMaxWidth()
+                .height(4.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth(progress)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(tone.color())
+            )
         }
     }
 }
@@ -597,7 +421,9 @@ private fun SemesterEvolutionChart(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -740,7 +566,9 @@ private fun SemestresHistorialCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

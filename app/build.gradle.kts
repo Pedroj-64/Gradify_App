@@ -24,6 +24,8 @@ fun secretOrEmpty(name: String): String {
     return raw
 }
 
+val aiKeyFields = listOf("GEMINI_API_KEY", "GROQ_API_KEY", "OPENROUTER_API_KEY")
+
 android {
     namespace = "com.notasapp"
     compileSdk = 35
@@ -32,8 +34,8 @@ android {
         applicationId = "com.notasapp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "2.1.1"
+        versionCode = 6
+        versionName = "2.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField(
@@ -43,26 +45,34 @@ android {
         )
         buildConfigField(
             "String",
-            "GEMINI_API_KEY",
-            "\"${secretOrEmpty("GEMINI_API_KEY")}\""
+            "BACKEND_TOKEN",
+            "\"${secretOrEmpty("BACKEND_TOKEN")}\""
         )
         buildConfigField(
             "String",
             "BACKEND_URL",
             "\"${secretOrEmpty("BACKEND_URL")}\""
         )
-        buildConfigField(
-            "String",
-            "GROQ_API_KEY",
-            "\"${secretOrEmpty("GROQ_API_KEY")}\""
-        )
-        buildConfigField(
-            "String",
-            "OPENROUTER_API_KEY",
-            "\"${secretOrEmpty("OPENROUTER_API_KEY")}\""
-        )
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    // Firma de release (mismo esquema que Inklus): se lee de key.properties en la raíz del proyecto,
+    // que NO se versiona (ver .gitignore). Formato:
+    //   storePassword=...   keyPassword=...   keyAlias=upload   storeFile=/ruta/gradify-upload.jks
+    // En CI se genera desde secretos de GitHub. Sin ese archivo, release se firma con la clave debug
+    // (útil para probar en local; NO es publicable).
+    val keystoreProperties = Properties()
+    val keystorePropertiesFile = rootProject.file("key.properties")
+    val hasReleaseKey = keystorePropertiesFile.exists()
+    if (hasReleaseKey) {
+        keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+        signingConfigs.create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
         }
     }
 
@@ -74,10 +84,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasReleaseKey) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
+            // En release las claves de IA NO van en el APK: solo el backend proxy.
+            aiKeyFields.forEach { buildConfigField("String", it, "\"\"") }
         }
         debug {
             isDebuggable = true
+            aiKeyFields.forEach { buildConfigField("String", it, "\"${secretOrEmpty(it)}\"") }
         }
     }
 
@@ -98,6 +111,8 @@ android {
         compose = true
         buildConfig = true
     }
+
+    sourceSets["androidTest"].assets.srcDir("$projectDir/schemas")
 
     packaging {
         resources {
@@ -125,6 +140,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.appcompat)
@@ -168,8 +184,6 @@ dependencies {
         exclude(group = "org.apache.httpcomponents")
     }
 
-    // Google Generative AI — ya NO se usa el SDK; se llama REST directo
-    // implementation(libs.google.ai.generativeai)
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
@@ -191,8 +205,10 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit)
+    testImplementation("org.json:json:20240303") // org.json real (el de android.jar es un stub en tests JVM)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)

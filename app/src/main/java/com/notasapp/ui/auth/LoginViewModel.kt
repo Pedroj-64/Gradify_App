@@ -12,9 +12,11 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.notasapp.BuildConfig
 import com.notasapp.data.local.UserPreferencesRepository
+import com.notasapp.data.local.dao.MateriaDao
 import com.notasapp.data.local.dao.UsuarioDao
 import com.notasapp.data.local.entities.UsuarioEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +36,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val usuarioDao: UsuarioDao,
+    private val materiaDao: MateriaDao,
     private val userPrefsRepository: UserPreferencesRepository
 ) : ViewModel() {
 
@@ -54,6 +57,14 @@ class LoginViewModel @Inject constructor(
      */
     fun signInWithGoogle(context: Context) {
         viewModelScope.launch {
+            // Sin client id, GetGoogleIdOption lanza IllegalArgumentException (antes: crash).
+            if (BuildConfig.GOOGLE_CLIENT_ID.isBlank()) {
+                _uiState.value = LoginUiState.Error(
+                    "El inicio de sesión con Google no está configurado en esta versión. " +
+                        "Puedes usar la app sin cuenta."
+                )
+                return@launch
+            }
             _uiState.value = LoginUiState.Loading
             try {
                 val credentialManager = CredentialManager.create(context)
@@ -100,6 +111,33 @@ class LoginViewModel @Inject constructor(
             } catch (e: GetCredentialException) {
                 Timber.e(e, "GetCredentialException")
                 _uiState.value = LoginUiState.Error("No se pudo iniciar sesión: ${e.localizedMessage}")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Último recurso: el login nunca debe tumbar la app
+                Timber.e(e, "Error inesperado en el login")
+                _uiState.value = LoginUiState.Error("No se pudo iniciar sesión: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    /**
+     * Usar la app sin cuenta: todo queda en el teléfono. Crea (o reutiliza) un
+     * usuario local para que materias, backup y calendario funcionen offline.
+     */
+    fun continueOffline() {
+        viewModelScope.launch {
+            try {
+                if (usuarioDao.getUsuarioActivoOnce() == null) {
+                    usuarioDao.insertOrUpdate(
+                        UsuarioEntity(googleId = LOCAL_USER_ID, nombre = "Estudiante", email = "")
+                    )
+                }
+                userPrefsRepository.setLocalMode(true)
+                _uiState.value = LoginUiState.Success
+            } catch (e: Exception) {
+                Timber.e(e, "Error al iniciar modo local")
+                _uiState.value = LoginUiState.Error("No se pudo iniciar: ${e.localizedMessage}")
             }
         }
     }
@@ -121,6 +159,12 @@ class LoginViewModel @Inject constructor(
                     fotoUrl  = fotoUrl
                 )
             )
+            // Si venía del modo local, las materias pasan a la cuenta (el usuario "local" desaparece)
+            usuarioDao.getUsuarioById(LOCAL_USER_ID)?.let { local ->
+                materiaDao.reasignarUsuario(LOCAL_USER_ID, googleId)
+                usuarioDao.delete(local)
+            }
+            userPrefsRepository.setLocalMode(false)
             // Guardar email en DataStore para GoogleAccountCredential (Sheets API)
             userPrefsRepository.setUserEmail(email)
             Timber.i("Login exitoso: $email")
@@ -137,6 +181,8 @@ class LoginViewModel @Inject constructor(
 }
 
 // ── Estados de UI ──────────────────────────────────────────────
+
+const val LOCAL_USER_ID = "local"
 
 sealed class LoginUiState {
     data object Idle    : LoginUiState()

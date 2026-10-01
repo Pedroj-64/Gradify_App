@@ -84,30 +84,4 @@ class SheetsRepositoryImpl @Inject constructor(
         )
     }
     }
-
-    override suspend fun syncAllMaterias(userEmail: String): NetworkResult<Int> {
-        val usuario = usuarioDao.getUsuarioActivo().first()
-            ?: return NetworkResult.Error("No hay usuario activo")
-
-        val materias = materiaRepository.getMateriasByUsuario(usuario.googleId).first()
-        if (materias.isEmpty()) return NetworkResult.Success(0)
-
-        var synced = 0
-        var lastError: NetworkResult.Error? = null
-
-        for (materia in materias) {
-            when (val result = syncMateria(materia, userEmail)) {
-                is NetworkResult.Success -> synced++
-                is NetworkResult.Error   -> {
-                    lastError = result
-                    // Si necesita recuperación del usuario, abortar el ciclo
-                    if (result.needsUserRecovery) return result
-                }
-                else -> Unit
-            }
-        }
-
-        return if (lastError != null && synced == 0) lastError
-        else NetworkResult.Success(synced)
-    }
 }

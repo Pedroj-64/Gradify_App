@@ -55,7 +55,7 @@ fun PromedioGauge(
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
     val progressColor = when {
         aprobado -> MaterialTheme.colorScheme.secondary
-        progreso > 0.45f -> Color(0xFFF57F17) // ámbar oscuro
+        progreso > 0.45f -> MaterialTheme.colorScheme.tertiary // ámbar de la marca
         else -> MaterialTheme.colorScheme.error
     }
 

@@ -305,7 +305,7 @@ class CalendarViewModel @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "Error al guardar evento")
             _uiState.update {
-                it.copy(isLoading = false, error = "[${e.javaClass.simpleName}] ${e.message}")
+                it.copy(isLoading = false, error = "No se pudo guardar el evento")
             }
         }
     }
@@ -320,7 +320,7 @@ class CalendarViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Error al eliminar evento")
-                _uiState.update { it.copy(error = "[${e.javaClass.simpleName}] ${e.message}") }
+                _uiState.update { it.copy(error = "No se pudo eliminar el evento") }
             }
         }
     }

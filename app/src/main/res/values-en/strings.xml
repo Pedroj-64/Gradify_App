@@ -226,7 +226,7 @@
     <string name="settings_about">About</string>
     <string name="settings_version">Version %1$s</string>
     <string name="settings_language">Language</string>
-    <string name="settings_language_system">System language</string>
+    <string name="settings_language_system">System</string>
     <string name="settings_language_es">Español</string>
     <string name="settings_language_en">English</string>
     <string name="settings_export_subtitle">Save all your grades in a JSON file</string>
@@ -270,9 +270,8 @@ Dedicated to miripili &lt;3</string>
     <string name="recs_will_generate">Gemini will generate personalized resources for you</string>
     <string name="recs_no_subjects">No subjects yet</string>
     <string name="recs_no_subjects_hint">Add your first subject and come back here for personalized recommendations</string>
-    <string name="recs_key_setup_steps">1. Get your free key at aistudio.google.com/app/apikey
-2. Add in local.properties: GEMINI_API_KEY=your_key
-3. Rebuild the app</string>
+    <string name="recs_key_setup_steps">Paste your free Gemini key in Settings → AI recommendations.
+Get it at aistudio.google.com/app/apikey</string>
 
     <string name="detail_elements_of">Items in "%1$s"</string>
     <string name="detail_example_first_attempt">E.g.: First attempt</string>
@@ -374,4 +373,55 @@ Dedicated to miripili &lt;3</string>
     <string name="notes_placeholder">Write your notes here…</string>
     <string name="notes_hint">Save important information: exam topics, tutoring schedules, etc.</string>
 
+    <string name="home_deleted">Subject deleted</string>
+    <string name="btn_undo">Undo</string>
+    <string name="settings_ai">AI recommendations</string>
+    <string name="settings_ai_desc">Recommendations use Gemini. Paste your own free key (stored only on this phone).</string>
+    <string name="settings_ai_key_label">Gemini API key</string>
+    <string name="settings_ai_show">Show</string>
+    <string name="settings_ai_hide">Hide</string>
+    <string name="settings_ai_get_key">Get a free key</string>
+    <string name="rename_title">Rename</string>
+    <string name="rename_action">Rename</string>
+    <string name="edit_subject_title">Edit subject</string>
+    <string name="edit_subject_name">Name</string>
+    <string name="edit_subject_period">Period</string>
+    <string name="edit_subject_teacher">Teacher (optional)</string>
+    <string name="edit_subject_credits">Credits</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_dynamic_color">System colors (Material You)</string>
+    <string name="settings_dynamic_color_desc">Use your wallpaper colors instead of the Gradify palette.</string>
+    <string name="login_continue_offline">Continue without account</string>
+    <string name="home_count">%1$d subjects</string>
+    <string name="home_overall_average">Overall average</string>
+    <string name="home_n_at_risk">%1$d at risk</string>
+    <string name="home_all_good">All on track</string>
+    <string name="home_n_pending">%1$d without grades</string>
+    <string name="more_options">More options</string>
+    <string name="detail_split">Split into parts</string>
+    <string name="stats_subtitle">Your semester at a glance</string>
+    <string name="stats_subjects_label">subjects</string>
+    <string name="stats_weighted">weighted</string>
+    <string name="stats_credits">credits passed</string>
+    <string name="recs_go_settings">Open settings</string>
+    <string name="login_tagline">Your grades, clear and on your phone.</string>
+    <string name="login_privacy">Everything stays on your device. Sign in with Google only if you want to upload your exports to Drive.</string>
+    <string name="backup_folder_title">Automatic backup folder</string>
+    <string name="backup_folder_none">Create or pick your own folder (e.g. “Gradify” inside Documents) so your grades survive uninstalling the app</string>
+    <string name="backup_folder_last">%1$s · last: %2$s</string>
+    <string name="backup_folder_choose">Choose folder</string>
+    <string name="backup_now">Back up now</string>
+    <string name="backup_now_subtitle">Saves a copy in the chosen folder</string>
+    <string name="backup_started">Backup in progress…</string>
+    <string name="restore_nothing_new">Nothing new: those subjects are already in the app</string>
+    <plurals name="restore_done">
+        <item quantity="one">%d subject restored</item>
+        <item quantity="other">%d subjects restored</item>
+    </plurals>
+    <string name="grade_field_desc">Grade for %1$s</string>
+    <string name="grade_out_of_range">Grade is outside the scale range</string>
+    <string name="home_archived">Archived</string>
+    <string name="home_close_semester">Close semester %1$s</string>
+    <string name="home_reopen_semester">Reopen semester %1$s</string>
+    <string name="home_all_closed">All your semesters are closed. Tap “Archived” to see them or add a new subject.</string>
 </resources>

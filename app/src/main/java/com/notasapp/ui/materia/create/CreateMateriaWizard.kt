@@ -1,5 +1,11 @@
 package com.notasapp.ui.materia.create
 
+import com.notasapp.ui.components.gradifyChipColors
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.background
+import com.notasapp.ui.components.ScreenHeader
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,7 +43,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -68,8 +74,8 @@ fun CreateMateriaWizard(
     onBack: () -> Unit,
     viewModel: CreateMateriaViewModel = hiltViewModel()
 ) {
-    val state by viewModel.wizardState.collectAsState()
-    val saveState by viewModel.saveState.collectAsState()
+    val state by viewModel.wizardState.collectAsStateWithLifecycle()
+    val saveState by viewModel.saveState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(saveState) {
@@ -85,19 +91,13 @@ fun CreateMateriaWizard(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Nueva Materia · Paso ${state.currentStep}/3") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        if (state.currentStep == 1) onBack()
-                        else viewModel.goBack()
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Regresar")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+            ScreenHeader(
+                title = "Nueva materia",
+                subtitle = "Paso ${state.currentStep} de 3",
+                onBack = {
+                    if (state.currentStep == 1) onBack()
+                    else viewModel.goBack()
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -107,11 +107,26 @@ fun CreateMateriaWizard(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // ── Barra de progreso ────────────────────────────
-            LinearProgressIndicator(
-                progress = { state.currentStep / 3f },
-                modifier = Modifier.fillMaxWidth()
-            )
+            // ── Progreso en 3 tramos ─────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                (1..3).forEach { i ->
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .height(4.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (i <= state.currentStep) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surfaceContainerHighest
+                            )
+                    )
+                }
+            }
 
             // ── Contenido del paso actual ────────────────────
             AnimatedContent(
@@ -220,6 +235,7 @@ private fun Step1BasicInfo(
         ) {
             listOf(1, 2, 3, 4, 5, 6).forEach { c ->
                 FilterChip(
+                    colors = gradifyChipColors(),
                     selected = state.creditos == c,
                     onClick = { onCreditosChange(c) },
                     label = { Text("$c") }
@@ -273,6 +289,7 @@ private fun Step2Escala(
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             TipoEscala.entries.forEach { tipo ->
                 FilterChip(
+                    colors = gradifyChipColors(),
                     selected = state.tipoEscala == tipo,
                     onClick = { onTipoEscalaChange(tipo) },
                     label = { Text(tipo.getDisplayName(context)) },

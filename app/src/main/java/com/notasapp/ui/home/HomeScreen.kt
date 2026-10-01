@@ -1,5 +1,13 @@
 package com.notasapp.ui.home
 
+import com.notasapp.ui.components.gradifyChipColors
+import androidx.compose.material.icons.filled.Check
+import com.notasapp.ui.components.gradeStyle
+import com.notasapp.ui.components.color
+import com.notasapp.ui.components.Tone
+import com.notasapp.ui.components.StatusLabel
+import com.notasapp.ui.components.SurfaceCard
+import com.notasapp.ui.components.ScreenHeader
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -48,6 +56,9 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.SnackbarResult
+import kotlinx.coroutines.launch
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -56,7 +67,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -101,15 +112,19 @@ fun HomeScreen(
     onNavigateToMateria: (Long) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val materias by viewModel.materias.collectAsState()
-    val error by viewModel.error.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val filtroSemestre by viewModel.filtroSemestre.collectAsState()
-    val orden by viewModel.orden.collectAsState()
-    val semestres by viewModel.semestresDisponibles.collectAsState()
-    val materiasEnRiesgo by viewModel.materiasEnRiesgo.collectAsState()
-    val promedioGeneral by viewModel.promedioGeneral.collectAsState()
-    val pendingDeleteId by viewModel.pendingDeleteId.collectAsState()
+    val materias by viewModel.materias.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val filtroSemestre by viewModel.filtroSemestre.collectAsStateWithLifecycle()
+    val orden by viewModel.orden.collectAsStateWithLifecycle()
+    val semestres by viewModel.semestresDisponibles.collectAsStateWithLifecycle()
+    val materiasEnRiesgo by viewModel.materiasEnRiesgo.collectAsStateWithLifecycle()
+    val promedioGeneral by viewModel.promedioGeneral.collectAsStateWithLifecycle()
+    val verArchivadas by viewModel.verArchivadas.collectAsStateWithLifecycle()
+    val hayArchivadas by viewModel.hayArchivadas.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    val deletedMsg = stringResource(R.string.home_deleted)
+    val undoLabel = stringResource(R.string.btn_undo)
     val snackbarHostState = remember { SnackbarHostState() }
 
     var showSearch by remember { mutableStateOf(false) }
@@ -131,65 +146,21 @@ fun HomeScreen(
         }
     }
 
-    // ── Diálogo de confirmación de borrado ─────────────────────
-    if (pendingDeleteId != null) {
-        AlertDialog(
-            onDismissRequest = { viewModel.cancelDelete() },
-            icon = {
-                Icon(
-                    Icons.Default.Warning,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error
-                )
-            },
-            title = { Text(stringResource(R.string.home_delete_title)) },
-            text = {
-                Text(stringResource(R.string.home_delete_message))
-            },
-            confirmButton = {
-                TextButton(onClick = { viewModel.confirmDelete() }) {
-                    Text(stringResource(R.string.btn_delete), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.cancelDelete() }) {
-                    Text(stringResource(R.string.btn_cancel))
-                }
-            }
-        )
-    }
-
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.home_title),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
+            ScreenHeader(
+                title = stringResource(R.string.home_title),
+                subtitle = stringResource(R.string.home_count, materias.size),
                 actions = {
                     IconButton(onClick = { showSearch = !showSearch }) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = stringResource(R.string.home_search),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.home_search))
                     }
                     Box {
                         IconButton(onClick = { showSortMenu = true }) {
                             @Suppress("DEPRECATION")
-                            Icon(
-                                imageVector = Icons.Default.Sort,
-                                contentDescription = stringResource(R.string.home_sort),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                            Icon(Icons.Default.Sort, contentDescription = stringResource(R.string.home_sort))
                         }
-                        DropdownMenu(
-                            expanded = showSortMenu,
-                            onDismissRequest = { showSortMenu = false }
-                        ) {
+                        DropdownMenu(expanded = showSortMenu, onDismissRequest = { showSortMenu = false }) {
                             OrdenMateria.entries.forEach { o ->
                                 DropdownMenuItem(
                                     text = { Text(o.label) },
@@ -198,20 +169,17 @@ fun HomeScreen(
                                         showSortMenu = false
                                     },
                                     leadingIcon = if (orden == o) {
-                                        { Text("✓") }
+                                        { Icon(Icons.Default.Check, contentDescription = null) }
                                     } else null
                                 )
                             }
                         }
                     }
-
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                }
             )
         },
         floatingActionButton = {
+            if (materias.isNotEmpty() || searchQuery.isNotBlank() || filtroSemestre != null || hayArchivadas)
             ExtendedFloatingActionButton(
                 onClick = onNavigateToCreateMateria,
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
@@ -238,7 +206,7 @@ fun HomeScreen(
             }
 
             // --- Lista vacía (sin materias reales, no solo sin filtro) ---
-            materias.isEmpty() && searchQuery.isBlank() && filtroSemestre == null -> {
+            materias.isEmpty() && searchQuery.isBlank() && filtroSemestre == null && !verArchivadas && !hayArchivadas -> {
                 EmptyState(
                     modifier = Modifier
                         .fillMaxSize()
@@ -253,8 +221,8 @@ fun HomeScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 96.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // ── Barra de búsqueda ─────────────────────────
                     if (showSearch) {
@@ -277,79 +245,90 @@ fun HomeScreen(
                         }
                     }
 
-                    // ── Filtro por semestre ────────────────────────
-                    if (semestres.size > 1) {
+                    // ── Filtro por semestre + semestres cerrados ──
+                    if (semestres.isNotEmpty() || hayArchivadas || verArchivadas) {
                         item {
-                            LazyRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                item {
-                                    FilterChip(
-                                        selected = filtroSemestre == null,
-                                        onClick = { viewModel.updateFiltroSemestre(null) },
-                                        label = { Text(stringResource(R.string.home_filter_all)) }
-                                    )
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (semestres.isNotEmpty()) {
+                                    item {
+                                        FilterChip(
+                                            colors = gradifyChipColors(),
+                                            selected = filtroSemestre == null,
+                                            onClick = { viewModel.updateFiltroSemestre(null) },
+                                            label = { Text(stringResource(R.string.home_filter_all)) }
+                                        )
+                                    }
+                                    items(semestres, key = { it }) { sem ->
+                                        FilterChip(
+                                            colors = gradifyChipColors(),
+                                            selected = filtroSemestre == sem,
+                                            onClick = {
+                                                viewModel.updateFiltroSemestre(
+                                                    if (filtroSemestre == sem) null else sem
+                                                )
+                                            },
+                                            label = { Text(sem) }
+                                        )
+                                    }
                                 }
-                                items(semestres) { sem ->
-                                    FilterChip(
-                                        selected = filtroSemestre == sem,
-                                        onClick = {
-                                            viewModel.updateFiltroSemestre(
-                                                if (filtroSemestre == sem) null else sem
-                                            )
-                                        },
-                                        label = { Text(sem) }
-                                    )
+                                if (hayArchivadas || verArchivadas) {
+                                    item {
+                                        FilterChip(
+                                            colors = gradifyChipColors(),
+                                            selected = verArchivadas,
+                                            onClick = { viewModel.toggleArchivadas() },
+                                            label = { Text(stringResource(R.string.home_archived)) }
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
 
-                    // ── Dashboard rápido ──────────────────────────
-                    if (promedioGeneral != null || materiasEnRiesgo.isNotEmpty()) {
+                    // ── Cerrar / reabrir el semestre seleccionado ──
+                    if (filtroSemestre != null) {
                         item {
-                            DashboardCard(
-                                promedioGeneral = promedioGeneral,
-                                materiasEnRiesgo = materiasEnRiesgo.size,
-                                totalMaterias = materias.size
+                            TextButton(
+                                onClick = { viewModel.setSemestreArchivado(filtroSemestre!!, archivado = !verArchivadas) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    stringResource(
+                                        if (verArchivadas) R.string.home_reopen_semester else R.string.home_close_semester,
+                                        filtroSemestre!!
+                                    )
+                                )
+                            }
+                        }
+                    }
+
+                    // ── Todo cerrado ──────────────────────────────
+                    if (materias.isEmpty() && !verArchivadas && hayArchivadas && searchQuery.isBlank()) {
+                        item {
+                            Text(
+                                text = stringResource(R.string.home_all_closed),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
 
-                    // ── Alerta de riesgo académico ────────────────
-                    if (materiasEnRiesgo.isNotEmpty()) {
+                    // ── Resumen ───────────────────────────────────
+                    if (!verArchivadas && (promedioGeneral != null || materiasEnRiesgo.isNotEmpty())) {
                         item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer
-                                )
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        Icons.Default.Warning,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.error,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(
-                                        text = "⚠ ${materiasEnRiesgo.size} materia(s) en riesgo: " +
-                                                materiasEnRiesgo.take(3).joinToString(", ") { it.nombre },
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onErrorContainer
-                                    )
-                                }
-                            }
+                            SummaryHero(
+                                promedioGeneral = promedioGeneral,
+                                escalaMax = materias.firstOrNull()?.escalaMax ?: 5f,
+                                enRiesgo = materiasEnRiesgo.size,
+                                sinNotas = materias.count { it.promedio == null }
+                            )
                         }
                     }
 
                     // ── Resultado de búsqueda vacío ───────────────
-                    if (materias.isEmpty()) {
+                    if (materias.isEmpty() && (searchQuery.isNotBlank() || filtroSemestre != null || verArchivadas)) {
                         item {
                             Text(
                                 text = stringResource(R.string.home_no_results),
@@ -370,7 +349,7 @@ fun HomeScreen(
                     ) { index, materia ->
                         var showed by remember { mutableStateOf(false) }
                         LaunchedEffect(Unit) {
-                            delay(index * 50L)
+                            delay(minOf(index, 8) * 50L)   // tope: en listas largas no hacer esperar a las últimas
                             showed = true
                         }
 
@@ -384,7 +363,17 @@ fun HomeScreen(
                             ) { it / 3 } + fadeIn(tween(400))
                         ) {
                             SwipeToDeleteWrapper(
-                                onDelete = { viewModel.requestDelete(materia.id) }
+                                onDelete = {
+                                    viewModel.softDelete(materia.id)
+                                    scope.launch {
+                                        val r = snackbarHostState.showSnackbar(
+                                            message = deletedMsg,
+                                            actionLabel = undoLabel,
+                                            withDismissAction = true
+                                        )
+                                        if (r == SnackbarResult.ActionPerformed) viewModel.undoDelete(materia.id)
+                                    }
+                                }
                             ) {
                                 MateriaCard(
                                     materia = materia,
@@ -401,241 +390,137 @@ fun HomeScreen(
 
 // ── Componentes internos ──────────────────────────────────────
 
-/**
- * Mini-dashboard en la parte superior: promedio general y materias en riesgo.
- */
+/** Promedio general como protagonista: sin tarjeta, número grande y una línea de contexto. */
 @Composable
-private fun DashboardCard(
+private fun SummaryHero(
     promedioGeneral: Float?,
-    materiasEnRiesgo: Int,
-    totalMaterias: Int,
+    escalaMax: Float,
+    enRiesgo: Int,
+    sinNotas: Int,
     modifier: Modifier = Modifier
 ) {
-    val dimens = rememberResponsiveDimens()
-
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(dimens.cardCornerRadius),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(dimens.cardPadding)
-        ) {
-            // Title
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.TrendingUp,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(dimens.iconSizeSmall)
-                )
-                Spacer(Modifier.width(6.dp))
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp)) {
+        Text(
+            text = stringResource(R.string.home_overall_average),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = promedioGeneral?.let { "%.2f".format(it) } ?: "--",
+                style = gradeStyle(64)
+            )
+            Text(
+                text = " / ${escalaMax.toInt()}",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (enRiesgo > 0) StatusLabel(stringResource(R.string.home_n_at_risk, enRiesgo), Tone.BAD)
+            else StatusLabel(stringResource(R.string.home_all_good), Tone.OK)
+            if (sinNotas > 0) {
                 Text(
-                    text = stringResource(R.string.home_summary),
+                    text = stringResource(R.string.home_n_pending, sinNotas),
                     style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Promedio
-                DashboardStat(
-                    value = promedioGeneral?.let { GradeCalculator.display(it) } ?: "–",
-                    label = stringResource(R.string.home_average),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-
-                // Divider vertical
-                Box(
-                    modifier = Modifier
-                        .width(1.dp)
-                        .height(40.dp)
-                        .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
-                )
-
-                // Materias
-                DashboardStat(
-                    value = "$totalMaterias",
-                    label = stringResource(R.string.home_subjects),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-
-                if (materiasEnRiesgo > 0) {
-                    // Divider vertical
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .height(40.dp)
-                            .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
-                    )
-
-                    DashboardStat(
-                        value = "$materiasEnRiesgo",
-                        label = stringResource(R.string.home_at_risk),
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
             }
         }
     }
 }
 
-@Composable
-private fun DashboardStat(
-    value: String,
-    label: String,
-    color: androidx.compose.ui.graphics.Color,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        AnimatedText(
-            text = value,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = color.copy(alpha = 0.8f)
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
+/** Fila de materia: nombre y nota a la vista, progreso fino en color de marca. */
 @Composable
 private fun MateriaCard(
     materia: Materia,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dimens = rememberResponsiveDimens()
     val progreso = materia.porcentajeEvaluado.coerceIn(0f, 1f)
-    val promedioColor = when {
-        materia.aprobado -> MaterialTheme.colorScheme.secondary
-        materia.promedio != null -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    val tone = when {
+        materia.promedio == null -> Tone.NONE
+        materia.aprobado -> Tone.OK
+        else -> Tone.BAD
     }
+    val statusText = when {
+        materia.promedio == null -> stringResource(R.string.home_not_evaluated)
+        materia.yaAprobo -> stringResource(R.string.home_status_approved)
+        materia.aprobado -> stringResource(R.string.home_status_passing)
+        else -> stringResource(R.string.home_status_at_risk)
+    }.lowercase().replaceFirstChar { it.titlecase() }
 
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(dimens.cardCornerRadius),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = dimens.cardElevation)
-    ) {
-        Column(modifier = Modifier.padding(dimens.cardPadding)) {
-            // ── Header: nombre + nota ──────────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = materia.nombre,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = buildString {
-                            append(materia.periodo)
-                            materia.profesor?.let { append(" · $it") }
-                            if (materia.creditos > 0) append(" · ${materia.creditos} cr")
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                Spacer(Modifier.width(12.dp))
-
-                // Nota circular
-                Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(CircleShape)
-                        .background(promedioColor.copy(alpha = 0.12f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        AnimatedText(
-                            text = materia.promedioDisplay,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = promedioColor
-                        )
-                        Text(
-                            text = "/${materia.escalaMax.toInt()}",
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(10.dp))
-
-            // ── Barra de progreso ──────────────────────────
-            GradeLinearIndicator(
-                progreso = progreso,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp),
-                color = promedioColor,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
-
-            Spacer(Modifier.height(6.dp))
-
-            // ── Footer: estado + progreso % ────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (materia.promedio != null) {
-                    EstadoBadge(
-                        aprobado = materia.aprobado,
-                        texto = if (materia.yaAprobo) stringResource(R.string.home_status_approved) else if (materia.aprobado) stringResource(R.string.home_status_passing) else stringResource(R.string.home_status_at_risk)
-                    )
-                } else {
-                    Text(
-                        text = stringResource(R.string.home_not_evaluated),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
+    SurfaceCard(modifier = modifier, onClick = onClick) {
+        Row(verticalAlignment = Alignment.Top) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.home_evaluated_pct, (progreso * 100).toInt()),
-                    style = MaterialTheme.typography.labelSmall,
+                    text = materia.nombre,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = buildString {
+                        append(materia.periodo)
+                        materia.profesor?.let { append(" · $it") }
+                        if (materia.creditos > 0) append(" · ${materia.creditos} cr")
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = materia.promedioDisplay,
+                    style = gradeStyle(34),
+                    color = if (tone == Tone.NONE) MaterialTheme.colorScheme.outline else tone.color()
+                )
+                Text(
+                    text = "/ ${materia.escalaMax.toInt()}",
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+
+        Spacer(Modifier.height(14.dp))
+
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth(progreso)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+        }
+
+        Spacer(Modifier.height(10.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            StatusLabel(statusText, tone)
+            Text(
+                text = stringResource(R.string.home_evaluated_pct, (progreso * 100).toInt()),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

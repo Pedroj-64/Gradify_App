@@ -191,7 +191,8 @@ class MateriaDetailViewModel @Inject constructor(
         _notaNecesariaResult.value = calcularNotaNecesaria(
             componentes = materiaActual.componentes,
             metaFinal = meta,
-            escalaMax = materiaActual.escalaMax
+            escalaMax = materiaActual.escalaMax,
+            escalaMin = materiaActual.escalaMin
         )
     }
 
@@ -289,6 +290,35 @@ class MateriaDetailViewModel @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Error al actualizar notas")
                 _error.value = "No se pudo guardar las notas"
+            }
+        }
+    }
+
+    // ── Renombrar / editar datos básicos ──────────────────────
+
+    fun editarMateria(nombre: String, periodo: String, profesor: String?, creditos: Int) =
+        guardar("No se pudo guardar la materia") {
+            materiaRepository.updateMateriaInfo(
+                materiaId, nombre.trim(), periodo.trim(), profesor?.trim()?.takeIf { it.isNotEmpty() }, creditos
+            )
+        }
+
+    fun renombrar(kind: RenameKind, id: Long, nuevo: String) {
+        val nombre = nuevo.trim().takeIf { it.isNotEmpty() } ?: return
+        guardar("No se pudo renombrar") {
+            when (kind) {
+                RenameKind.COMPONENTE -> materiaRepository.renameComponente(id, nombre)
+                RenameKind.SUBNOTA -> materiaRepository.renameSubNota(id, nombre)
+                RenameKind.DETALLE -> materiaRepository.renameSubNotaDetalle(id, nombre)
+            }
+        }
+    }
+
+    private fun guardar(errorMsg: String, block: suspend () -> Unit) {
+        viewModelScope.launch {
+            try { block() } catch (e: Exception) {
+                Timber.e(e, errorMsg)
+                _error.value = errorMsg
             }
         }
     }

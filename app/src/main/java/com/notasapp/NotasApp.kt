@@ -1,8 +1,12 @@
 package com.notasapp
 
+import com.notasapp.widget.WidgetUpdater
+import com.notasapp.data.local.AppDatabase
+import androidx.room.InvalidationTracker
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -29,12 +33,29 @@ class NotasApp : Application(), Configuration.Provider {
     @Inject
     lateinit var notificationHelper: NotificationHelper
 
+    @Inject
+    lateinit var database: AppDatabase
+
     override fun onCreate() {
         super.onCreate()
         initTimber()
         notificationHelper.createNotificationChannels()
         scheduleReminderWorker()
         scheduleAutoBackupWorker()
+        observeGradesForWidgets()
+    }
+
+    /** Cualquier cambio en materias, cortes o notas refresca los widgets de inicio. */
+    private fun observeGradesForWidgets() {
+        database.invalidationTracker.addObserver(
+            object : InvalidationTracker.Observer(
+                "materias", "componentes", "sub_notas", "sub_nota_details"
+            ) {
+                override fun onInvalidated(tables: Set<String>) {
+                    WidgetUpdater.refreshSoon(this@NotasApp)
+                }
+            }
+        )
     }
 
     /**
@@ -58,6 +79,7 @@ class NotasApp : Application(), Configuration.Provider {
 
     private fun scheduleAutoBackupWorker() {
         val request = PeriodicWorkRequestBuilder<AutoBackupWorker>(1, TimeUnit.DAYS)
+            .setConstraints(Constraints.Builder().setRequiresStorageNotLow(true).build())
             .build()
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             AutoBackupWorker.TAG,
