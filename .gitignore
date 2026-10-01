@@ -46,3 +46,6 @@ node_modules/
 
 # graphify
 graphify-out/
+key.properties
+graphify-out/
+.kotlin/
