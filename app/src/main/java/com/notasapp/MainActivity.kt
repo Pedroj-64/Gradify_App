@@ -1,5 +1,6 @@
 package com.notasapp
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -51,7 +52,9 @@ class MainActivity : AppCompatActivity() {
         // Leer DataStore (I/O ligero) y decidir destino inicial
         lifecycleScope.launch {
             val email = userPrefsRepository.userEmail.first()
-            startDestination = if (!email.isNullOrBlank()) {
+            val localMode = userPrefsRepository.isLocalMode.first()
+            // Sesión Google O modo local (la cuenta es opcional)
+            startDestination = if (!email.isNullOrBlank() || localMode) {
                 // Si ya vio el onboarding → Main; si no → Onboarding
                 val hasOnboarding = userPrefsRepository.hasSeenOnboarding.first()
                 if (hasOnboarding) Screen.Main.route else Screen.Onboarding.route
@@ -61,7 +64,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         setContent {
-            NotasAppTheme {
+            val dynamicColor by userPrefsRepository.useDynamicColor.collectAsStateWithLifecycle(initialValue = false)
+            NotasAppTheme(dynamicColor = dynamicColor) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

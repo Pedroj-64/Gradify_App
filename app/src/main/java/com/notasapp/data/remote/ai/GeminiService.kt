@@ -1,5 +1,7 @@
 package com.notasapp.data.remote.ai
 
+import kotlinx.coroutines.flow.first
+import com.notasapp.data.local.UserPreferencesRepository
 import com.notasapp.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -44,7 +46,9 @@ enum class TipoRecomendacion {
  * - `OPENROUTER_API_KEY` → https://openrouter.ai/keys (gratis, modelos free)
  */
 @Singleton
-class GeminiService @Inject constructor() {
+class GeminiService @Inject constructor(
+    private val userPrefs: UserPreferencesRepository
+) {
 
     companion object {
         private const val MAX_RETRIES = 2
@@ -54,11 +58,9 @@ class GeminiService @Inject constructor() {
         private const val GEMINI_API_BASE =
             "https://generativelanguage.googleapis.com/v1beta"
         private val GEMINI_MODELS = listOf(
-            "gemini-2.0-flash",
-            "gemini-2.0-flash-lite",
-            "gemini-1.5-flash",
-            "gemini-1.5-flash-latest",
-            "gemini-pro"
+            "gemini-2.5-flash",
+            "gemini-2.5-flash-lite",
+            "gemini-2.0-flash"
         )
 
         // ── Groq ────────────────────────────────────────────────────
@@ -66,17 +68,15 @@ class GeminiService @Inject constructor() {
             "https://api.groq.com/openai/v1/chat/completions"
         private val GROQ_MODELS = listOf(
             "llama-3.3-70b-versatile",
-            "llama-3.1-8b-instant",
-            "mixtral-8x7b-32768"
+            "llama-3.1-8b-instant"
         )
 
         // ── OpenRouter ──────────────────────────────────────────────
         private const val OPENROUTER_API_BASE =
             "https://openrouter.ai/api/v1/chat/completions"
         private val OPENROUTER_MODELS = listOf(
-            "google/gemini-2.0-flash-exp:free",
             "meta-llama/llama-3.3-70b-instruct:free",
-            "mistralai/mistral-7b-instruct:free"
+            "google/gemini-2.0-flash-exp:free"
         )
 
         /** URL base del backend proxy (configurada en local.properties). */
@@ -85,6 +85,57 @@ class GeminiService @Inject constructor() {
             .takeUnless { it.equals("null", ignoreCase = true) || it.isBlank() }
             ?: ""
 
+        // ═══════════════════════════════════════════════════════════════════
+        //  Parseo
+        // ═══════════════════════════════════════════════════════════════════
+
+        internal fun parseRecomendaciones(jsonText: String): List<Recomendacion> {
+            val cleanJson = extractJsonArray(jsonText)
+
+            val array = try {
+                JSONArray(cleanJson)
+            } catch (e: Exception) {
+                Timber.e(e, "Error parseando JSON. Respuesta: ${cleanJson.take(300)}")
+                throw Exception(
+                    "JSON parse error: ${e.message}. Respuesta: ${cleanJson.take(200)}", e
+                )
+            }
+
+            val lista = (0 until array.length()).map { i ->
+                val obj = array.getJSONObject(i)
+                Recomendacion(
+                    tipo = try {
+                        TipoRecomendacion.valueOf(obj.getString("tipo"))
+                    } catch (_: Exception) {
+                        TipoRecomendacion.RECURSO
+                    },
+                    titulo = obj.getString("titulo"),
+                    descripcion = obj.getString("descripcion"),
+                    url = obj.getString("url"),
+                    autor = obj.optString("autor", "")
+                        .takeIf { it != "null" && it.isNotBlank() }
+                )
+            }
+
+            if (lista.isEmpty()) {
+                throw Exception("IA devolvió 0 recomendaciones. Raw: ${cleanJson.take(200)}")
+            }
+            return lista
+        }
+
+        /**
+         * Extrae el primer array JSON [...] del texto, descartando
+         * markdown fences u otro texto antes/después.
+         */
+        private fun extractJsonArray(text: String): String {
+            val trimmed = text.trim()
+                .removePrefix("```json").removePrefix("```")
+                .removeSuffix("```").trim()
+            val start = trimmed.indexOf('[')
+            val end = trimmed.lastIndexOf(']')
+            if (start != -1 && end > start) return trimmed.substring(start, end + 1)
+            return trimmed
+        }
         private fun normalizeApiKey(rawValue: String): String = rawValue
             .trim()
             .takeUnless {
@@ -145,7 +196,9 @@ class GeminiService @Inject constructor() {
         if (elapsed < minIntervalMs) delay(minIntervalMs - elapsed)
 
         // ── 2. Gemini REST API ─────────────────────────────────────
-        val geminiKey = normalizeApiKey(BuildConfig.GEMINI_API_KEY)
+        // Prioridad: clave del usuario (Ajustes) > clave de local.properties (solo debug)
+        val geminiKey = normalizeApiKey(userPrefs.geminiApiKey.first())
+            .ifBlank { normalizeApiKey(BuildConfig.GEMINI_API_KEY) }
         if (geminiKey.isNotBlank()) {
             try {
                 Timber.d("Estrategia 2: Gemini REST API")
@@ -201,7 +254,7 @@ class GeminiService @Inject constructor() {
         }.trimEnd(',', ' ')
 
         val errorMsg = if (noKeysMsg.isNotBlank())
-            "No se configuraron claves de IA ($noKeysMsg). Agrega al menos una en local.properties. Errores: $summary"
+            "No se configuraron claves de IA ($noKeysMsg). Pega tu clave gratuita de Gemini en Ajustes → Recomendaciones con IA. Errores: $summary"
         else
             "Todos los proveedores de IA fallaron. $summary"
 
@@ -389,6 +442,8 @@ class GeminiService @Inject constructor() {
         val conn = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             setRequestProperty("Content-Type", "application/json")
+            BuildConfig.BACKEND_TOKEN.takeIf { it.isNotBlank() }
+                ?.let { setRequestProperty("X-Gradify-Token", it) }
             connectTimeout = 15_000
             readTimeout = 60_000
             doOutput = true
@@ -496,58 +551,6 @@ class GeminiService @Inject constructor() {
 [{"tipo":"YOUTUBE","titulo":"...","descripcion":"...","url":"https://...","autor":"..."},{"tipo":"LIBRO","titulo":"...","descripcion":"...","url":"https://...","autor":"..."},{"tipo":"RECURSO","titulo":"...","descripcion":"...","url":"https://...","autor":null}]""")
 
         return sb.toString()
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  Parseo
-    // ═══════════════════════════════════════════════════════════════════
-
-    private fun parseRecomendaciones(jsonText: String): List<Recomendacion> {
-        val cleanJson = extractJsonArray(jsonText)
-
-        val array = try {
-            JSONArray(cleanJson)
-        } catch (e: Exception) {
-            Timber.e(e, "Error parseando JSON. Respuesta: ${cleanJson.take(300)}")
-            throw Exception(
-                "JSON parse error: ${e.message}. Respuesta: ${cleanJson.take(200)}", e
-            )
-        }
-
-        val lista = (0 until array.length()).map { i ->
-            val obj = array.getJSONObject(i)
-            Recomendacion(
-                tipo = try {
-                    TipoRecomendacion.valueOf(obj.getString("tipo"))
-                } catch (_: Exception) {
-                    TipoRecomendacion.RECURSO
-                },
-                titulo = obj.getString("titulo"),
-                descripcion = obj.getString("descripcion"),
-                url = obj.getString("url"),
-                autor = obj.optString("autor", "")
-                    .takeIf { it != "null" && it.isNotBlank() }
-            )
-        }
-
-        if (lista.isEmpty()) {
-            throw Exception("IA devolvió 0 recomendaciones. Raw: ${cleanJson.take(200)}")
-        }
-        return lista
-    }
-
-    /**
-     * Extrae el primer array JSON [...] del texto, descartando
-     * markdown fences u otro texto antes/después.
-     */
-    private fun extractJsonArray(text: String): String {
-        val trimmed = text.trim()
-            .removePrefix("```json").removePrefix("```")
-            .removeSuffix("```").trim()
-        val start = trimmed.indexOf('[')
-        val end = trimmed.lastIndexOf(']')
-        if (start != -1 && end > start) return trimmed.substring(start, end + 1)
-        return trimmed
     }
 }
 

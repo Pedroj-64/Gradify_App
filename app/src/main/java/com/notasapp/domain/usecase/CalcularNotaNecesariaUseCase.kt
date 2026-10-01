@@ -25,7 +25,8 @@ class CalcularNotaNecesariaUseCase @Inject constructor() {
     operator fun invoke(
         componentes: List<Componente>,
         metaFinal: Float,
-        escalaMax: Float
+        escalaMax: Float,
+        escalaMin: Float = 0f
     ): Resultado {
         val aporteExistente = componentes
             .filter { it.aporteAlFinal != null }
@@ -39,13 +40,19 @@ class CalcularNotaNecesariaUseCase @Inject constructor() {
             return Resultado.MetaYaAlcanzada(aporteExistente >= metaFinal)
         }
 
+        // Si los pesos no suman 100 %, el cálculo no es confiable: avisar en vez de dar un número engañoso.
+        val sumaTotal = componentes.sumOf { it.porcentaje.toDouble() }
+        if (kotlin.math.abs(sumaTotal - 1.0) > 0.01) {
+            return Resultado.Error("Los porcentajes de los cortes no suman 100 %")
+        }
+
         val sumaPorcentajeFaltantes = faltantes.sumOf { it.porcentaje.toDouble() }.toFloat()
         if (sumaPorcentajeFaltantes == 0f) return Resultado.Error("Suma de porcentajes = 0")
 
         val notaNecesaria = (metaFinal - aporteExistente) / sumaPorcentajeFaltantes
 
         return when {
-            notaNecesaria <= 0f -> Resultado.MetaYaAlcanzada(true)
+            notaNecesaria <= escalaMin -> Resultado.MetaYaAlcanzada(true)
             notaNecesaria > escalaMax -> Resultado.Imposible(notaNecesaria)
             else -> Resultado.Posible(
                 notaNecesaria = notaNecesaria,

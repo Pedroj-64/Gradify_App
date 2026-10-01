@@ -1,5 +1,8 @@
 package com.notasapp.ui.theme
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Shapes
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -16,45 +19,86 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-// ── Colores base ──────────────────────────────────────────────────
-val PrimaryBlue = Color(0xFF1565C0)
-val PrimaryLight = Color(0xFF42A5F5)
-val SecondaryGreen = Color(0xFF2E7D32)
-val SecondaryLightGreen = Color(0xFF66BB6A)
-val ErrorRed = Color(0xFFB00020)
+// ── Marca Gradify ─────────────────────────────────────────────────
+// Azul académico + verde "aprobado" + ámbar "en riesgo". Fijos en todos los celulares;
+// Material You es opcional (Ajustes → Apariencia).
+val PrimaryBlue = Color(0xFF2B59C3)
+val PrimaryLight = Color(0xFFB2C5FF)
+val SecondaryGreen = Color(0xFF1B7F4F)
+val SecondaryLightGreen = Color(0xFF7FDBA6)
+val ErrorRed = Color(0xFFBA1A1A)
+val WarningAmber = Color(0xFFB26A00)
 
 private val LightColorScheme = lightColorScheme(
     primary = PrimaryBlue,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD1E4FF),
-    onPrimaryContainer = Color(0xFF001D36),
+    primaryContainer = Color(0xFFDCE5FF),
+    onPrimaryContainer = Color(0xFF00164F),
     secondary = SecondaryGreen,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFB8F0B8),
-    onSecondaryContainer = Color(0xFF002204),
+    secondaryContainer = Color(0xFFC3F0D6),
+    onSecondaryContainer = Color(0xFF00210F),
+    tertiary = WarningAmber,
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFFFDDB3),
+    onTertiaryContainer = Color(0xFF2A1700),
     error = ErrorRed,
-    background = Color(0xFFFAFAFA),
-    onBackground = Color(0xFF1A1C1E),
-    surface = Color.White,
-    onSurface = Color(0xFF1A1C1E),
-    surfaceVariant = Color(0xFFDFE2EB),
-    onSurfaceVariant = Color(0xFF43474E)
+    onError = Color.White,
+    errorContainer = Color(0xFFFFDAD6),
+    onErrorContainer = Color(0xFF410002),
+    background = Color(0xFFF6F8FC),
+    onBackground = Color(0xFF181B22),
+    surface = Color(0xFFFFFFFF),
+    onSurface = Color(0xFF181B22),
+    surfaceVariant = Color(0xFFE1E5F0),
+    onSurfaceVariant = Color(0xFF444953),
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFF1F4FA),
+    surfaceContainer = Color(0xFFEBEFF7),
+    surfaceContainerHigh = Color(0xFFE5E9F2),
+    surfaceContainerHighest = Color(0xFFDFE3EC),
+    outline = Color(0xFF747985),
+    outlineVariant = Color(0xFFC4C8D4)
 )
 
 private val DarkColorScheme = darkColorScheme(
     primary = PrimaryLight,
-    onPrimary = Color(0xFF003060),
-    primaryContainer = Color(0xFF004787),
-    onPrimaryContainer = Color(0xFFD1E4FF),
+    onPrimary = Color(0xFF002A78),
+    primaryContainer = Color(0xFF1B418F),
+    onPrimaryContainer = Color(0xFFDCE5FF),
     secondary = SecondaryLightGreen,
-    onSecondary = Color(0xFF003A0A),
-    secondaryContainer = Color(0xFF005313),
-    onSecondaryContainer = Color(0xFFB8F0B8),
+    onSecondary = Color(0xFF00391E),
+    secondaryContainer = Color(0xFF00522E),
+    onSecondaryContainer = Color(0xFFC3F0D6),
+    tertiary = Color(0xFFFFB866),
+    onTertiary = Color(0xFF462A00),
+    tertiaryContainer = Color(0xFF653D00),
+    onTertiaryContainer = Color(0xFFFFDDB3),
     error = Color(0xFFFFB4AB),
-    background = Color(0xFF1A1C1E),
-    onBackground = Color(0xFFE2E2E6),
-    surface = Color(0xFF1A1C1E),
-    onSurface = Color(0xFFE2E2E6)
+    onError = Color(0xFF690005),
+    errorContainer = Color(0xFF93000A),
+    onErrorContainer = Color(0xFFFFDAD6),
+    background = Color(0xFF10131A),
+    onBackground = Color(0xFFE2E4ED),
+    surface = Color(0xFF10131A),
+    onSurface = Color(0xFFE2E4ED),
+    surfaceVariant = Color(0xFF444953),
+    onSurfaceVariant = Color(0xFFC4C8D4),
+    surfaceContainerLowest = Color(0xFF0B0E14),
+    surfaceContainerLow = Color(0xFF181B22),
+    surfaceContainer = Color(0xFF1C1F27),
+    surfaceContainerHigh = Color(0xFF272A32),
+    surfaceContainerHighest = Color(0xFF32353D),
+    outline = Color(0xFF8E919D),
+    outlineVariant = Color(0xFF444953)
+)
+
+private val GradifyShapes = Shapes(
+    extraSmall = RoundedCornerShape(6.dp),
+    small = RoundedCornerShape(10.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(24.dp),
+    extraLarge = RoundedCornerShape(28.dp)
 )
 
 /**
@@ -68,7 +112,7 @@ private val DarkColorScheme = darkColorScheme(
 @Composable
 fun NotasAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,   // Material You (Android 12+)
+    dynamicColor: Boolean = false,  // Material You (Android 12+), opcional en Ajustes
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -93,6 +137,7 @@ fun NotasAppTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = NotasTypography,
+        shapes = GradifyShapes,
         content = content
     )
 }

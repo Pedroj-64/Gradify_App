@@ -101,4 +101,16 @@ class CalcularPromedioPonderadoUseCaseTest {
         val result = useCase(emptyList())
         assertEquals("--", result.promedioDisplay)
     }
+
+    @Test
+    fun `materias sin nota no cuentan como aprobadas ni suman creditos aprobados`() {
+        val materias = listOf(
+            materia(promedio = 4.0f, creditos = 3),   // aprobada
+            materia(promedio = null, creditos = 4)    // sin notas
+        )
+        val r = useCase(materias)
+        assertEquals(1, r.materiasAprobadas)
+        assertEquals(3, r.creditosAprobados)
+        assertEquals(7, r.totalCreditos)
+    }
 }

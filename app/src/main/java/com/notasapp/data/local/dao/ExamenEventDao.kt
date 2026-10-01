@@ -78,4 +78,12 @@ interface ExamenEventDao {
     /** Marca un evento como con recordatorio programado. */
     @Query("UPDATE examen_events SET recordatorioProgramado = 1 WHERE id = :eventId")
     suspend fun markReminderScheduled(eventId: Long)
+
+    /** Todos los eventos futuros con recordatorio (para reprogramar alarmas tras reinicio). */
+    @Query("SELECT * FROM examen_events WHERE recordatorioMinutos > 0 AND fechaEpochMs > :nowMs")
+    suspend fun getFutureEventsWithReminder(nowMs: Long): List<ExamenEventEntity>
+
+    /** Eventos de una materia (una sola lectura), para el backup. */
+    @Query("SELECT * FROM examen_events WHERE materiaId = :materiaId ORDER BY fechaEpochMs ASC")
+    suspend fun getByMateriaOnce(materiaId: Long): List<ExamenEventEntity>
 }

@@ -56,4 +56,7 @@ interface SubNotaDao {
 
     @Query("DELETE FROM sub_notas WHERE componenteId = :componenteId")
     suspend fun deleteByComponente(componenteId: Long)
+
+    @Query("UPDATE sub_notas SET descripcion = :descripcion, ultimaModificacionMs = :ts WHERE id = :id")
+    suspend fun updateDescripcion(id: Long, descripcion: String, ts: Long = System.currentTimeMillis())
 }

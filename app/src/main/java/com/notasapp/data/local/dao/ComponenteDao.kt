@@ -75,4 +75,7 @@ interface ComponenteDao {
      */
     @Query("UPDATE componentes SET orden = :nuevoOrden WHERE id = :id")
     suspend fun updateOrden(id: Long, nuevoOrden: Int)
+
+    @Query("UPDATE componentes SET nombre = :nombre WHERE id = :id")
+    suspend fun updateNombre(id: Long, nombre: String)
 }

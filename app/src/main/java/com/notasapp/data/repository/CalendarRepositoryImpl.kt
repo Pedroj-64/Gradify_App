@@ -2,7 +2,10 @@ package com.notasapp.data.repository
 
 import com.notasapp.data.local.dao.ExamenEventDao
 import com.notasapp.data.local.dao.MateriaDao
+import android.content.Context
 import com.notasapp.data.local.entities.ExamenEventEntity
+import com.notasapp.data.receiver.ExamAlarmScheduler
+import dagger.hilt.android.qualifiers.ApplicationContext
 import com.notasapp.domain.model.ExamenEvent
 import com.notasapp.domain.model.TipoEvento
 import com.notasapp.domain.repository.CalendarRepository
@@ -18,8 +21,11 @@ import javax.inject.Singleton
 @Singleton
 class CalendarRepositoryImpl @Inject constructor(
     private val examenEventDao: ExamenEventDao,
-    private val materiaDao: MateriaDao
+    private val materiaDao: MateriaDao,
+    @ApplicationContext private val context: Context
 ) : CalendarRepository {
+
+    private val scheduler by lazy { ExamAlarmScheduler(context) }
 
     override fun getEventsByUsuario(usuarioId: String): Flow<List<ExamenEvent>> =
         examenEventDao.getEventsByUsuario(usuarioId).mapToEvents()
@@ -39,15 +45,31 @@ class CalendarRepositoryImpl @Inject constructor(
 
     override suspend fun saveEvent(event: ExamenEvent): Long {
         val entity = event.toEntity()
-        return if (event.id > 0) {
+        val id = if (event.id > 0) {
             examenEventDao.update(entity)
             event.id
         } else {
             examenEventDao.insert(entity)
         }
+        // Antes nada programaba la alarma: los recordatorios del calendario nunca sonaban.
+        scheduler.cancelAlarm(id)
+        if (event.recordatorioMinutos > 0) {
+            scheduler.scheduleAlarm(
+                eventId = id,
+                title = event.titulo,
+                description = event.descripcion,
+                tipoEvento = event.tipoEvento.name,
+                triggerAtMs = event.fechaEpochMs - event.recordatorioMinutos * 60_000L,
+                materiaId = event.materiaId,
+                reminderMinutes = event.recordatorioMinutos
+            )
+            examenEventDao.markReminderScheduled(id)
+        }
+        return id
     }
 
     override suspend fun deleteEvent(eventId: Long) {
+        scheduler.cancelAlarm(eventId)
         examenEventDao.deleteById(eventId)
     }
 

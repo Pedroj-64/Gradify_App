@@ -15,6 +15,9 @@
     <exclude domain="database" path="notas_app.db-shm" />
     <exclude domain="database" path="notas_app.db-wal" />
 
+    <!-- Excluir preferencias (DataStore: correo, claves de IA) -->
+    <exclude domain="file" path="datastore/" />
+
     <!-- Excluir preferencias encriptadas (tokens) -->
     <exclude domain="sharedpref" path="encrypted_prefs.xml" />
 </full-backup-content>

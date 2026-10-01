@@ -117,6 +117,16 @@
             android:name=".data.receiver.ExamAlarmReceiver"
             android:exported="false" />
 
+        <!-- Receiver: reprogramar alarmas tras reinicio/actualización -->
+        <receiver
+            android:name=".data.receiver.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <!-- Per-app language support (AppCompat) -->
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"

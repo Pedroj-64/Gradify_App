@@ -37,14 +37,14 @@ class CalcularPromedioPonderadoUseCase @Inject constructor() {
         } else null
 
         val totalCreditos = materias.sumOf { it.creditos }
-        val creditosAprobados = materias.filter { it.aprobado }.sumOf { it.creditos }
+        val creditosAprobados = conNotas.filter { it.aprobado }.sumOf { it.creditos }
 
         return Resultado(
             promedioSimple = promedioSimple,
             promedioPonderado = promedioPonderado,
             totalCreditos = totalCreditos,
             creditosAprobados = creditosAprobados,
-            materiasAprobadas = materias.count { it.aprobado },
+            materiasAprobadas = conNotas.count { it.aprobado },
             materiasReprobadas = conNotas.count { !it.aprobado },
             totalMaterias = materias.size
         )

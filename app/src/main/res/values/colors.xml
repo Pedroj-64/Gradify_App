@@ -3,19 +3,19 @@
     <!-- Colores base (Material You los reemplaza dinámicamente en Android 12+) -->
 
     <!-- Primario -->
-    <color name="primary">#1565C0</color>
+    <color name="primary">#2B59C3</color>
     <color name="primary_light">#42A5F5</color>
     <color name="on_primary">#FFFFFF</color>
 
     <!-- Secundario (aprobado) -->
-    <color name="secondary">#2E7D32</color>
+    <color name="secondary">#1B7F4F</color>
     <color name="on_secondary">#FFFFFF</color>
 
     <!-- Error (reprobado) -->
     <color name="error">#B00020</color>
 
     <!-- Fondos -->
-    <color name="background">#FAFAFA</color>
+    <color name="background">#F6F8FC</color>
     <color name="surface">#FFFFFF</color>
     <color name="splash_background">#0D1B4A</color>
 

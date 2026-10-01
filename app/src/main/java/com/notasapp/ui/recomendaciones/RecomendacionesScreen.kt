@@ -1,5 +1,8 @@
 ﻿package com.notasapp.ui.recomendaciones
 
+import com.notasapp.ui.components.SectionLabel
+import com.notasapp.ui.components.SurfaceCard
+import com.notasapp.ui.components.ScreenHeader
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
@@ -63,7 +66,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -126,10 +129,11 @@ private fun tipoMeta(tipo: TipoRecomendacion): TipoMeta = when (tipo) {
 @Composable
 fun RecomendacionesScreen(
     onBack: () -> Unit,
+    onOpenSettings: () -> Unit = {},
     viewModel: RecomendacionesViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val materias by viewModel.materias.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val materias by viewModel.materias.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
@@ -142,29 +146,9 @@ fun RecomendacionesScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.recs_title),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = stringResource(R.string.recs_subtitle),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.btn_back))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+            ScreenHeader(
+                title = stringResource(R.string.recs_title),
+                subtitle = stringResource(R.string.recs_subtitle)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -198,7 +182,7 @@ fun RecomendacionesScreen(
 
             // API Key faltante
             if (uiState.apiKeyFaltante) {
-                item { ApiKeyMissingBanner() }
+                item { ApiKeyMissingBanner(onOpenSettings) }
             }
 
             // Cargando
@@ -292,13 +276,7 @@ private fun MateriaSelector(
     onSelect: (Long) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = stringResource(R.string.recs_subject_label),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(start = 2.dp)
-        )
+        SectionLabel(stringResource(R.string.recs_subject_label).lowercase().replaceFirstChar { it.titlecase() })
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(materias) { (nombre, id) ->
                 FilterChip(
@@ -364,7 +342,7 @@ private fun AnimatedRecomendacionCard(
 ) {
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        delay(index * 60L)
+        delay(minOf(index, 8) * 60L)
         visible = true
     }
     AnimatedVisibility(
@@ -596,35 +574,25 @@ private fun ErrorBanner(message: String, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun ApiKeyMissingBanner() {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.tertiaryContainer
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Icon(
-                Icons.Default.VpnKey, null,
-                tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                modifier = Modifier.size(20.dp)
+private fun ApiKeyMissingBanner(onOpenSettings: () -> Unit) {
+    SurfaceCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.VpnKey, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = stringResource(R.string.recs_key_needed),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
             )
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = stringResource(R.string.recs_key_needed),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
-                )
-                Text(
-                    text = stringResource(R.string.recs_key_setup_steps),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
-                )
-            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.recs_key_setup_steps),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        TextButton(onClick = onOpenSettings, modifier = Modifier.padding(top = 4.dp)) {
+            Text(stringResource(R.string.recs_go_settings))
         }
     }
 }

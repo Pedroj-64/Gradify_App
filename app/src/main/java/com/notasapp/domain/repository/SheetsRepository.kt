@@ -28,12 +28,4 @@ interface SheetsRepository {
         materia: Materia,
         userEmail: String
     ): NetworkResult<String>
-
-    /**
-     * Sincroniza todas las materias del usuario [userEmail] con Sheets.
-     * Se usa desde el [SheetsSyncWorker] para la sincronización periódica.
-     *
-     * @return [NetworkResult.Success] con la cantidad de materias sincronizadas.
-     */
-    suspend fun syncAllMaterias(userEmail: String): NetworkResult<Int>
 }

@@ -29,10 +29,20 @@ Gradify es mucho más que una simple calculadora de notas. Es un **ecosistema ac
 - 📈 **Visualizar estadísticas** de tu rendimiento académico con gráficos interactivos
 - 📅 **Programar exámenes** en un calendario inteligente con recordatorios
 - 🤖 **Recibir recomendaciones** de estudio personalizadas con Inteligencia Artificial
-- 💾 **Respaldar datos** en Google Sheets y exportar reportes en Excel y PDF
+- 💾 **Respaldar tus notas** en una carpeta que tú eliges (sobreviven aunque desinstales la app) y exportar reportes en Excel y PDF
 - 🎨 **Disfrutar una UI moderna** con Material Design 3 y tema dinámico
 
 **Dedicado con cariño a todos los estudiantes universitarios y especialmente a "miripili" 💜**
+
+---
+
+## 📲 Usar la app (sin compilar)
+
+1. Descarga el APK desde **Releases** e instálalo (permite "instalar apps de orígenes desconocidos" si Android lo pide).
+2. Abre Gradify y toca **Continuar sin cuenta**. No necesitas Google: todo se guarda en tu teléfono.
+3. **Respaldo recomendado:** en *Ajustes → Carpeta de respaldos automáticos* crea o elige una carpeta (por ejemplo «Gradify» dentro de Documentos). La app guarda ahí una copia al día; si cambias de teléfono, usa *Restaurar backup*.
+4. **Recomendaciones con IA (opcional):** consigue una clave gratis en [Google AI Studio](https://aistudio.google.com/app/apikey) y pégala en *Ajustes → Recomendaciones con IA*. Se guarda solo en tu teléfono.
+5. Al terminar el periodo, en *Inicio* elige el semestre y toca **Cerrar semestre**: sale de la lista pero sigue contando en tus estadísticas.
 
 ---
 
@@ -108,7 +118,7 @@ Gradify está construida con las tecnologías más modernas y robustas del ecosi
 ### Funcionalidades Avanzadas
 | Feature | Librería |
 |---------|----------|
-| **Inteligencia Artificial** | Google Gemini AI (Generative AI SDK) |
+| **Inteligencia Artificial** | Gemini / Groq / OpenRouter vía REST (+ backend proxy) |
 | **Exportación Excel** | [Apache POI](https://poi.apache.org/) - Generación de .xlsx |
 | **Exportación PDF** | Android PDF API nativa |
 | **Drag & Drop** | [sh.calvin.reorderable](https://github.com/Calvin-LL/Reorderable) |
@@ -264,6 +274,8 @@ OPENROUTER_API_KEY=
 
 > ⚠️ **Importante**: El archivo `local.properties` está en `.gitignore` y nunca debe subirse a GitHub.
 
+> 💡 **Build local**: usa JDK 17 o 21 (no 25). Necesitas `app/google-services.json` (ver `google-services.example.json`) y `sdk.dir` en `local.properties`. Las claves de IA de `local.properties` solo se incluyen en builds *debug*. En el APK público cada usuario pega su propia clave gratuita de Gemini en **Ajustes → Recomendaciones con IA**; el backend (`backend/`) es opcional.
+
 #### 5️⃣ Compilar y Ejecutar
 
 ```bash
@@ -410,7 +422,7 @@ Si encuentras un error, por favor abre un [Issue en GitHub](https://github.com/P
 
 ## 📱 Soporte y Contacto
 
-- **Email**: pj245668@gmail.com
+- **Email**: kelequel@gmail.com
 - **GitHub Issues**: [Abrir ticket](https://github.com/Pedroj-64/GradeApp-Android/issues)
 - **Documentación**: [Wiki del proyecto](https://github.com/Pedroj-64/GradeApp-Android/wiki)
 

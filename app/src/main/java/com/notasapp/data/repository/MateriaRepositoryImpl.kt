@@ -1,5 +1,10 @@
 package com.notasapp.data.repository
 
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.Dispatchers
+import com.notasapp.data.local.AppDatabase
+import androidx.room.withTransaction
 import com.notasapp.data.local.dao.ComponenteDao
 import com.notasapp.data.local.dao.MateriaDao
 import com.notasapp.data.local.dao.SubNotaDao
@@ -27,6 +32,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class MateriaRepositoryImpl @Inject constructor(
+    private val db: AppDatabase,
     private val materiaDao: MateriaDao,
     private val componenteDao: ComponenteDao,
     private val subNotaDao: SubNotaDao,
@@ -42,9 +48,10 @@ class MateriaRepositoryImpl @Inject constructor(
 
     override fun getMateriasByUsuario(usuarioId: String): Flow<List<Materia>> {
         // Carga componentes + sub-notas para que promedio se calcule correctamente en Home.
-        return materiaDao.getMateriasConComponentesByUsuario(usuarioId).map { relations ->
-            relations.map { it.toDomain() }
-        }
+        return materiaDao.getMateriasConComponentesByUsuario(usuarioId)
+            .map { relations -> relations.map { it.toDomain() } }
+            .distinctUntilChanged()          // una escritura que no cambia nada no re-dibuja la lista
+            .flowOn(Dispatchers.Default)     // el mapeo de todo el árbol fuera del hilo principal
     }
 
     override fun getMateriaConComponentes(materiaId: Long): Flow<Materia?> =
@@ -61,8 +68,8 @@ class MateriaRepositoryImpl @Inject constructor(
         materiaDao.touchUltimaModificacion(materia.id)
     }
 
-    override suspend fun deleteMateria(materiaId: Long) {
-        val entity = materiaDao.getMateriaByIdOnce(materiaId) ?: return
+    override suspend fun deleteMateria(materiaId: Long) = db.withTransaction {
+        val entity = materiaDao.getMateriaByIdOnce(materiaId) ?: return@withTransaction
         materiaDao.delete(entity)
     }
 
@@ -85,7 +92,7 @@ class MateriaRepositoryImpl @Inject constructor(
 
     // ── Sub-Notas ────────────────────────────────────────────────
 
-    override suspend fun insertSubNotas(subNotas: List<SubNota>) {
+    override suspend fun insertSubNotas(subNotas: List<SubNota>) = db.withTransaction {
         // Validar cada sub-nota individualmente
         subNotas.forEach { subNota ->
             require(subNota.porcentajeDelComponente > 0f) {
@@ -109,7 +116,7 @@ class MateriaRepositoryImpl @Inject constructor(
     }
 
     override suspend fun insertSubNota(subNota: SubNota): Long =
-        run {
+        db.withTransaction {
             require(subNota.porcentajeDelComponente > 0f) {
                 "El porcentaje de la sub-nota debe ser mayor a 0%."
             }
@@ -181,4 +188,20 @@ class MateriaRepositoryImpl @Inject constructor(
     override suspend fun updateNotas(materiaId: Long, notas: String?) {
         materiaDao.updateNotas(materiaId, notas)
     }
+
+    override suspend fun updateMateriaInfo(
+        materiaId: Long, nombre: String, periodo: String, profesor: String?, creditos: Int
+    ) = materiaDao.updateInfo(materiaId, nombre, periodo, profesor, creditos)
+
+    override suspend fun setPeriodoArchivado(usuarioId: String, periodo: String, archivada: Boolean) =
+        materiaDao.setPeriodoArchivado(usuarioId, periodo, archivada)
+
+    override suspend fun renameComponente(componenteId: Long, nombre: String) =
+        componenteDao.updateNombre(componenteId, nombre)
+
+    override suspend fun renameSubNota(subNotaId: Long, descripcion: String) =
+        subNotaDao.updateDescripcion(subNotaId, descripcion)
+
+    override suspend fun renameSubNotaDetalle(detalleId: Long, descripcion: String) =
+        subNotaDetailDao.updateDescripcion(detalleId, descripcion)
 }

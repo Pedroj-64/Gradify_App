@@ -1,5 +1,9 @@
 package com.notasapp.ui.settings
 
+import com.notasapp.R
+import com.notasapp.data.worker.AutoBackupWorker
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -39,7 +43,11 @@ data class SettingsUiState(
     val lastSyncMs:       Long?   = null,
     val showLogoutDialog: Boolean = false,
     val loggedOut:        Boolean = false,
-    val configuracionNota: ConfiguracionNota = ConfiguracionNota()
+    val configuracionNota: ConfiguracionNota = ConfiguracionNota(),
+    val geminiApiKey:     String  = "",
+    val dynamicColor:     Boolean = false,
+    val backupFolder:     String? = null,
+    val lastBackupMs:     Long?   = null
 )
 
 /**
@@ -65,6 +73,26 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             userPrefsRepository.lastSyncMs.collect { ms ->
                 _uiState.update { it.copy(lastSyncMs = ms) }
+            }
+        }
+        viewModelScope.launch {
+            userPrefsRepository.useDynamicColor.collect { on ->
+                _uiState.update { it.copy(dynamicColor = on) }
+            }
+        }
+        viewModelScope.launch {
+            userPrefsRepository.backupFolderUri.collect { uri ->
+                _uiState.update { it.copy(backupFolder = uri) }
+            }
+        }
+        viewModelScope.launch {
+            userPrefsRepository.lastBackupMs.collect { ms ->
+                _uiState.update { it.copy(lastBackupMs = ms) }
+            }
+        }
+        viewModelScope.launch {
+            userPrefsRepository.geminiApiKey.collect { key ->
+                _uiState.update { it.copy(geminiApiKey = key) }
             }
         }
         // Observar la configuración de redondeo
@@ -121,7 +149,8 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading      = false,
-                        successMessage = "$count materia${if (count != 1) "s" else ""} restaurada${if (count != 1) "s" else ""} exitosamente"
+                        successMessage = if (count == 0) context.getString(R.string.restore_nothing_new)
+                        else context.resources.getQuantityString(R.plurals.restore_done, count, count)
                     )
                 }
             } catch (e: Exception) {
@@ -146,6 +175,28 @@ class SettingsViewModel @Inject constructor(
     // ── Configuración de redondeo ─────────────────────────────────────────────
 
     /** Actualiza la configuración de redondeo de notas. */
+    /** Guarda la carpeta elegida y hace un primer respaldo de inmediato. */
+    fun setBackupFolder(uri: Uri) {
+        viewModelScope.launch {
+            userPrefsRepository.setBackupFolderUri(uri.toString())
+            respaldarAhora()
+        }
+    }
+
+    /** Ejecuta ya el respaldo automático (si hay carpeta elegida). */
+    fun respaldarAhora() {
+        WorkManager.getInstance(context).enqueue(OneTimeWorkRequestBuilder<AutoBackupWorker>().build())
+        _uiState.update { it.copy(successMessage = context.getString(R.string.backup_started)) }
+    }
+
+    fun setDynamicColor(on: Boolean) {
+        viewModelScope.launch { userPrefsRepository.setUseDynamicColor(on) }
+    }
+
+    fun saveGeminiApiKey(key: String) {
+        viewModelScope.launch { userPrefsRepository.setGeminiApiKey(key) }
+    }
+
     fun updateConfiguracionNota(config: ConfiguracionNota) {
         viewModelScope.launch {
             userPrefsRepository.setConfiguracionNota(config)
@@ -173,6 +224,7 @@ class SettingsViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, showLogoutDialog = false) }
             try {
                 userPrefsRepository.clearUserEmail()
+                userPrefsRepository.setLocalMode(false)
                 Timber.i("Sesión cerrada correctamente")
                 _uiState.update { it.copy(isLoading = false, loggedOut = true) }
             } catch (e: Exception) {

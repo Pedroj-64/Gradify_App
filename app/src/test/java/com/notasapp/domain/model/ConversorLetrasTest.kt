@@ -62,7 +62,7 @@ class ConversorLetrasTest {
     fun `display con letra`() {
         val display = ConversorLetras.displayConLetra(4.5f, 0f, 5f)
         assertTrue(display.contains("A"))
-        assertTrue(display.contains("4.50"))
+        assertTrue(display.contains("%.2f".format(4.5f))) // respeta el locale (4,50 en es)
     }
 
     @Test

@@ -1,5 +1,17 @@
 package com.notasapp.ui.settings
 
+import com.notasapp.utils.BackupFolder
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SegmentedButton
+import com.notasapp.ui.components.SurfaceCard
+import com.notasapp.ui.components.SectionLabel
+import com.notasapp.ui.components.ScreenHeader
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.material3.OutlinedTextField
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -49,7 +61,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -88,7 +100,7 @@ fun SettingsScreen(
     onLogout: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val uiState          = viewModel.uiState.collectAsState().value
+    val uiState          = viewModel.uiState.collectAsStateWithLifecycle().value
     val snackbarHostState = remember { SnackbarHostState() }
     val context          = LocalContext.current
 
@@ -101,6 +113,19 @@ fun SettingsScreen(
     val openFileLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri -> uri?.let { viewModel.importarBackup(it) } }
+
+    // Selector de carpeta para los respaldos automáticos (persistente aunque se desinstale la app)
+    val folderLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        uri?.let {
+            context.contentResolver.takePersistableUriPermission(
+                it,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+            viewModel.setBackupFolder(it)
+        }
+    }
 
     // Lanzar el share intent en cuanto esté disponible
     LaunchedEffect(uiState.shareIntent) {
@@ -118,19 +143,7 @@ fun SettingsScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.settings_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.btn_back))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
+        topBar = { ScreenHeader(title = stringResource(R.string.settings_title)) },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
@@ -139,12 +152,37 @@ fun SettingsScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(22.dp)
         ) {
             Spacer(Modifier.height(8.dp))
 
             // ── Sección: Datos y Backup ───────────────────────────────────────
             SettingsSection(title = stringResource(R.string.settings_data_backup)) {
+
+                SettingsActionCard(
+                    icon      = Icons.Default.Folder,
+                    title     = stringResource(R.string.backup_folder_title),
+                    subtitle  = uiState.backupFolder?.let { uri ->
+                        val name = BackupFolder.displayName(android.net.Uri.parse(uri))
+                        uiState.lastBackupMs?.let { ms ->
+                            stringResource(R.string.backup_folder_last, name, formatDate(ms))
+                        } ?: name
+                    } ?: stringResource(R.string.backup_folder_none),
+                    ctaLabel  = stringResource(R.string.backup_folder_choose),
+                    isLoading = false,
+                    onClick   = { folderLauncher.launch(null) }
+                )
+
+                if (uiState.backupFolder != null) {
+                    SettingsActionCard(
+                        icon      = Icons.Default.Backup,
+                        title     = stringResource(R.string.backup_now),
+                        subtitle  = stringResource(R.string.backup_now_subtitle),
+                        ctaLabel  = stringResource(R.string.backup_now),
+                        isLoading = false,
+                        onClick   = { viewModel.respaldarAhora() }
+                    )
+                }
 
                 SettingsActionCard(
                     icon      = Icons.Default.Backup,
@@ -169,7 +207,6 @@ fun SettingsScreen(
                 )
             }
 
-            HorizontalDivider()
 
             // ── Sección: Notas y Redondeo ──────────────────────────────────
             SettingsSection(title = stringResource(R.string.settings_notes_rounding)) {
@@ -179,38 +216,65 @@ fun SettingsScreen(
                 )
             }
 
-            HorizontalDivider()
+
+            // ── Sección: Apariencia (Material You solo existe desde Android 12) ──
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                SettingsSection(title = stringResource(R.string.settings_appearance)) {
+                  SurfaceCard {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.settings_dynamic_color), style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                stringResource(R.string.settings_dynamic_color_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        androidx.compose.material3.Switch(
+                            checked = uiState.dynamicColor,
+                            onCheckedChange = { viewModel.setDynamicColor(it) }
+                        )
+                    }
+                  }
+                }
+            }
+
+            // ── Sección: IA ───────────────────────────────────────────────────────
+            SettingsSection(title = stringResource(R.string.settings_ai)) {
+                SurfaceCard {
+                    AiKeyCard(
+                        currentKey = uiState.geminiApiKey,
+                        onSave = { viewModel.saveGeminiApiKey(it) }
+                    )
+                }
+            }
+
 
             // ── Sección: Idioma ───────────────────────────────────────────────────
             SettingsSection(title = stringResource(R.string.settings_language)) {
                 LanguageSelectorCard()
             }
 
-            HorizontalDivider()
             // ── Sección: Cuenta ───────────────────────────────────────────────────
             SettingsSection(title = stringResource(R.string.settings_account)) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors   = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f)
-                    )
-                ) {
-                    Row(
-                        modifier          = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                SurfaceCard(onClick = if (uiState.isLoading) null else ({ viewModel.showLogoutDialog() })) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector        = Icons.Default.Logout,
                             contentDescription = null,
                             tint               = MaterialTheme.colorScheme.error,
-                            modifier           = Modifier.size(28.dp)
+                            modifier           = Modifier.size(24.dp)
                         )
-                        Spacer(Modifier.width(12.dp))
+                        Spacer(Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text       = stringResource(R.string.settings_logout),
                                 style      = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.SemiBold,
+                                color      = MaterialTheme.colorScheme.error
                             )
                             Text(
                                 text  = stringResource(R.string.settings_back_to_login),
@@ -218,43 +282,17 @@ fun SettingsScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        Spacer(Modifier.width(8.dp))
                         if (uiState.isLoading) {
-                            CircularProgressIndicator(
-                                modifier    = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            OutlinedButton(
-                                onClick = { viewModel.showLogoutDialog() },
-                                colors  = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.error
-                                )
-                            ) {
-                                Text(stringResource(R.string.settings_exit))
-                            }
+                            CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
                         }
                     }
                 }
             }
-            HorizontalDivider()
             // ── Sección: Acerca de ────────────────────────────────────────────
             SettingsSection(title = stringResource(R.string.settings_about)) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors   = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
+                SurfaceCard {
+                    Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector        = Icons.Default.Info,
-                                contentDescription = null,
-                                tint               = MaterialTheme.colorScheme.primary,
-                                modifier           = Modifier.size(32.dp)
-                            )
-                            Spacer(Modifier.width(12.dp))
                             Column {
                                 Text(
                                     text       = stringResource(R.string.app_name),
@@ -274,12 +312,10 @@ fun SettingsScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(Modifier.height(12.dp))
-                        HorizontalDivider()
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(16.dp))
                         Text(
                             text       = stringResource(R.string.settings_developed_by),
-                            style      = MaterialTheme.typography.labelMedium,
+                            style      = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold,
                             color      = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -335,18 +371,48 @@ fun SettingsScreen(
 // ── Componentes internos ──────────────────────────────────────────────────────
 
 @Composable
+private fun AiKeyCard(currentKey: String, onSave: (String) -> Unit) {
+    var text by remember(currentKey) { mutableStateOf(currentKey) }
+    var visible by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            stringResource(R.string.settings_ai_desc),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it },
+            label = { Text(stringResource(R.string.settings_ai_key_label)) },
+            singleLine = true,
+            visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                TextButton(onClick = { visible = !visible }) {
+                    Text(stringResource(if (visible) R.string.settings_ai_hide else R.string.settings_ai_show))
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { onSave(text) }, enabled = text.trim() != currentKey) {
+                Text(stringResource(R.string.btn_save))
+            }
+            TextButton(onClick = { uriHandler.openUri("https://aistudio.google.com/app/apikey") }) {
+                Text(stringResource(R.string.settings_ai_get_key))
+            }
+        }
+    }
+}
+
+@Composable
 private fun SettingsSection(
     title:   String,
     content: @Composable () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text       = title,
-            style      = MaterialTheme.typography.labelLarge,
-            color      = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold,
-            modifier   = Modifier.padding(bottom = 2.dp)
-        )
+        SectionLabel(title)
         content()
     }
 }
@@ -361,23 +427,15 @@ private fun SettingsActionCard(
     onClick:   () -> Unit,
     modifier:  Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors   = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
-        Row(
-            modifier          = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    SurfaceCard(modifier = modifier, onClick = if (isLoading) null else onClick) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector        = icon,
-                contentDescription = null,
+                contentDescription = ctaLabel,
                 tint               = MaterialTheme.colorScheme.primary,
-                modifier           = Modifier.size(28.dp)
+                modifier           = Modifier.size(24.dp)
             )
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text  = title,
@@ -390,16 +448,8 @@ private fun SettingsActionCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Spacer(Modifier.width(8.dp))
             if (isLoading) {
-                CircularProgressIndicator(
-                    modifier    = Modifier.size(24.dp),
-                    strokeWidth = 2.dp
-                )
-            } else {
-                OutlinedButton(onClick = onClick) {
-                    Text(ctaLabel)
-                }
+                CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
             }
         }
     }
@@ -427,61 +477,26 @@ private fun LanguageSelectorCard(modifier: Modifier = Modifier) {
     val currentLocales = AppCompatDelegate.getApplicationLocales()
     val currentTag = if (currentLocales.isEmpty) "" else currentLocales.get(0)?.language ?: ""
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Language,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+    SingleChoiceSegmentedButtonRow(modifier = modifier.fillMaxWidth()) {
+        options.forEachIndexed { i, option ->
+            SegmentedButton(
+                selected = currentTag == option.tag,
+                onClick = {
+                    val locales = if (option.tag.isEmpty()) {
+                        LocaleListCompat.getEmptyLocaleList()
+                    } else {
+                        LocaleListCompat.forLanguageTags(option.tag)
+                    }
+                    AppCompatDelegate.setApplicationLocales(locales)
+                },
+                shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size),
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    activeBorderColor = MaterialTheme.colorScheme.primary
                 )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.settings_language),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            Spacer(Modifier.height(12.dp))
-
-            options.forEach { option ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            val locales = if (option.tag.isEmpty()) {
-                                LocaleListCompat.getEmptyLocaleList()
-                            } else {
-                                LocaleListCompat.forLanguageTags(option.tag)
-                            }
-                            AppCompatDelegate.setApplicationLocales(locales)
-                        }
-                        .padding(vertical = 4.dp)
-                ) {
-                    RadioButton(
-                        selected = currentTag == option.tag,
-                        onClick = {
-                            val locales = if (option.tag.isEmpty()) {
-                                LocaleListCompat.getEmptyLocaleList()
-                            } else {
-                                LocaleListCompat.forLanguageTags(option.tag)
-                            }
-                            AppCompatDelegate.setApplicationLocales(locales)
-                        }
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = option.label,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+            ) {
+                Text(option.label, maxLines = 1, style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -501,11 +516,12 @@ private fun RedondeoConfigCard(
     val context = LocalContext.current
     Card(
         modifier = modifier.fillMaxWidth(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(18.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.Tune,
@@ -529,15 +545,17 @@ private fun RedondeoConfigCard(
                 fontWeight = FontWeight.Medium
             )
             Spacer(Modifier.height(4.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(1, 2, 3).forEach { dec ->
-                    OutlinedButton(
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                listOf(1, 2, 3).forEachIndexed { i, dec ->
+                    SegmentedButton(
+                        selected = config.decimales == dec,
                         onClick = { onConfigChange(config.copy(decimales = dec)) },
-                        colors = if (config.decimales == dec)
-                            ButtonDefaults.outlinedButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            )
-                        else ButtonDefaults.outlinedButtonColors()
+                        shape = SegmentedButtonDefaults.itemShape(index = i, count = 3),
+                        colors = SegmentedButtonDefaults.colors(
+                            activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            activeBorderColor = MaterialTheme.colorScheme.primary
+                        )
                     ) {
                         Text("$dec")
                     }

@@ -7,6 +7,7 @@ import com.gradify.backend.service.GeminiProxyService
 import com.gradify.backend.service.PromptBuilder
 import io.github.bucket4j.Bandwidth
 import io.github.bucket4j.Bucket
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -15,9 +16,11 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Controlador REST que actúa como proxy entre la app Android y la API de Gemini.
@@ -34,13 +37,13 @@ class RecomendacionesController(
     private val geminiService: GeminiProxyService,
     private val promptBuilder: PromptBuilder,
     @Value("\${rate-limit.requests-per-minute:30}") private val rpm: Long,
-    @Value("\${rate-limit.burst-capacity:5}") private val burst: Long
+    @Value("\${rate-limit.burst-capacity:5}") private val burst: Long,
+    @Value("\${app.token:}") private val appToken: String
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
 
-    /** Rate limiter global. */
-    private val bucket: Bucket = Bucket.builder()
+    private fun newBucket(): Bucket = Bucket.builder()
         .addLimit(
             Bandwidth.builder()
                 .capacity(burst)
@@ -48,6 +51,14 @@ class RecomendacionesController(
                 .build()
         )
         .build()
+
+    /** Un bucket por IP. ponytail: se vacía al pasar de 10k IPs; usar Caffeine si el tráfico crece. */
+    private val buckets = ConcurrentHashMap<String, Bucket>()
+
+    private fun bucketFor(ip: String): Bucket {
+        if (buckets.size > 10_000) buckets.clear()
+        return buckets.computeIfAbsent(ip) { newBucket() }
+    }
 
     @GetMapping("/health")
     fun health(): ResponseEntity<Map<String, String>> =
@@ -61,11 +72,20 @@ class RecomendacionesController(
      */
     @PostMapping("/recomendaciones")
     fun generarRecomendaciones(
-        @Valid @RequestBody request: RecomendacionesRequest
+        @Valid @RequestBody request: RecomendacionesRequest,
+        @RequestHeader("X-Gradify-Token", required = false) token: String?,
+        http: HttpServletRequest
     ): ResponseEntity<Any> {
 
-        // Rate limiting
-        if (!bucket.tryConsume(1)) {
+        // Token de app (si está configurado): evita que cualquiera gaste la cuota de Gemini
+        if (appToken.isNotBlank() && token != appToken) {
+            return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ErrorResponse("UNAUTHORIZED", "Token de aplicación inválido.", retryable = false))
+        }
+
+        // Rate limiting por IP
+        if (!bucketFor(http.remoteAddr).tryConsume(1)) {
             log.warn("Rate limit excedido")
             return ResponseEntity
                 .status(HttpStatus.TOO_MANY_REQUESTS)

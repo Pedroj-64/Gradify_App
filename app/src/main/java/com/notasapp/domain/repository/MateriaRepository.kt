@@ -72,4 +72,16 @@ interface MateriaRepository {
 
     /** Actualiza las notas personales de una materia. */
     suspend fun updateNotas(materiaId: Long, notas: String?)
+
+    /** Edita nombre, periodo, profesor y créditos sin tocar fechas de creación ni notas. */
+    suspend fun updateMateriaInfo(materiaId: Long, nombre: String, periodo: String, profesor: String?, creditos: Int)
+
+    /** Cierra o reabre un semestre completo (todas las materias de ese periodo). */
+    suspend fun setPeriodoArchivado(usuarioId: String, periodo: String, archivada: Boolean)
+
+    suspend fun renameComponente(componenteId: Long, nombre: String)
+
+    suspend fun renameSubNota(subNotaId: Long, descripcion: String)
+
+    suspend fun renameSubNotaDetalle(detalleId: Long, descripcion: String)
 }

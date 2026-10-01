@@ -1,5 +1,8 @@
 package com.notasapp.ui.onboarding
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -110,8 +113,10 @@ fun OnboardingScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.Start
     ) {
         // ── Botón saltar ────────────────────────────────────────
         Row(
@@ -143,14 +148,14 @@ fun OnboardingScreen(
         ) { pageIndex ->
             val p = pages[pageIndex]
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.Start,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 // Icono grande
                 Box(
                     modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
+                        .size(96.dp)
+                        .clip(RoundedCornerShape(30.dp))
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
@@ -158,18 +163,18 @@ fun OnboardingScreen(
                         imageVector = p.icon,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(60.dp)
+                        modifier = Modifier.size(48.dp)
                     )
                 }
 
-                Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(36.dp))
 
                 // Título
                 Text(
                     text = p.title,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.headlineLarge.copy(fontSize = 34.sp, lineHeight = 40.sp),
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Start,
                     color = MaterialTheme.colorScheme.onBackground
                 )
 
@@ -179,9 +184,8 @@ fun OnboardingScreen(
                 Text(
                     text = p.description,
                     style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    textAlign = TextAlign.Start,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Spacer(Modifier.height(12.dp))
@@ -190,26 +194,25 @@ fun OnboardingScreen(
                 Text(
                     text = p.highlight,
                     style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
+                    textAlign = TextAlign.Start,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 24.dp)
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
 
         Spacer(Modifier.weight(1f))
 
-        // ── Indicadores de página ───────────────────────────────
+        // ── Indicadores de página (barras) ──────────────────────
         Row(
-            horizontalArrangement = Arrangement.Center,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.padding(vertical = 24.dp)
         ) {
             pages.forEachIndexed { index, _ ->
                 Box(
                     modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .size(if (index == currentPage) 12.dp else 8.dp)
+                        .width(if (index == currentPage) 28.dp else 10.dp)
+                        .height(6.dp)
                         .clip(CircleShape)
                         .background(
                             if (index == currentPage)
@@ -251,7 +254,7 @@ fun OnboardingScreen(
                 )
             ) {
                 Text(
-                    text = if (isLastPage) "¡Empezar!" else "Siguiente",
+                    text = if (isLastPage) "Empezar" else "Siguiente",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )

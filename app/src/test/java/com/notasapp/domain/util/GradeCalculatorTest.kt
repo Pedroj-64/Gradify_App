@@ -57,8 +57,8 @@ class GradeCalculatorTest {
     }
 
     @Test
-    fun `displayOrDash con 0 retorna --`() {
-        assertEquals("--", GradeCalculator.displayOrDash(0f))
+    fun `displayOrDash con 0 muestra el 0 real`() {
+        assertNotEquals("--", GradeCalculator.displayOrDash(0f))
     }
 
     @Test
@@ -152,5 +152,12 @@ class GradeCalculatorTest {
     @Test
     fun `promedio ponderado creditos lista vacia retorna null`() {
         assertNull(GradeCalculator.promedioPonderadoCreditos(emptyList()))
+    }
+
+    @Test
+    fun `notaNecesaria respeta una escala con minimo distinto de cero`() {
+        // Escala 1-7, aporte 3.0, queda 50 %, meta 5.0 -> necesita 4.0
+        val r = GradeCalculator.notaNecesaria(3.0f, 0.5f, 5.0f, 7.0f, escalaMin = 1.0f)
+        assertEquals(4.0f, r!!, 0.01f)
     }
 }

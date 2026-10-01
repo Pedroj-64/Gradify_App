@@ -23,7 +23,7 @@
     <string name="nav_settings">Ajustes</string>
 
     <!-- Home -->
-    <string name="home_title">Mis Materias</string>
+    <string name="home_title">Mis materias</string>
     <string name="home_empty">Aún no tienes materias</string>
     <string name="home_empty_hint">Toca el botón + para agregar tu primera materia</string>
     <string name="home_fab_add">Nueva materia</string>
@@ -226,7 +226,7 @@
     <string name="gcal_import_login_required">Debes iniciar sesión para importar de Google Calendar</string>
 
     <!-- Configuración -->
-    <string name="settings_title">Configuración</string>
+    <string name="settings_title">Ajustes</string>
     <string name="settings_data_backup">Datos y Backup</string>
     <string name="settings_export_backup">Exportar backup</string>
     <string name="settings_restore_backup">Restaurar backup</string>
@@ -237,7 +237,7 @@
     <string name="settings_about">Acerca de</string>
     <string name="settings_version">Versión %1$s</string>
     <string name="settings_language">Idioma</string>
-    <string name="settings_language_system">Idioma del sistema</string>
+    <string name="settings_language_system">Sistema</string>
     <string name="settings_language_es">Español</string>
     <string name="settings_language_en">English</string>
     <string name="settings_export_subtitle">Guarda todas tus notas en un archivo JSON</string>
@@ -281,9 +281,8 @@ Dedicado a miripili &lt;3</string>
     <string name="recs_will_generate">Gemini generará recursos personalizados para ti</string>
     <string name="recs_no_subjects">Aún no tienes materias</string>
     <string name="recs_no_subjects_hint">Agrega tu primera materia y vuelve aquí para obtener recomendaciones personalizadas</string>
-    <string name="recs_key_setup_steps">1. Obtén tu clave gratis en aistudio.google.com/app/apikey
-2. Agrega en local.properties: GEMINI_API_KEY=tu_clave
-3. Recompila la app</string>
+    <string name="recs_key_setup_steps">Pega tu clave gratuita de Gemini en Ajustes → Recomendaciones con IA.
+La consigues en aistudio.google.com/app/apikey</string>
 
     <string name="detail_elements_of">Elementos de «%1$s»</string>
     <string name="detail_example_first_attempt">Ej: Primer intento</string>
@@ -337,7 +336,7 @@ Dedicado a miripili &lt;3</string>
     <string name="onboard_start">¡Empezar!</string>
 
     <!-- Estadísticas -->
-    <string name="stats_title">Estadísticas del semestre</string>
+    <string name="stats_title">Estadísticas</string>
     <string name="stats_back">Volver</string>
     <string name="stats_best">Mejor rendimiento</string>
     <string name="stats_needs_attention">Necesita atención</string>
@@ -385,4 +384,55 @@ Dedicado a miripili &lt;3</string>
     <string name="notes_placeholder">Escribe tus notas aquí…</string>
     <string name="notes_hint">Guarda información importante: temas de examen, horarios de tutoría, etc.</string>
 
+    <string name="home_deleted">Materia eliminada</string>
+    <string name="btn_undo">Deshacer</string>
+    <string name="settings_ai">Recomendaciones con IA</string>
+    <string name="settings_ai_desc">Las recomendaciones usan Gemini. Pega tu propia clave gratuita (se guarda solo en este teléfono).</string>
+    <string name="settings_ai_key_label">Clave de API de Gemini</string>
+    <string name="settings_ai_show">Mostrar</string>
+    <string name="settings_ai_hide">Ocultar</string>
+    <string name="settings_ai_get_key">Obtener clave gratis</string>
+    <string name="rename_title">Renombrar</string>
+    <string name="rename_action">Renombrar</string>
+    <string name="edit_subject_title">Editar materia</string>
+    <string name="edit_subject_name">Nombre</string>
+    <string name="edit_subject_period">Periodo</string>
+    <string name="edit_subject_teacher">Profesor (opcional)</string>
+    <string name="edit_subject_credits">Créditos</string>
+    <string name="settings_appearance">Apariencia</string>
+    <string name="settings_dynamic_color">Colores del sistema (Material You)</string>
+    <string name="settings_dynamic_color_desc">Usa los colores de tu fondo de pantalla en lugar de la paleta de Gradify.</string>
+    <string name="login_continue_offline">Continuar sin cuenta</string>
+    <string name="home_count">%1$d materias</string>
+    <string name="home_overall_average">Promedio general</string>
+    <string name="home_n_at_risk">%1$d en riesgo</string>
+    <string name="home_all_good">Todo en orden</string>
+    <string name="home_n_pending">%1$d sin notas</string>
+    <string name="more_options">Más opciones</string>
+    <string name="detail_split">Dividir en partes</string>
+    <string name="stats_subtitle">Resumen de tu semestre</string>
+    <string name="stats_subjects_label">materias</string>
+    <string name="stats_weighted">ponderado</string>
+    <string name="stats_credits">créditos aprobados</string>
+    <string name="recs_go_settings">Ir a Ajustes</string>
+    <string name="login_tagline">Tus notas, claras y en tu teléfono.</string>
+    <string name="login_privacy">Todo se guarda en tu dispositivo. Inicia sesión con Google solo si quieres subir tus exportaciones a Drive.</string>
+    <string name="backup_folder_title">Carpeta de respaldos automáticos</string>
+    <string name="backup_folder_none">Crea o elige una carpeta propia (p. ej. «Gradify» dentro de Documentos) para que tus notas sobrevivan aunque desinstales la app</string>
+    <string name="backup_folder_last">%1$s · último: %2$s</string>
+    <string name="backup_folder_choose">Elegir carpeta</string>
+    <string name="backup_now">Respaldar ahora</string>
+    <string name="backup_now_subtitle">Guarda una copia en la carpeta elegida</string>
+    <string name="backup_started">Respaldo en curso…</string>
+    <string name="restore_nothing_new">No hay materias nuevas: ya estaban en la app</string>
+    <plurals name="restore_done">
+        <item quantity="one">%d materia restaurada</item>
+        <item quantity="other">%d materias restauradas</item>
+    </plurals>
+    <string name="grade_field_desc">Nota de %1$s</string>
+    <string name="grade_out_of_range">Nota fuera del rango de la escala</string>
+    <string name="home_archived">Archivados</string>
+    <string name="home_close_semester">Cerrar semestre %1$s</string>
+    <string name="home_reopen_semester">Reabrir semestre %1$s</string>
+    <string name="home_all_closed">Todos tus semestres están cerrados. Toca «Archivados» para verlos o crea una materia nueva.</string>
 </resources>

@@ -2,7 +2,10 @@ package com.notasapp.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
+import com.notasapp.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
@@ -12,7 +15,7 @@ import androidx.compose.ui.unit.sp
  * Se usa la fuente predeterminada del sistema para mejor rendimiento
  * y coherencia con el dispositivo del usuario.
  */
-val NotasTypography = Typography(
+private val BaseTypography = Typography(
     // Títulos grandes (ej: nombre de la materia en detalle)
     headlineLarge = TextStyle(
         fontFamily = FontFamily.Default,
@@ -49,14 +52,14 @@ val NotasTypography = Typography(
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
+        letterSpacing = 0.1.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
         lineHeight = 20.sp,
-        letterSpacing = 0.25.sp
+        letterSpacing = 0.1.sp
     ),
     // Etiquetas (ej: badge de porcentaje)
     labelSmall = TextStyle(
@@ -64,13 +67,46 @@ val NotasTypography = Typography(
         fontWeight = FontWeight.Medium,
         fontSize = 11.sp,
         lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        letterSpacing = 0.1.sp
     ),
     labelMedium = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
         lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        letterSpacing = 0.1.sp
     )
 )
+
+/** Plus Jakarta Sans (OFL), fuente variable: un solo archivo para todos los pesos. */
+@OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
+val GradifyFontFamily = FontFamily(
+    listOf(400, 500, 600, 700, 800).map { w ->
+        Font(
+            R.font.plus_jakarta_sans,
+            weight = FontWeight(w),
+            variationSettings = FontVariation.Settings(FontVariation.weight(w))
+        )
+    }
+)
+
+/** Tipografía de Gradify: la base Material 3 completa con la fuente de la marca. */
+val NotasTypography: Typography = with(BaseTypography) {
+    copy(
+        displayLarge = displayLarge.copy(fontFamily = GradifyFontFamily),
+        displayMedium = displayMedium.copy(fontFamily = GradifyFontFamily),
+        displaySmall = displaySmall.copy(fontFamily = GradifyFontFamily),
+        headlineLarge = headlineLarge.copy(fontFamily = GradifyFontFamily),
+        headlineMedium = headlineMedium.copy(fontFamily = GradifyFontFamily),
+        headlineSmall = headlineSmall.copy(fontFamily = GradifyFontFamily),
+        titleLarge = titleLarge.copy(fontFamily = GradifyFontFamily),
+        titleMedium = titleMedium.copy(fontFamily = GradifyFontFamily),
+        titleSmall = titleSmall.copy(fontFamily = GradifyFontFamily),
+        bodyLarge = bodyLarge.copy(fontFamily = GradifyFontFamily),
+        bodyMedium = bodyMedium.copy(fontFamily = GradifyFontFamily),
+        bodySmall = bodySmall.copy(fontFamily = GradifyFontFamily),
+        labelLarge = labelLarge.copy(fontFamily = GradifyFontFamily),
+        labelMedium = labelMedium.copy(fontFamily = GradifyFontFamily),
+        labelSmall = labelSmall.copy(fontFamily = GradifyFontFamily)
+    )
+}

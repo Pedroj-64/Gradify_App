@@ -86,4 +86,15 @@ interface MateriaDao {
     @Transaction
     @Query("SELECT * FROM materias WHERE usuarioId = :usuarioId ORDER BY periodo DESC, nombre ASC")
     suspend fun getMateriasConComponentesOnce(usuarioId: String): List<MateriaConComponentes>
+
+    @Query("UPDATE materias SET nombre = :nombre, periodo = :periodo, profesor = :profesor, creditos = :creditos, ultimaModificacionMs = :ts WHERE id = :id")
+    suspend fun updateInfo(id: Long, nombre: String, periodo: String, profesor: String?, creditos: Int, ts: Long = System.currentTimeMillis())
+
+    /** Pasa las materias de un usuario a otro (migrar datos del modo local a una cuenta Google). */
+    @Query("UPDATE materias SET usuarioId = :nuevo WHERE usuarioId = :viejo")
+    suspend fun reasignarUsuario(viejo: String, nuevo: String)
+
+    /** Cierra (o reabre) todas las materias de un periodo. */
+    @Query("UPDATE materias SET archivada = :archivada, ultimaModificacionMs = :ts WHERE usuarioId = :usuarioId AND periodo = :periodo")
+    suspend fun setPeriodoArchivado(usuarioId: String, periodo: String, archivada: Boolean, ts: Long = System.currentTimeMillis())
 }
