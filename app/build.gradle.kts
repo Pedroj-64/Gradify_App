@@ -172,18 +172,9 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
+    implementation(libs.play.services.auth)   // Authorization API (token de Drive)
 
-    // Google Drive API
-    implementation(libs.google.api.services.drive) {
-        exclude(group = "org.apache.httpcomponents")
-    }
-    implementation(libs.google.api.services.calendar) {
-        exclude(group = "org.apache.httpcomponents")
-    }
-    implementation(libs.google.api.client.android) {
-        exclude(group = "org.apache.httpcomponents")
-    }
-
+    // Drive se llama por REST con el token de la Authorization API: no hacen falta las librerías google-api-*.
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)

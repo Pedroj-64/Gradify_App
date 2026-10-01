@@ -1,5 +1,6 @@
 package com.notasapp.ui.calendar
 
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.notasapp.ui.components.MenuAction
 import com.notasapp.ui.components.RowMenu
 import com.notasapp.ui.components.ScreenHeader
@@ -112,16 +113,14 @@ fun CalendarScreen(
     val formState by viewModel.formState.collectAsStateWithLifecycle()
     val materias by viewModel.materias.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val calendarAuthLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        viewModel.onGoogleCalendarAuthResult(result.resultCode == Activity.RESULT_OK)
-    }
-
-    LaunchedEffect(uiState.googleCalendarRecoveryIntent) {
-        val intent = uiState.googleCalendarRecoveryIntent ?: return@LaunchedEffect
-        viewModel.onGoogleCalendarRecoveryIntentConsumed()
-        calendarAuthLauncher.launch(intent)
+    // Importar .ics: primero se elige la materia (diálogo) y luego el archivo (selector del sistema)
+    var materiaParaImportar by rememberSaveable { mutableStateOf<Long?>(null) }
+    val icsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        val materiaId = materiaParaImportar
+        materiaParaImportar = null
+        if (uri != null && materiaId != null) viewModel.importIcs(uri, materiaId)
     }
 
     LaunchedEffect(uiState.successMessage, uiState.error) {
@@ -149,11 +148,11 @@ fun CalendarScreen(
             // ── Header: mes + navegación ────────────────────────────────
             MonthHeader(
                 currentMonth = uiState.currentMonth,
-                importing = uiState.isImportingGoogleCalendar,
+                importing = uiState.isImporting,
                 onPrevious = viewModel::goToPreviousMonth,
                 onNext = viewModel::goToNextMonth,
                 onToday = viewModel::goToToday,
-                onImport = viewModel::showGoogleCalendarDialog
+                onImport = viewModel::showImportDialog
             )
 
             // ── Grid del calendario ─────────────────────────────────────
@@ -204,11 +203,14 @@ fun CalendarScreen(
     }
 
     // ── Diálogo de importación de Google Calendar ──────────────────
-    if (uiState.showGoogleCalendarDialog) {
-        GoogleCalendarImportDialog(
+    if (uiState.showImportDialog) {
+        ImportIcsDialog(
             materias = materias,
-            onImport = { materiaId -> viewModel.importFromGoogleCalendar(materiaId) },
-            onDismiss = viewModel::dismissGoogleCalendarDialog
+            onPickFile = { materiaId ->
+                materiaParaImportar = materiaId
+                icsLauncher.launch(arrayOf("text/calendar", "application/ics", "text/plain", "application/octet-stream"))
+            },
+            onDismiss = viewModel::dismissImportDialog
         )
     }
 }
@@ -770,14 +772,14 @@ private fun EventFormDialog(
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-//  Google Calendar Import Dialog
+//  Importar calendario (.ics)
 // ═════════════════════════════════════════════════════════════════════════════
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GoogleCalendarImportDialog(
+private fun ImportIcsDialog(
     materias: List<Materia>,
-    onImport: (Long) -> Unit,
+    onPickFile: (Long) -> Unit,
     onDismiss: () -> Unit
 ) {
     var selectedMateriaId by remember { mutableStateOf(materias.firstOrNull()?.id) }
@@ -830,7 +832,7 @@ private fun GoogleCalendarImportDialog(
         },
         confirmButton = {
             Button(
-                onClick = { selectedMateriaId?.let { onImport(it) } },
+                onClick = { selectedMateriaId?.let { onPickFile(it) } },
                 enabled = selectedMateriaId != null
             ) {
                 Text(stringResource(R.string.gcal_import_button))

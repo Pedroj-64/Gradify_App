@@ -197,7 +197,7 @@
     <string name="calendar_1h_plus">+1h</string>
     <string name="calendar_1h_minus">-1h</string>
     <string name="calendar_n_min_before">%1$d min before</string>
-    <string name="calendar_import_gcal">Import Google Calendar</string>
+    <string name="calendar_import_gcal">Import calendar (.ics)</string>
     <string name="calendar_day_mon">Mon</string>
     <string name="calendar_day_tue">Tue</string>
     <string name="calendar_day_wed">Wed</string>
@@ -207,10 +207,10 @@
     <string name="calendar_day_sun">Sun</string>
 
     <!-- Google Calendar -->
-    <string name="gcal_import_title">Import Google Calendar</string>
-    <string name="gcal_import_description">Import events from the next 90 days of your Google Calendar.</string>
-    <string name="gcal_import_select_materia">Select the subject to associate them with:</string>
-    <string name="gcal_import_button">Import</string>
+    <string name="gcal_import_title">Import calendar</string>
+    <string name="gcal_import_description">Pick an .ics file (Google Calendar, Outlook, Apple or your university calendar). Future events are imported; repeating ones are skipped.</string>
+    <string name="gcal_import_select_materia">Subject the events will belong to</string>
+    <string name="gcal_import_button">Choose file</string>
     <string name="gcal_import_success">%1$d events imported from Google Calendar</string>
     <string name="gcal_import_login_required">You must sign in to import from Google Calendar</string>
 
@@ -424,4 +424,7 @@ Get it at aistudio.google.com/app/apikey</string>
     <string name="home_close_semester">Close semester %1$s</string>
     <string name="home_reopen_semester">Reopen semester %1$s</string>
     <string name="home_all_closed">All your semesters are closed. Tap “Archived” to see them or add a new subject.</string>
+    <string name="ics_result">%1$d events imported · %2$d already there · %3$d recurring skipped · %4$d past skipped</string>
+    <string name="ics_empty">No events found in that file</string>
+    <string name="ics_error">Could not read the file. Is it a valid .ics?</string>
 </resources>

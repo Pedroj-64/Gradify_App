@@ -7,7 +7,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
+import com.notasapp.data.remote.drive.DriveConsentRequiredException
 import com.notasapp.data.local.UserPreferencesRepository
 import com.notasapp.data.remote.NetworkResult
 import com.notasapp.domain.repository.MateriaRepository
@@ -270,12 +270,12 @@ class ExportViewModel @Inject constructor(
                     }
 
                     is NetworkResult.Error -> {
-                        val recoverable = (result.cause as? UserRecoverableAuthIOException)
+                        val recoverable = (result.cause as? DriveConsentRequiredException)
                         if (result.needsUserRecovery && recoverable != null) {
                             _uiState.update {
                                 it.copy(
                                     isExporting = false,
-                                    driveRecoveryIntent = recoverable.intent,
+                                    driveConsent = recoverable.pendingIntent,
                                     pendingDriveRetry = true
                                 )
                             }
@@ -308,7 +308,7 @@ class ExportViewModel @Inject constructor(
     }
 
     fun onDriveRecoveryIntentConsumed() {
-        _uiState.update { it.copy(driveRecoveryIntent = null) }
+        _uiState.update { it.copy(driveConsent = null) }
     }
 
     fun onDriveAuthResult(granted: Boolean) {
@@ -316,7 +316,7 @@ class ExportViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 pendingDriveRetry = false,
-                driveRecoveryIntent = null
+                driveConsent = null
             )
         }
 
@@ -338,7 +338,7 @@ data class ExportUiState(
     val exportedFileUri: Uri? = null,
     val exportError: String? = null,
     val driveWebLink: String? = null,
-    val driveRecoveryIntent: Intent? = null,
+    val driveConsent: android.app.PendingIntent? = null,
     val pendingDriveRetry: Boolean = false,
     /** Nombre de la materia cargado. */
     val materiaNombre: String? = null,

@@ -44,5 +44,8 @@ node_modules/
 # Kotlin sessions
 .kotlin/
 
-# graphify
+# graphify (grafo de conocimiento generado: pesado, regenerable y dispara falsos positivos de secretos)
 graphify-out/
+**/graphify-out/
+.graphify*
+graphify.log

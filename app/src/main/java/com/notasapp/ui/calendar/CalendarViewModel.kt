@@ -1,14 +1,17 @@
 package com.notasapp.ui.calendar
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import com.notasapp.utils.IcsParser
+import com.notasapp.R
+import android.net.Uri
 import android.content.Intent
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.notasapp.data.local.UserPreferencesRepository
 import com.notasapp.data.local.dao.UsuarioDao
 import com.notasapp.data.receiver.ExamAlarmScheduler
-import com.notasapp.data.remote.calendar.GoogleCalendarService
 import com.notasapp.domain.model.ExamenEvent
 import com.notasapp.domain.model.Materia
 import com.notasapp.domain.model.TipoEvento
@@ -50,10 +53,8 @@ data class CalendarUiState(
     val showEditDialog: Boolean = false,
     val editingEvent: ExamenEvent? = null,
     val showNotificationPermissionFlow: Boolean = false,
-    val isImportingGoogleCalendar: Boolean = false,
-    val showGoogleCalendarDialog: Boolean = false,
-    val googleCalendarRecoveryIntent: Intent? = null,
-    val pendingImportMateriaId: Long? = null,
+    val isImporting: Boolean = false,
+    val showImportDialog: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null
 )
@@ -84,7 +85,6 @@ class CalendarViewModel @Inject constructor(
     private val materiaRepository: MateriaRepository,
     private val usuarioDao: UsuarioDao,
     private val userPrefsRepository: UserPreferencesRepository,
-    private val googleCalendarService: GoogleCalendarService,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -329,99 +329,73 @@ class CalendarViewModel @Inject constructor(
         _uiState.update { it.copy(error = null, successMessage = null) }
     }
 
-    // ── Google Calendar import ─────────────────────────────────────
+    // ── Importar calendario (.ics) ─────────────────────────────────
 
-    fun showGoogleCalendarDialog() {
-        _uiState.update { it.copy(showGoogleCalendarDialog = true) }
+    fun showImportDialog() {
+        _uiState.update { it.copy(showImportDialog = true) }
     }
 
-    fun dismissGoogleCalendarDialog() {
-        _uiState.update { it.copy(showGoogleCalendarDialog = false) }
+    fun dismissImportDialog() {
+        _uiState.update { it.copy(showImportDialog = false) }
     }
 
     /**
-     * Importa eventos desde Google Calendar y los guarda como eventos locales.
-     * @param materiaId Materia a la cual asociar los eventos importados.
+     * Lee un archivo .ics y guarda sus eventos futuros en [materiaId]. Sin cuenta ni permisos de Google:
+     * sirve con archivos de Google Calendar, Outlook, Apple o el calendario de la universidad.
      */
-    fun importFromGoogleCalendar(materiaId: Long) {
+    fun importIcs(uri: Uri, materiaId: Long) {
         viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isImportingGoogleCalendar = true,
-                    showGoogleCalendarDialog = false,
-                    googleCalendarRecoveryIntent = null,
-                    pendingImportMateriaId = materiaId,
-                    error = null
-                )
-            }
-
+            _uiState.update { it.copy(isImporting = true, showImportDialog = false, error = null) }
             try {
-                val userEmail = userPrefsRepository.userEmail.first()
-                if (userEmail.isNullOrBlank()) {
-                    _uiState.update {
-                        it.copy(
-                            isImportingGoogleCalendar = false,
-                            error = "Debes iniciar sesión para importar de Google Calendar"
+                val texto = withContext(Dispatchers.IO) { leerTexto(uri) }
+                val resultado = IcsParser.parse(texto)
+
+                // No duplicar si el mismo archivo se importa dos veces.
+                val existentes = calendarRepository.getEventsByMateria(materiaId).first()
+                    .map { it.titulo.trim().lowercase() to it.fechaEpochMs }.toSet()
+                var importados = 0
+                var yaEstaban = 0
+                for (e in resultado.eventos) {
+                    if ((e.titulo.trim().lowercase() to e.inicioEpochMs) in existentes) { yaEstaban++; continue }
+                    calendarRepository.saveEvent(
+                        ExamenEvent(
+                            materiaId = materiaId,
+                            titulo = e.titulo,
+                            descripcion = e.descripcion,
+                            tipoEvento = e.tipo,
+                            fechaEpochMs = e.inicioEpochMs,
+                            recordatorioMinutos = 60
                         )
-                    }
-                    return@launch
-                }
-
-                val events = googleCalendarService.fetchUpcomingEvents(
-                    userEmail = userEmail,
-                    materiaId = materiaId
-                )
-
-                var imported = 0
-                for (event in events) {
-                    calendarRepository.saveEvent(event)
-                    imported++
-                }
-
-                _uiState.update {
-                    it.copy(
-                        isImportingGoogleCalendar = false,
-                        pendingImportMateriaId = null,
-                        successMessage = "$imported eventos importados de Google Calendar"
                     )
+                    importados++
                 }
-                Timber.i("Google Calendar: $imported eventos importados")
-            } catch (e: UserRecoverableAuthIOException) {
-                Timber.w(e, "Google Calendar requiere consentimiento OAuth")
-                _uiState.update {
-                    it.copy(
-                        isImportingGoogleCalendar = false,
-                        googleCalendarRecoveryIntent = e.intent,
-                        error = null
-                    )
-                }
+
+                val mensaje = if (resultado.eventos.isEmpty() && resultado.recurrentes == 0 && resultado.pasados == 0)
+                    appContext.getString(R.string.ics_empty)
+                else
+                    appContext.getString(R.string.ics_result, importados, yaEstaban, resultado.recurrentes, resultado.pasados)
+                _uiState.update { it.copy(isImporting = false, successMessage = mensaje) }
+                Timber.i("ICS: $importados importados, $yaEstaban repetidos, ${resultado.recurrentes} recurrentes, ${resultado.pasados} pasados")
             } catch (e: Exception) {
-                Timber.e(e, "Error al importar de Google Calendar")
-                _uiState.update {
-                    it.copy(
-                        isImportingGoogleCalendar = false,
-                        error = "[${e.javaClass.simpleName}] ${e.message}"
-                    )
-                }
+                Timber.e(e, "Error al importar .ics")
+                _uiState.update { it.copy(isImporting = false, error = appContext.getString(R.string.ics_error)) }
             }
         }
     }
 
-    fun onGoogleCalendarRecoveryIntentConsumed() {
-        _uiState.update { it.copy(googleCalendarRecoveryIntent = null) }
-    }
-
-    fun onGoogleCalendarAuthResult(granted: Boolean) {
-        val materiaId = _uiState.value.pendingImportMateriaId ?: return
-        if (granted) {
-            importFromGoogleCalendar(materiaId)
-        } else {
-            _uiState.update {
-                it.copy(
-                    pendingImportMateriaId = null,
-                    error = "No se concedieron permisos de Google Calendar"
-                )
+    private fun leerTexto(uri: Uri): String {
+        val max = 2 * 1024 * 1024   // 2 MB: un calendario normal pesa mucho menos
+        val bytes = appContext.contentResolver.openInputStream(uri)?.use { input ->
+            val out = java.io.ByteArrayOutputStream()
+            val buf = ByteArray(8 * 1024)
+            while (true) {
+                val n = input.read(buf)
+                if (n < 0) break
+                out.write(buf, 0, n)
+                check(out.size() <= max) { "Archivo demasiado grande" }
             }
-        }
+            out.toByteArray()
+        } ?: error("No se pudo leer el archivo")
+        return String(bytes, Charsets.UTF_8)
     }
 }

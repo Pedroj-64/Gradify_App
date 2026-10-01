@@ -14,13 +14,17 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). C
 - Deshacer al borrar una materia.
 - Clave de Gemini propia en Ajustes (se guarda solo en el teléfono) y colores del sistema (Material You) opcionales.
 - Los widgets se actualizan al guardar una nota.
+- **Importar calendario (.ics):** trae los eventos futuros de Google Calendar, Outlook, Apple o del calendario de tu universidad a una materia, sin cuenta ni permisos. Los eventos que se repiten se omiten y importar dos veces no duplica.
+- Inicio de sesión con Google (opcional) para subir tus exportaciones a Drive.
 
 ### Cambiado
+- La subida a Drive usa la API de autorización actual de Google; la app es más liviana (APK de ~3 MB).
 - Rediseño completo de la interfaz (modo claro y oscuro) con tipografía Plus Jakarta Sans.
 - Restaurar un backup dos veces ya no duplica materias; la importación es todo o nada.
 - El respaldo incluye metas, notas, semestres cerrados y eventos del calendario.
 
 ### Corregido
+- Subir a Drive fallaba con «the name must not be empty: null».
 - Cierre de la app al tocar «Iniciar sesión con Google» sin configuración.
 - Los recordatorios del calendario nunca sonaban; ahora se programan y se restauran tras reiniciar el teléfono.
 - Una nota de 0 se mostraba como «--»; el campo de nota aceptaba valores inválidos y se reformateaba al escribir.
@@ -29,6 +33,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). C
 
 ### Eliminado
 - Sincronización periódica con Google Sheets (nunca estuvo activa).
+- Importación directa desde Google Calendar (reemplazada por la importación de archivos .ics, que no necesita permisos de Google).
 
 ## [2.1.1]
 - Correcciones y mejoras menores.

@@ -1,5 +1,6 @@
 package com.notasapp.ui.export
 
+import androidx.activity.result.IntentSenderRequest
 import com.notasapp.ui.components.ScreenHeader
 import android.app.Activity
 import android.content.Intent
@@ -75,15 +76,15 @@ fun ExportScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context    = LocalContext.current
     val driveAuthLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
+        contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         viewModel.onDriveAuthResult(result.resultCode == Activity.RESULT_OK)
     }
 
-    LaunchedEffect(uiState.driveRecoveryIntent) {
-        val intent = uiState.driveRecoveryIntent ?: return@LaunchedEffect
+    LaunchedEffect(uiState.driveConsent) {
+        val pending = uiState.driveConsent ?: return@LaunchedEffect
         viewModel.onDriveRecoveryIntentConsumed()
-        driveAuthLauncher.launch(intent)
+        driveAuthLauncher.launch(IntentSenderRequest.Builder(pending).build())
     }
 
     // Launcher SAF: el usuario elige dónde guardar el .xlsx

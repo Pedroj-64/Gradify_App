@@ -208,7 +208,7 @@
     <string name="calendar_1h_plus">+1h</string>
     <string name="calendar_1h_minus">-1h</string>
     <string name="calendar_n_min_before">%1$d min antes</string>
-    <string name="calendar_import_gcal">Importar Google Calendar</string>
+    <string name="calendar_import_gcal">Importar calendario (.ics)</string>
     <string name="calendar_day_mon">Lun</string>
     <string name="calendar_day_tue">Mar</string>
     <string name="calendar_day_wed">Mié</string>
@@ -218,10 +218,10 @@
     <string name="calendar_day_sun">Dom</string>
 
     <!-- Google Calendar -->
-    <string name="gcal_import_title">Importar Google Calendar</string>
-    <string name="gcal_import_description">Importar eventos de los próximos 90 días de tu Google Calendar.</string>
-    <string name="gcal_import_select_materia">Selecciona la materia a la que se asociarán:</string>
-    <string name="gcal_import_button">Importar</string>
+    <string name="gcal_import_title">Importar calendario</string>
+    <string name="gcal_import_description">Elige un archivo .ics (Google Calendar, Outlook, Apple o el calendario de tu universidad). Se importan los eventos futuros; los que se repiten se omiten.</string>
+    <string name="gcal_import_select_materia">Materia a la que se asociarán los eventos</string>
+    <string name="gcal_import_button">Elegir archivo</string>
     <string name="gcal_import_success">%1$d eventos importados de Google Calendar</string>
     <string name="gcal_import_login_required">Debes iniciar sesión para importar de Google Calendar</string>
 
@@ -435,4 +435,7 @@ La consigues en aistudio.google.com/app/apikey</string>
     <string name="home_close_semester">Cerrar semestre %1$s</string>
     <string name="home_reopen_semester">Reabrir semestre %1$s</string>
     <string name="home_all_closed">Todos tus semestres están cerrados. Toca «Archivados» para verlos o crea una materia nueva.</string>
+    <string name="ics_result">%1$d eventos importados · %2$d ya estaban · %3$d recurrentes omitidos · %4$d pasados omitidos</string>
+    <string name="ics_empty">No se encontraron eventos en ese archivo</string>
+    <string name="ics_error">No se pudo leer el archivo. ¿Es un .ics válido?</string>
 </resources>

@@ -25,41 +25,11 @@
 -keep class com.google.android.libraries.identity.googleid.** { *; }
 -keep class androidx.credentials.** { *; }
 
-# ── Google API Client (base para Drive y Sheets) ────────────────
-# Mantener TODAS las clases del API Client: transporte HTTP, JSON,
-# autenticación, extensiones Android y las anotaciones @Key que
-# permiten la serialización/deserialización de modelos.
--keep class com.google.api.client.** { *; }
--keep class com.google.api.client.googleapis.** { *; }
--keep class com.google.api.client.http.** { *; }
--keep class com.google.api.client.json.** { *; }
--keep class com.google.api.client.util.** { *; }
--dontwarn com.google.api.client.**
-
-# Campos anotados con @Key son CRÍTICOS para que la serialización
-# JSON funcione (sin esto, Drive envía name=null en las requests)
--keepclassmembers class * {
-    @com.google.api.client.util.Key <fields>;
-}
-
-# ── Google Drive API ─────────────────────────────────────────────
--keep class com.google.api.services.drive.** { *; }
--keepclassmembers class com.google.api.services.drive.model.** { *; }
--dontwarn com.google.api.services.drive.**
-
-# ── Google Calendar API ──────────────────────────────────────────
--keep class com.google.api.services.calendar.** { *; }
--keepclassmembers class com.google.api.services.calendar.model.** { *; }
--dontwarn com.google.api.services.calendar.**
-
-# (Se quitaron las reglas del SDK de Gemini, Ktor y kotlinx.serialization: la app ya no los usa;
+# (Se quitaron las reglas de google-api-client/Drive/Calendar, Gemini SDK, Ktor, kotlinx.serialization y Gson:
+#  la app ya no los usa; Drive y la IA se llaman por REST.
 #  la IA se llama por REST. Tampoco hace falta conservar todo kotlinx.coroutines.)
 -dontwarn kotlin.coroutines.**
 -dontwarn kotlinx.coroutines.**
-
-# ── Gson (usado por google-api-client para JSON) ────────────────
--keep class com.google.gson.** { *; }
--dontwarn com.google.gson.**
 
 # ── Timber ───────────────────────────────────────────────────────
 -dontwarn org.slf4j.**

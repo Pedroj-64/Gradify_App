@@ -1,0 +1,12 @@
+# Configuración de gitleaks (escaneo de secretos en CI).
+title = "Gradify"
+
+[extend]
+useDefault = true   # conserva todas las reglas estándar
+
+[allowlist]
+description = "Artefactos generados que nunca se versionan"
+paths = [
+  '''(^|/)graphify-out/''',
+  '''(^|/)build/''',
+]

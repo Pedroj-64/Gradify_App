@@ -1,6 +1,6 @@
 package com.notasapp.data.remote.sheets
 
-import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
+import com.notasapp.data.remote.drive.DriveConsentRequiredException
 import com.notasapp.data.local.dao.UsuarioDao
 import com.notasapp.data.remote.NetworkResult
 import com.notasapp.data.remote.drive.DriveFileNotFoundException
@@ -66,9 +66,9 @@ class SheetsRepositoryImpl @Inject constructor(
             message = "[DriveFileNotFound] ${e.message} | cause: ${e.cause}",
             cause = e
         )
-    } catch (e: UserRecoverableAuthIOException) {
+    } catch (e: DriveConsentRequiredException) {
         NetworkResult.Error(
-            message = "[UserRecoverableAuth] ${e.message}",
+            message = "Se necesita tu permiso para usar Google Drive",
             cause = e,
             needsUserRecovery = true
         )

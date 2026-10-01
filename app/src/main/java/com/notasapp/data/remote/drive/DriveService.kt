@@ -1,8 +1,6 @@
 package com.notasapp.data.remote.drive
 
 import android.content.Context
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
-import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.notasapp.domain.model.Materia
 import com.notasapp.utils.ExcelExporter
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -38,7 +36,8 @@ data class DriveUploadResult(
 @Singleton
 class DriveService @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val excelExporter: ExcelExporter
+    private val excelExporter: ExcelExporter,
+    private val authorizer: DriveAuthorizer
 ) {
 
     companion object {
@@ -50,30 +49,16 @@ class DriveService @Inject constructor(
         private val SCOPES = listOf("https://www.googleapis.com/auth/drive.file")
     }
 
-    /**
-     * Obtiene un access token OAuth2 para la cuenta dada.
-     * Lanza [UserRecoverableAuthIOException] si falta consentimiento.
-     */
-    private fun getAccessToken(userEmail: String): String {
-        // Validación preventiva: Account(null/empty, ...) lanza IllegalArgumentException
+    /** Token OAuth2 de Drive para [userEmail] (ver [DriveAuthorizer]). */
+    private suspend fun getAccessToken(userEmail: String): String {
         if (userEmail.isBlank()) {
             throw IOException(
                 "No se puede autenticar: el email del usuario está vacío. " +
                 "Debes iniciar sesión con Google antes de sincronizar."
             )
         }
-        Timber.d("Obteniendo token OAuth2 para: $userEmail")
-
-        val credential = GoogleAccountCredential.usingOAuth2(context, SCOPES)
-            .apply { selectedAccountName = userEmail }
-
-        return try {
-            credential.token
-                ?: throw IOException("El token OAuth2 es null para $userEmail")
-        } catch (e: UserRecoverableAuthIOException) {
-            Timber.w("Se requiere consentimiento de Drive para $userEmail")
-            throw e
-        }
+        Timber.d("Obteniendo token de Drive para: $userEmail")
+        return authorizer.accessToken(userEmail)
     }
 
     /**
@@ -84,7 +69,7 @@ class DriveService @Inject constructor(
      * - Si el archivo fue eliminado externamente (404), lanza [DriveFileNotFoundException].
      *
      * @return [DriveUploadResult] con el ID del archivo y un link para abrirlo.
-     * @throws UserRecoverableAuthIOException si falta permiso OAuth2.
+     * @throws DriveConsentRequiredException si falta el permiso del usuario.
      * @throws DriveFileNotFoundException     si el archivo ya no existe en Drive.
      * @throws IOException                    cualquier otro error de red/API.
      */
@@ -107,7 +92,7 @@ class DriveService @Inject constructor(
         // ── 2. Obtener token OAuth2 ─────────────────────────────────────
         val token = try {
             getAccessToken(userEmail)
-        } catch (e: UserRecoverableAuthIOException) {
+        } catch (e: DriveConsentRequiredException) {
             throw e // UI debe pedir consentimiento
         } catch (e: IOException) {
             throw e // Ya tiene mensaje descriptivo
