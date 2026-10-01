@@ -1,5 +1,7 @@
 <div align="center">
 
+**🇪🇸 Español** · [🇬🇧 English](README.en.md)
+
 # 📚 Gradify - Sistema de Gestión Académica
 
 ### *Tu compañero inteligente para el éxito académico*
@@ -228,8 +230,8 @@ app/src/main/java/com/notasapp/
 
 #### 1️⃣ Clonar el Repositorio
 ```bash
-git clone https://github.com/tu-usuario/GradeApp-Android.git
-cd GradeApp-Android
+git clone https://github.com/Pedroj-64/Gradify_App.git
+cd Gradify_App
 ```
 
 #### 2️⃣ Abrir en Android Studio
@@ -410,7 +412,7 @@ Gradify toma en serio la seguridad de tus datos:
 
 ## 🐛 Reportar Bugs
 
-Si encuentras un error, por favor abre un [Issue en GitHub](https://github.com/Pedroj-64/GradeApp-Android/issues) incluyendo:
+Si encuentras un error, por favor abre un [Issue en GitHub](https://github.com/Pedroj-64/Gradify_App/issues) incluyendo:
 
 - Descripción del problema
 - Pasos para reproducirlo
@@ -423,8 +425,8 @@ Si encuentras un error, por favor abre un [Issue en GitHub](https://github.com/P
 ## 📱 Soporte y Contacto
 
 - **Email**: kelequel@gmail.com
-- **GitHub Issues**: [Abrir ticket](https://github.com/Pedroj-64/GradeApp-Android/issues)
-- **Documentación**: [Wiki del proyecto](https://github.com/Pedroj-64/GradeApp-Android/wiki)
+- **GitHub Issues**: [Abrir ticket](https://github.com/Pedroj-64/Gradify_App/issues)
+- **Documentación**: [Wiki del proyecto](https://github.com/Pedroj-64/Gradify_App/wiki)
 
 ---
 
