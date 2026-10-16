@@ -91,32 +91,6 @@ class ExcelExporter @Inject constructor() {
     //  API pública (misma firma que antes)
     // ═════════════════════════════════════════════════════════════════════
 
-    /** Nombre sugerido para el archivo .xlsx. */
-    fun sugerirNombreArchivo(materia: Materia): String {
-        val safe = materia.nombre.replace(Regex("[^\\w\\s-]"), "").replace(" ", "_")
-        val ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"))
-        return "${safe}_${ts}.xlsx"
-    }
-
-    /** Exporta al almacenamiento privado de la app (fallback sin SAF). */
-    fun exportar(context: Context, materia: Materia): File {
-        val bytes = buildWorkbookBytes(materia)
-        val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) ?: context.filesDir
-        dir.mkdirs()
-        val file = File(dir, sugerirNombreArchivo(materia))
-        BufferedOutputStream(FileOutputStream(file)).use { it.write(bytes); it.flush() }
-        Timber.i("Excel generado: ${file.absolutePath} (${bytes.size} bytes)")
-        return file
-    }
-
-    /** Escribe la materia en un OutputStream ya abierto (p. ej. SAF). */
-    fun exportarToOutputStream(materia: Materia, outputStream: OutputStream) {
-        val bytes = buildWorkbookBytes(materia)
-        if (bytes.isEmpty()) throw IllegalStateException("Workbook generó 0 bytes")
-        BufferedOutputStream(outputStream).use { it.write(bytes); it.flush() }
-        Timber.i("Excel escrito en OutputStream (${bytes.size} bytes)")
-    }
-
     /** Genera el .xlsx completo como ByteArray (listo para escribir a disco). */
     fun buildWorkbookBytes(materia: Materia): ByteArray {
         val result = buildSheetData(materia)

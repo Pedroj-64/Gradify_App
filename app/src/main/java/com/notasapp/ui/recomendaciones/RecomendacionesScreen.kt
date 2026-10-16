@@ -137,13 +137,6 @@ fun RecomendacionesScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearError()
-        }
-    }
-
     Scaffold(
         topBar = {
             ScreenHeader(
@@ -197,7 +190,7 @@ fun RecomendacionesScreen(
             if (!uiState.isLoading && uiState.error != null) {
                 item {
                     ErrorBanner(
-                        message = uiState.error!!,
+                        message = uiState.error!!.asString(context),
                         onRetry = { viewModel.reintentar() }
                     )
                 }
@@ -519,7 +512,7 @@ private fun LoadingBanner(materia: String) {
                 strokeCap = StrokeCap.Round
             )
             Text(
-                text = if (materia.isNotBlank()) "Analizando $materia…" else "Generando recomendaciones…",
+                text = if (materia.isNotBlank()) stringResource(R.string.recs_loading_for, materia) else stringResource(R.string.recs_loading),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

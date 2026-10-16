@@ -1,5 +1,7 @@
 package com.notasapp.ui.materia.edit
 
+import com.notasapp.ui.UiText
+import com.notasapp.R
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -46,7 +48,7 @@ class EditPorcentajesViewModel @Inject constructor(
                 _uiState.update { it.copy(componentes = materia?.componentes ?: emptyList()) }
             } catch (e: Exception) {
                 Timber.e(e, "Error al cargar componentes")
-                _uiState.update { it.copy(error = "No se pudieron cargar los componentes") }
+                _uiState.update { it.copy(error = UiText(R.string.err_load_components)) }
             }
         }
     }
@@ -86,7 +88,7 @@ class EditPorcentajesViewModel @Inject constructor(
      */
     fun guardar() {
         if (!sumaEs100(_uiState.value.componentes)) {
-            _uiState.update { it.copy(error = "Los porcentajes deben sumar exactamente 100 %") }
+            _uiState.update { it.copy(error = UiText(R.string.error_porcentajes)) }
             return
         }
         viewModelScope.launch {
@@ -100,7 +102,7 @@ class EditPorcentajesViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isSaving = false,
-                        error = "No se pudieron guardar los cambios"
+                        error = UiText(R.string.err_save_changes)
                     )
                 }
             }
@@ -120,5 +122,5 @@ data class EditPorcentajesUiState(
     val componentes: List<Componente> = emptyList(),
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
-    val error: String? = null
+    val error: UiText? = null
 )

@@ -104,7 +104,6 @@ import com.notasapp.ui.components.AnimatedText
 import com.notasapp.ui.components.EstadoBadge
 import com.notasapp.ui.components.GradeLinearIndicator
 import com.notasapp.ui.components.MateriaDetailShimmer
-import com.notasapp.ui.components.PromedioGauge
 import kotlinx.coroutines.launch
 
 @Composable
@@ -136,7 +135,7 @@ internal fun ComponenteCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "${componente.porcentajeDisplay}% del total · ${componente.progresoDisplay}",
+                    text = stringResource(R.string.dc_of_total, componente.porcentajeDisplay, componente.progresoDisplay.toString()),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -150,7 +149,7 @@ internal fun ComponenteCard(
                 )
                 componente.aporteAlFinal?.let { aporte ->
                     Text(
-                        text = "aporta %.2f".format(aporte),
+                        text = stringResource(R.string.dc_contributes, aporte),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -309,8 +308,8 @@ internal fun SubNotaRow(
                 )
                 Text(
                     text = buildString {
-                        append("${(subNota.porcentajeDelComponente * 100).toInt()}% del corte")
-                        if (subNota.esCompuesta) append(" · ${subNota.detalles.size} partes")
+                        append(stringResource(R.string.dc_of_cut, (subNota.porcentajeDelComponente * 100).toInt()))
+                        if (subNota.esCompuesta) append(stringResource(R.string.dc_parts, subNota.detalles.size))
                     },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

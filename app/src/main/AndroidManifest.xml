@@ -4,12 +4,6 @@
 
     <!-- Permisos de red para Google Sheets API y Sign-In -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- Permiso para almacenar archivos Excel (Android < 10) -->
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
 
     <!-- Permiso para enviar notificaciones locales (requerido en Android 13+) -->
     <uses-permission

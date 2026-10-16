@@ -1,5 +1,6 @@
 package com.notasapp.utils
 
+import com.notasapp.R
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -48,29 +49,29 @@ class NotificationHelper @Inject constructor(
 
         NotificationChannel(
             CHANNEL_REMINDERS,
-            "Recordatorios de Evaluaciones",
+            context.getString(R.string.nch_reminders),
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
-            description = "Alertas cuando un componente de evaluación está próximo"
+            description = context.getString(R.string.nch_reminders_desc)
             enableLights(true)
             manager.createNotificationChannel(this)
         }
 
         NotificationChannel(
             CHANNEL_SYNC,
-            "Sincronización con Google Sheets",
+            context.getString(R.string.nch_sync),
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "Estado del worker de sincronización automática"
+            description = context.getString(R.string.nch_sync_desc)
             manager.createNotificationChannel(this)
         }
 
         NotificationChannel(
             CHANNEL_EXAMS,
-            "Recordatorios de Exámenes",
+            context.getString(R.string.nch_exams),
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Alertas de exámenes, entregas y evaluaciones programadas"
+            description = context.getString(R.string.nch_exams_desc)
             enableLights(true)
             enableVibration(true)
             manager.createNotificationChannel(this)

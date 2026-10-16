@@ -44,4 +44,20 @@ class GeminiServiceParseTest {
             }
         }
     }
+
+    @Test
+    fun `backend 401 y 429 son fatales, 503 permite fallback`() {
+        val body = """{"error":"AI_ERROR","message":"caído","retryable":true}"""
+        assertTrue(GeminiService.parseBackendError(401, body).fatal)
+        assertTrue(GeminiService.parseBackendError(429, body).fatal)
+        val e = GeminiService.parseBackendError(503, body)
+        assertTrue(!e.fatal && e.retryable)
+        assertEquals("AI_ERROR", e.code)
+    }
+
+    @Test
+    fun `backend con cuerpo no JSON no revienta`() {
+        val e = GeminiService.parseBackendError(502, "<html>bad gateway</html>")
+        assertTrue(e.message!!.contains("502"))
+    }
 }

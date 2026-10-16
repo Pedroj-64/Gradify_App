@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarOutline
@@ -90,7 +91,6 @@ import com.notasapp.ui.components.AnimatedText
 import com.notasapp.ui.components.EstadoBadge
 import com.notasapp.ui.components.GradeLinearIndicator
 import com.notasapp.ui.components.MateriaDetailShimmer
-import com.notasapp.ui.components.PromedioGauge
 import kotlinx.coroutines.launch
 
 /**
@@ -132,6 +132,9 @@ fun MateriaDetailScreen(
     // ── Bottom sheet de calculadora ───────────────────────────
     var showCalculadora by rememberSaveable { mutableStateOf(false) }
     var showQuickEntry by rememberSaveable { mutableStateOf(false) }
+    var showSimulador by rememberSaveable { mutableStateOf(false) }
+    val simuladorResult by viewModel.simuladorResult.collectAsStateWithLifecycle()
+    val simuladorSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showMetaDialog by rememberSaveable { mutableStateOf(false) }
     var showNotasDialog by rememberSaveable { mutableStateOf(false) }
     var showEditMateria by rememberSaveable { mutableStateOf(false) }
@@ -140,9 +143,10 @@ fun MateriaDetailScreen(
     val quickEntrySheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
+    val context = androidx.compose.ui.platform.LocalContext.current
     LaunchedEffect(error) {
         error?.let {
-            snackbarHostState.showSnackbar(it)
+            snackbarHostState.showSnackbar(it.asString(context))
             viewModel.clearError()
         }
     }
@@ -186,6 +190,12 @@ fun MateriaDetailScreen(
                                 text = { Text(stringResource(R.string.detail_edit_percentages)) },
                                 leadingIcon = { Icon(Icons.Default.Edit, null) },
                                 onClick = { menuOpen = false; onEditPorcentajes() }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.sim_title)) },
+                                leadingIcon = { Icon(Icons.Default.Science, null) },
+                                enabled = materia != null,
+                                onClick = { menuOpen = false; showSimulador = true }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.detail_study_resources)) },
@@ -299,6 +309,26 @@ fun MateriaDetailScreen(
                     }
                 },
                 sheetState = sheetState
+            )
+        }
+    }
+
+    // ── Simulador bottom sheet ───────────────────────────────
+    if (showSimulador) {
+        materia?.let { mat ->
+            SimuladorBottomSheet(
+                componentesFaltantes = mat.componentes.filter { it.aporteAlFinal == null },
+                escalaMax = mat.escalaMax,
+                notaAprobacion = mat.notaAprobacion,
+                resultado = simuladorResult,
+                onSimular = viewModel::simularNota,
+                onDismiss = {
+                    scope.launch { simuladorSheetState.hide() }.invokeOnCompletion {
+                        showSimulador = false
+                        viewModel.clearSimulador()
+                    }
+                },
+                sheetState = simuladorSheetState
             )
         }
     }

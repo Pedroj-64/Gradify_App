@@ -34,27 +34,6 @@ interface ComponenteDao {
     @Delete
     suspend fun delete(componente: ComponenteEntity)
 
-    @Query("SELECT * FROM componentes WHERE materiaId = :materiaId ORDER BY orden ASC")
-    fun getComponentesByMateria(materiaId: Long): Flow<List<ComponenteEntity>>
-
-    @Query("SELECT * FROM componentes WHERE materiaId = :materiaId ORDER BY orden ASC")
-    suspend fun getComponentesByMateriaOnce(materiaId: Long): List<ComponenteEntity>
-
-    @Query("SELECT * FROM componentes WHERE id = :id")
-    suspend fun getComponenteById(id: Long): ComponenteEntity?
-
-    /**
-     * Retorna cada componente junto con sus sub-notas.
-     * Se usa en el cálculo de promedio y en la vista detalle.
-     */
-    @Transaction
-    @Query("SELECT * FROM componentes WHERE materiaId = :materiaId ORDER BY orden ASC")
-    fun getComponentesConSubNotas(materiaId: Long): Flow<List<ComponenteConSubNotas>>
-
-    @Transaction
-    @Query("SELECT * FROM componentes WHERE materiaId = :materiaId ORDER BY orden ASC")
-    suspend fun getComponentesConSubNotasOnce(materiaId: Long): List<ComponenteConSubNotas>
-
     /** Elimina todos los componentes de una materia. */
     @Query("DELETE FROM componentes WHERE materiaId = :materiaId")
     suspend fun deleteByMateria(materiaId: Long)

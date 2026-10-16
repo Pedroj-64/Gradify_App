@@ -1,5 +1,8 @@
 package com.notasapp.ui.onboarding
 
+import com.notasapp.R
+import androidx.compose.ui.res.stringResource
+import androidx.annotation.StringRes
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -53,35 +56,35 @@ import androidx.hilt.navigation.compose.hiltViewModel
  */
 private data class OnboardingPage(
     val icon: ImageVector,
-    val title: String,
-    val description: String,
-    val highlight: String
+    @StringRes val title: Int,
+    @StringRes val description: Int,
+    @StringRes val highlight: Int
 )
 
 private val pages = listOf(
     OnboardingPage(
         icon = Icons.Default.School,
-        title = "Bienvenido a Gradify",
-        description = "Tu compañero académico para gestionar materias, notas y promedios de forma organizada.",
-        highlight = "Registra tus materias, componentes y calificaciones en un solo lugar."
+        title = R.string.ob1_title,
+        description = R.string.ob1_desc,
+        highlight = R.string.ob1_highlight
     ),
     OnboardingPage(
         icon = Icons.Default.BarChart,
-        title = "Estadísticas inteligentes",
-        description = "Visualiza tu rendimiento con gráficos y promedios en tiempo real.",
-        highlight = "Obtén recomendaciones de estudio personalizadas con inteligencia artificial."
+        title = R.string.ob2_title,
+        description = R.string.ob2_desc,
+        highlight = R.string.ob2_highlight
     ),
     OnboardingPage(
         icon = Icons.Default.CalendarMonth,
-        title = "Calendario de exámenes",
-        description = "Programa tus evaluaciones y recibe recordatorios antes de cada examen.",
-        highlight = "Nunca más olvides una fecha importante."
+        title = R.string.ob3_title,
+        description = R.string.ob3_desc,
+        highlight = R.string.ob3_highlight
     ),
     OnboardingPage(
         icon = Icons.Default.CloudSync,
-        title = "Respaldo seguro",
-        description = "Exporta tus notas a Excel o PDF. Sincroniza con Google Drive para no perder nada.",
-        highlight = "Tus datos siempre protegidos y accesibles."
+        title = R.string.ob4_title,
+        description = R.string.ob4_desc,
+        highlight = R.string.ob4_highlight
     )
 )
 
@@ -125,7 +128,7 @@ fun OnboardingScreen(
         ) {
             if (!isLastPage) {
                 TextButton(onClick = finish) {
-                    Text("Saltar", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.ob_skip), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -171,7 +174,7 @@ fun OnboardingScreen(
 
                 // Título
                 Text(
-                    text = p.title,
+                    text = stringResource(p.title),
                     style = MaterialTheme.typography.headlineLarge.copy(fontSize = 34.sp, lineHeight = 40.sp),
                     fontWeight = FontWeight.ExtraBold,
                     textAlign = TextAlign.Start,
@@ -182,7 +185,7 @@ fun OnboardingScreen(
 
                 // Descripción
                 Text(
-                    text = p.description,
+                    text = stringResource(p.description),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Start,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -192,7 +195,7 @@ fun OnboardingScreen(
 
                 // Highlight
                 Text(
-                    text = p.highlight,
+                    text = stringResource(p.highlight),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Start,
                     fontWeight = FontWeight.SemiBold,
@@ -232,7 +235,7 @@ fun OnboardingScreen(
         ) {
             if (currentPage > 0) {
                 TextButton(onClick = { currentPage-- }) {
-                    Text("Anterior")
+                    Text(stringResource(R.string.ob_prev))
                 }
             } else {
                 Spacer(Modifier.width(1.dp))
@@ -254,7 +257,7 @@ fun OnboardingScreen(
                 )
             ) {
                 Text(
-                    text = if (isLastPage) "Empezar" else "Siguiente",
+                    text = stringResource(if (isLastPage) R.string.ob_start else R.string.btn_siguiente),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )

@@ -1,5 +1,7 @@
 package com.notasapp.ui.materia.detail
 
+import com.notasapp.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -120,7 +122,7 @@ private fun SimuladorContent(
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = "¿Qué pasa si saco...?",
+                text = stringResource(R.string.sim_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold
             )
@@ -129,7 +131,7 @@ private fun SimuladorContent(
         Spacer(Modifier.height(4.dp))
 
         Text(
-            text = "Ingresa notas hipotéticas para los componentes pendientes",
+            text = stringResource(R.string.sim_hint),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -139,7 +141,7 @@ private fun SimuladorContent(
 
         if (componentesFaltantes.isEmpty()) {
             Text(
-                text = "Todos los componentes ya tienen nota.",
+                text = stringResource(R.string.sim_all_graded),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -156,7 +158,7 @@ private fun SimuladorContent(
                             notasInputs[comp.id] = sanitized
                         }
                     },
-                    label = { Text("${comp.nombre} (${kotlin.math.round(comp.porcentaje * 100).toInt()}%)") },
+                    label = { Text(stringResource(R.string.sim_comp_label, comp.nombre, kotlin.math.round(comp.porcentaje * 100).toInt())) },
                     placeholder = { Text("0 - ${"%.1f".format(escalaMax)}") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -179,7 +181,7 @@ private fun SimuladorContent(
             ) {
                 Icon(Icons.Default.Science, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Simular")
+                Text(stringResource(R.string.sim_simulate))
             }
         }
 
@@ -215,11 +217,11 @@ private fun SimuladorResultCard(
     val esAprobado = resultado.notaFinalProyectada >= notaAprobacion
 
     val icon = if (esAprobado) Icons.Default.CheckCircle else Icons.Default.Warning
-    val title = "Nota final proyectada: ${"%.2f".format(resultado.notaFinalProyectada)}"
+    val title = stringResource(R.string.sim_projected, resultado.notaFinalProyectada)
     val subtitle = if (esAprobado)
-        "¡Con estas notas aprobarías! 🎉"
+        stringResource(R.string.sim_pass)
     else
-        "Con estas notas no alcanzarías el mínimo de ${"%.2f".format(notaAprobacion)}"
+        stringResource(R.string.sim_fail_min, notaAprobacion)
 
     val containerColor: Color
     val contentColor: Color
@@ -265,7 +267,7 @@ private fun SimuladorResultCard(
                 Spacer(Modifier.height(8.dp))
                 resultado.componentesSimulados.forEach { cs ->
                     Text(
-                        text = "· ${cs.nombre}: ${"%.2f".format(cs.notaHipotetica)} → aporte: ${"%.2f".format(cs.aporteSimulado)}",
+                        text = stringResource(R.string.sim_line, cs.nombre, cs.notaHipotetica, cs.aporteSimulado),
                         style = MaterialTheme.typography.bodySmall,
                         color = contentColor.copy(alpha = 0.7f)
                     )

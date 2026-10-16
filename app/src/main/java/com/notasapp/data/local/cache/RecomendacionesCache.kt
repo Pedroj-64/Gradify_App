@@ -95,13 +95,6 @@ class RecomendacionesCache @Inject constructor(
         File(cacheDir, "$materiaId.json").delete()
     }
 
-    /**
-     * Limpia todo el cache de recomendaciones.
-     */
-    fun clearAll() {
-        cacheDir.listFiles()?.forEach { it.delete() }
-    }
-
     // ── Serialización ──────────────────────────────────────────────
 
     fun serializeRecomendaciones(recs: List<com.notasapp.data.remote.ai.Recomendacion>): String {

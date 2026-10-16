@@ -27,12 +27,6 @@ interface SubNotaDao {
     @Delete
     suspend fun delete(subNota: SubNotaEntity)
 
-    @Query("SELECT * FROM sub_notas WHERE componenteId = :componenteId ORDER BY id ASC")
-    fun getSubNotasByComponente(componenteId: Long): Flow<List<SubNotaEntity>>
-
-    @Query("SELECT * FROM sub_notas WHERE componenteId = :componenteId ORDER BY id ASC")
-    suspend fun getSubNotasByComponenteOnce(componenteId: Long): List<SubNotaEntity>
-
     @Query("SELECT * FROM sub_notas WHERE id = :id")
     suspend fun getSubNotaById(id: Long): SubNotaEntity?
 
@@ -49,10 +43,6 @@ interface SubNotaDao {
         WHERE id = :id
     """)
     suspend fun updateValor(id: Long, valor: Float?, ts: Long = System.currentTimeMillis())
-
-    /** Cuenta cuántas sub-notas de un componente aún no tienen valor. */
-    @Query("SELECT COUNT(*) FROM sub_notas WHERE componenteId = :componenteId AND valor IS NULL")
-    fun countPendientesByComponente(componenteId: Long): Flow<Int>
 
     @Query("DELETE FROM sub_notas WHERE componenteId = :componenteId")
     suspend fun deleteByComponente(componenteId: Long)

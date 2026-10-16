@@ -23,31 +23,21 @@ interface MateriaRepository {
 
     suspend fun insertMateria(materia: Materia): Long
 
-    suspend fun updateMateria(materia: Materia)
-
     suspend fun deleteMateria(materiaId: Long)
 
     // ── Componentes ─────────────────────────────────────────────
-
-    suspend fun insertComponentes(componentes: List<Componente>)
 
     /** Inserta un único componente y devuelve su ID generado. */
     suspend fun insertComponente(componente: Componente): Long
 
     suspend fun updateComponentes(componentes: List<Componente>)
 
-    suspend fun deleteComponentesByMateria(materiaId: Long)
-
     // ── Sub-Notas ────────────────────────────────────────────────
-
-    suspend fun insertSubNotas(subNotas: List<SubNota>)
 
     /** Inserta una sub-nota y devuelve su ID generado. */
     suspend fun insertSubNota(subNota: SubNota): Long
 
     suspend fun updateSubNotaValor(subNotaId: Long, valor: Float?)
-
-    suspend fun deleteSubNotasByComponente(componenteId: Long)
 
     /** Elimina una sub-nota por su ID. */
     suspend fun deleteSubNota(subNotaId: Long)

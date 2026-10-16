@@ -123,7 +123,7 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading    = false,
-                        errorMessage = "Error al exportar: ${e.localizedMessage}"
+                        errorMessage = context.getString(R.string.settings_err_export)
                     )
                 }
             }
@@ -158,7 +158,7 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading    = false,
-                        errorMessage = "Error al restaurar: ${e.localizedMessage}"
+                        errorMessage = context.getString(R.string.settings_err_restore)
                     )
                 }
             }
@@ -232,7 +232,7 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading    = false,
-                        errorMessage = "Error al cerrar sesión: ${e.localizedMessage}"
+                        errorMessage = context.getString(R.string.settings_err_signout)
                     )
                 }
             }

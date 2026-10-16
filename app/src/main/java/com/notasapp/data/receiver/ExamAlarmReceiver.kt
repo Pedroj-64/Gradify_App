@@ -69,6 +69,7 @@ class ExamAlarmReceiver : BroadcastReceiver() {
                 } else null
 
                 val smartContent = SmartNotificationBuilder.buildContent(
+                    context = context,
                     eventTitle = title,
                     eventType = tipoEvento,
                     materia = materia,

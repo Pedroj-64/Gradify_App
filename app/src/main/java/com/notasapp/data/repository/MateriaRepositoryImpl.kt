@@ -63,21 +63,12 @@ class MateriaRepositoryImpl @Inject constructor(
         return id
     }
 
-    override suspend fun updateMateria(materia: Materia) {
-        materiaDao.update(materia.toEntity())
-        materiaDao.touchUltimaModificacion(materia.id)
-    }
-
     override suspend fun deleteMateria(materiaId: Long) = db.withTransaction {
         val entity = materiaDao.getMateriaByIdOnce(materiaId) ?: return@withTransaction
         materiaDao.delete(entity)
     }
 
     // ── Componentes ─────────────────────────────────────────────
-
-    override suspend fun insertComponentes(componentes: List<Componente>) {
-        componenteDao.insertAll(componentes.map { it.toEntity() })
-    }
 
     override suspend fun insertComponente(componente: Componente): Long =
         componenteDao.insert(componente.toEntity())
@@ -86,34 +77,7 @@ class MateriaRepositoryImpl @Inject constructor(
         componenteDao.updateAll(componentes.map { it.toEntity() })
     }
 
-    override suspend fun deleteComponentesByMateria(materiaId: Long) {
-        componenteDao.deleteByMateria(materiaId)
-    }
-
     // ── Sub-Notas ────────────────────────────────────────────────
-
-    override suspend fun insertSubNotas(subNotas: List<SubNota>) = db.withTransaction {
-        // Validar cada sub-nota individualmente
-        subNotas.forEach { subNota ->
-            require(subNota.porcentajeDelComponente > 0f) {
-                "El porcentaje de la sub-nota debe ser mayor a 0%."
-            }
-            require(subNota.porcentajeDelComponente <= MAX_PORCENTAJE) {
-                "El porcentaje de la sub-nota no puede superar 100%."
-            }
-        }
-
-        // Validar suma por componente (existentes + nuevas)
-        subNotas.groupBy { it.componenteId }.forEach { (componenteId, items) ->
-            val sumaActual = subNotaDao.getSumaPorcentajeByComponente(componenteId)
-            val sumaNueva = items.sumOf { it.porcentajeDelComponente.toDouble() }.toFloat()
-            require(sumaActual + sumaNueva <= MAX_PORCENTAJE + EPSILON) {
-                "La suma de sub-notas no puede superar 100% en el componente."
-            }
-        }
-
-        subNotaDao.insertAll(subNotas.map { it.toEntity() })
-    }
 
     override suspend fun insertSubNota(subNota: SubNota): Long =
         db.withTransaction {
@@ -134,10 +98,6 @@ class MateriaRepositoryImpl @Inject constructor(
 
     override suspend fun updateSubNotaValor(subNotaId: Long, valor: Float?) {
         subNotaDao.updateValor(subNotaId, valor)
-    }
-
-    override suspend fun deleteSubNotasByComponente(componenteId: Long) {
-        subNotaDao.deleteByComponente(componenteId)
     }
 
     override suspend fun deleteSubNota(subNotaId: Long) {

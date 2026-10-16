@@ -1,5 +1,12 @@
 package com.notasapp.ui.materia.create
 
+import androidx.lifecycle.SavedStateHandle
+import com.notasapp.ui.savedFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.channels.Channel
+import com.notasapp.ui.UiEvent
+import com.notasapp.ui.UiText
+import com.notasapp.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notasapp.data.local.dao.UsuarioDao
@@ -26,16 +33,20 @@ import javax.inject.Inject
 @HiltViewModel
 class CreateMateriaViewModel @Inject constructor(
     private val usuarioDao: UsuarioDao,
-    private val materiaRepository: MateriaRepository
+    private val materiaRepository: MateriaRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     // ── Estado del Wizard ──────────────────────────────────────
 
-    private val _wizardState = MutableStateFlow(WizardState())
+    private val _wizardState = savedFlow(savedStateHandle, "wizard", WizardState())
     val wizardState: StateFlow<WizardState> = _wizardState.asStateFlow()
 
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
+
+    private val _events = Channel<UiEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     // ── Paso 1: Información básica ─────────────────────────────
 
@@ -103,12 +114,12 @@ class CreateMateriaViewModel @Inject constructor(
 
             // Validaciones
             if (state.nombre.isBlank()) {
-                _saveState.value = SaveState.Error("El nombre de la materia es obligatorio")
+                fail(UiText(R.string.error_nombre_obligatorio))
                 return@launch
             }
             val sumaPorcentajes = state.componentes.sumOf { it.porcentaje.toDouble() }.toFloat()
             if (state.componentes.isNotEmpty() && kotlin.math.abs(sumaPorcentajes - 1f) > 0.01f) {
-                _saveState.value = SaveState.Error("Los porcentajes deben sumar 100%")
+                fail(UiText(R.string.error_porcentajes))
                 return@launch
             }
 
@@ -151,10 +162,11 @@ class CreateMateriaViewModel @Inject constructor(
                 }
 
                 Timber.i("Materia creada: ${state.nombre} (id=$materiaId)")
-                _saveState.value = SaveState.Success
+                _saveState.value = SaveState.Idle
+                _events.trySend(UiEvent.Done)
             } catch (e: Exception) {
                 Timber.e(e, "Error al guardar materia")
-                _saveState.value = SaveState.Error(e.localizedMessage ?: "Error desconocido")
+                fail(UiText(R.string.error_generic))
             }
         }
     }
@@ -164,7 +176,10 @@ class CreateMateriaViewModel @Inject constructor(
         else state
     }
 
-    fun resetSaveState() { _saveState.value = SaveState.Idle }
+    private fun fail(text: UiText) {
+        _saveState.value = SaveState.Idle
+        _events.trySend(UiEvent.Message(text))
+    }
 }
 
 // ── Modelos de estado del Wizard ───────────────────────────────
@@ -187,7 +202,7 @@ data class WizardState(
         ComponenteInput("Segundo corte", 0.30f),
         ComponenteInput("Examen final", 0.40f)
     )
-) {
+) : java.io.Serializable {
     val sumaPorcentajes: Float get() = componentes.sumOf { it.porcentaje.toDouble() }.toFloat()
     val porcentajesValidos: Boolean get() = kotlin.math.abs(sumaPorcentajes - 1f) <= 0.01f
 }
@@ -195,13 +210,11 @@ data class WizardState(
 data class ComponenteInput(
     val nombre: String = "",
     val porcentaje: Float = 0f
-) {
+) : java.io.Serializable {
     val porcentajeDisplay: Int get() = kotlin.math.round(porcentaje * 100).toInt()
 }
 
 sealed class SaveState {
     data object Idle : SaveState()
     data object Loading : SaveState()
-    data object Success : SaveState()
-    data class Error(val message: String) : SaveState()
 }

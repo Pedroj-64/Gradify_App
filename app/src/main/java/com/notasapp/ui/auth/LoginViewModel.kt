@@ -1,5 +1,10 @@
 package com.notasapp.ui.auth
 
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.channels.Channel
+import com.notasapp.ui.UiEvent
+import com.notasapp.ui.UiText
+import com.notasapp.R
 import android.content.Context
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
@@ -45,6 +50,9 @@ class LoginViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
+    private val _events = Channel<UiEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
+
     // ── Acciones públicas ──────────────────────────────────────
 
     /**
@@ -59,10 +67,7 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             // Sin client id, GetGoogleIdOption lanza IllegalArgumentException (antes: crash).
             if (BuildConfig.GOOGLE_CLIENT_ID.isBlank()) {
-                _uiState.value = LoginUiState.Error(
-                    "El inicio de sesión con Google no está configurado en esta versión. " +
-                        "Puedes usar la app sin cuenta."
-                )
+                fail(UiText(R.string.login_err_not_configured))
                 return@launch
             }
             _uiState.value = LoginUiState.Loading
@@ -97,7 +102,7 @@ class LoginViewModel @Inject constructor(
                     )
                 } else {
                     Timber.w("Tipo de credencial inesperado: ${credential.type}")
-                    _uiState.value = LoginUiState.Error("Tipo de credencial no soportado")
+                    fail(UiText(R.string.login_err_credential))
                 }
 
             } catch (e: GetCredentialCancellationException) {
@@ -107,16 +112,16 @@ class LoginViewModel @Inject constructor(
             } catch (e: NoCredentialException) {
                 // No hay ninguna cuenta Google en el dispositivo
                 Timber.w(e, "Sin cuentas Google disponibles")
-                _uiState.value = LoginUiState.Error("Agrega una cuenta Google en los ajustes del dispositivo")
+                fail(UiText(R.string.login_err_no_account))
             } catch (e: GetCredentialException) {
                 Timber.e(e, "GetCredentialException")
-                _uiState.value = LoginUiState.Error("No se pudo iniciar sesión: ${e.localizedMessage}")
+                fail(UiText(R.string.login_err_failed))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 // Último recurso: el login nunca debe tumbar la app
                 Timber.e(e, "Error inesperado en el login")
-                _uiState.value = LoginUiState.Error("No se pudo iniciar sesión: ${e.localizedMessage}")
+                fail(UiText(R.string.login_err_failed))
             }
         }
     }
@@ -134,10 +139,11 @@ class LoginViewModel @Inject constructor(
                     )
                 }
                 userPrefsRepository.setLocalMode(true)
-                _uiState.value = LoginUiState.Success
+                _uiState.value = LoginUiState.Idle
+            _events.trySend(UiEvent.Done)
             } catch (e: Exception) {
                 Timber.e(e, "Error al iniciar modo local")
-                _uiState.value = LoginUiState.Error("No se pudo iniciar: ${e.localizedMessage}")
+                fail(UiText(R.string.login_err_failed))
             }
         }
     }
@@ -168,15 +174,17 @@ class LoginViewModel @Inject constructor(
             // Guardar email en DataStore para GoogleAccountCredential (Sheets API)
             userPrefsRepository.setUserEmail(email)
             Timber.i("Login exitoso: $email")
-            _uiState.value = LoginUiState.Success
+            _uiState.value = LoginUiState.Idle
+            _events.trySend(UiEvent.Done)
         } catch (e: Exception) {
             Timber.e(e, "Error al guardar usuario")
-            _uiState.value = LoginUiState.Error("Error al guardar sesión: ${e.localizedMessage}")
+            fail(UiText(R.string.login_err_save_session))
         }
     }
 
-    fun resetError() {
+    private fun fail(text: UiText) {
         _uiState.value = LoginUiState.Idle
+        _events.trySend(UiEvent.Message(text))
     }
 }
 
@@ -187,6 +195,4 @@ const val LOCAL_USER_ID = "local"
 sealed class LoginUiState {
     data object Idle    : LoginUiState()
     data object Loading : LoginUiState()
-    data object Success : LoginUiState()
-    data class Error(val message: String) : LoginUiState()
 }

@@ -66,15 +66,6 @@ interface ExamenEventDao {
     """)
     fun getUpcomingEvents(usuarioId: String, nowMs: Long, limit: Int = 10): Flow<List<ExamenEventEntity>>
 
-    /** Eventos que necesitan recordatorio (no programados aún y fecha en el futuro). */
-    @Query("""
-        SELECT e.* FROM examen_events e
-        WHERE e.recordatorioMinutos > 0
-          AND e.recordatorioProgramado = 0
-          AND e.fechaEpochMs > :nowMs
-    """)
-    suspend fun getEventsPendingReminder(nowMs: Long): List<ExamenEventEntity>
-
     /** Marca un evento como con recordatorio programado. */
     @Query("UPDATE examen_events SET recordatorioProgramado = 1 WHERE id = :eventId")
     suspend fun markReminderScheduled(eventId: Long)

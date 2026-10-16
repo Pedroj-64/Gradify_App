@@ -113,13 +113,6 @@ class UserPreferencesRepository @Inject constructor(
     val lastSyncMs: Flow<Long?> = context.dataStore.data
         .map { prefs -> prefs[KEY_LAST_SYNC_MS]?.toLongOrNull() }
 
-    /** Actualiza el timestamp de la última sync. */
-    suspend fun touchLastSync() {
-        context.dataStore.edit { prefs ->
-            prefs[KEY_LAST_SYNC_MS] = System.currentTimeMillis().toString()
-        }
-    }
-
     // ── Timestamp de último backup ────────────────────────────────
 
     /** Flow del último backup automático como milisegundos epoch. */

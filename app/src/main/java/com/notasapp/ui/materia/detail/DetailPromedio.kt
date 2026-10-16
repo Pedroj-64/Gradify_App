@@ -93,7 +93,6 @@ import com.notasapp.ui.components.AnimatedText
 import com.notasapp.ui.components.EstadoBadge
 import com.notasapp.ui.components.GradeLinearIndicator
 import com.notasapp.ui.components.MateriaDetailShimmer
-import com.notasapp.ui.components.PromedioGauge
 import kotlinx.coroutines.launch
 
 @Composable
@@ -135,7 +134,7 @@ internal fun PromedioResumen(
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             StatusLabel(estado, tone)
             Text(
-                text = "Mínimo ${materia.notaAprobacion}",
+                text = stringResource(R.string.dp_min, materia.notaAprobacion.toString()),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -154,12 +153,12 @@ internal fun PromedioResumen(
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
-                text = "Evaluado ${kotlin.math.round(materia.porcentajeEvaluado * 100).toInt()}%",
+                text = stringResource(R.string.dp_evaluated, kotlin.math.round(materia.porcentajeEvaluado * 100).toInt()),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Acumulado ${materia.acumuladoDisplay}",
+                text = stringResource(R.string.dp_accum, materia.acumuladoDisplay.toString()),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -167,9 +166,9 @@ internal fun PromedioResumen(
 
         // ── Un solo recuadro de lectura: qué necesito + ánimo ─────
         val necesita = materia.notaNecesariaParaAprobar
-        val mensaje = getMensajeMotivacional(materia)?.second
+        val mensaje = getMensajeMotivacional(materia)?.second?.let { stringResource(it) }
         val felicitacion = if (materia.yaAprobo && !materia.completa)
-            "Ya superaste el mínimo de ${materia.notaAprobacion}. Llevas ${materia.acumuladoDisplay} acumulado."
+            stringResource(R.string.dp_congrats, materia.notaAprobacion.toString(), materia.acumuladoDisplay.toString())
         else null
         if (necesita != null || mensaje != null || felicitacion != null) {
             Spacer(Modifier.height(18.dp))
@@ -181,7 +180,7 @@ internal fun PromedioResumen(
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "es lo que necesitas en promedio en lo que falta para aprobar",
+                        text = stringResource(R.string.dp_needed_avg),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -233,7 +232,7 @@ private fun GradeTrack(promedio: Float?, aprobacion: Float, max: Float, tone: To
  * Devuelve un par (emoji, mensaje) motivacional según el progreso del estudiante.
  * Null si no hay notas ingresadas aún.
  */
-internal fun getMensajeMotivacional(materia: Materia): Pair<String, String>? {
+internal fun getMensajeMotivacional(materia: Materia): Pair<String, Int>? {
     val pct = materia.porcentajeEvaluado
 
     // Sin notas todavía
@@ -242,9 +241,9 @@ internal fun getMensajeMotivacional(materia: Materia): Pair<String, String>? {
     // Ya completó todo
     if (materia.completa) {
         return if (materia.aprobado) {
-            "🏆" to "¡Completaste todas las evaluaciones y aprobaste! Excelente semestre."
+            "🏆" to R.string.mm_01
         } else {
-            "📋" to "Completaste todas las evaluaciones. Revisa las áreas donde puedes mejorar."
+            "📋" to R.string.mm_02
         }
     }
 
@@ -259,38 +258,38 @@ internal fun getMensajeMotivacional(materia: Materia): Pair<String, String>? {
         // Primer corte (0-25%)
         pct <= 0.25f -> when {
             rendimiento >= aprobacionRatio * 1.2f ->
-                "🚀" to "¡Gran inicio! Arrancaste con todo. Mantén ese ritmo y el semestre será tuyo."
+                "🚀" to R.string.mm_03
             rendimiento >= aprobacionRatio ->
-                "💪" to "Buen comienzo, vas por buen camino. ¡Sigue así y cada vez será más fácil!"
+                "💪" to R.string.mm_04
             else ->
-                "📚" to "Es solo el inicio, hay mucho camino por recorrer. ¡Cada nota cuenta, tú puedes!"
+                "📚" to R.string.mm_05
         }
         // Segundo corte (25-50%)
         pct <= 0.50f -> when {
             rendimiento >= aprobacionRatio * 1.2f ->
-                "⭐" to "¡Llevas un rendimiento excelente! Ya vas por la mitad, sigue destacándote."
+                "⭐" to R.string.mm_06
             rendimiento >= aprobacionRatio ->
-                "📈" to "Vas bien, ya pasaste la primera mitad. ¡Mantén el enfoque y lo lograrás!"
+                "📈" to R.string.mm_07
             else ->
-                "🔥" to "Aún puedes remontar, queda bastante por evaluar. ¡Enfócate en lo que viene!"
+                "🔥" to R.string.mm_08
         }
         // Tercer corte (50-75%)
         pct <= 0.75f -> when {
             rendimiento >= aprobacionRatio * 1.2f ->
-                "🌟" to "¡Vas volando! Más de la mitad evaluada y tu rendimiento es sobresaliente."
+                "🌟" to R.string.mm_09
             rendimiento >= aprobacionRatio ->
-                "✨" to "¡Ya se ve la meta! Mantén la concentración en la recta final."
+                "✨" to R.string.mm_10
             else ->
-                "💡" to "Queda poco, pero cada punto cuenta. ¡Da lo mejor de ti en lo que resta!"
+                "💡" to R.string.mm_11
         }
         // Recta final (75-99%)
         else -> when {
             rendimiento >= aprobacionRatio * 1.2f ->
-                "🎯" to "¡Casi terminas y vas increíble! Un último empujón para cerrar con broche de oro."
+                "🎯" to R.string.mm_12
             rendimiento >= aprobacionRatio ->
-                "🏁" to "¡Ya casi llegas! Falta poco para terminar el semestre con éxito."
+                "🏁" to R.string.mm_13
             else ->
-                "⚡" to "El último tramo es clave. ¡Concéntrate y da todo, aún es posible!"
+                "⚡" to R.string.mm_14
         }
     }
 }

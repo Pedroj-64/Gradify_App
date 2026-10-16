@@ -89,6 +89,28 @@ class GeminiService @Inject constructor(
         //  Parseo
         // ═══════════════════════════════════════════════════════════════════
 
+        /** Error del backend proxy: [fatal] = no tiene sentido caer a claves directas. */
+        internal class BackendException(
+            val status: Int,
+            val code: String,
+            message: String,
+            val retryable: Boolean
+        ) : Exception(message) {
+            val fatal: Boolean get() = status == 401 || status == 429
+        }
+
+        internal fun parseBackendError(status: Int, rawBody: String): BackendException {
+            val obj = try { JSONObject(rawBody) } catch (_: Exception) { null }
+            val code = obj?.optString("error").orEmpty()
+            val detail = obj?.optString("message").orEmpty().ifBlank { rawBody.take(300) }
+            val msg = when (status) {
+                401 -> "El token de la app no es válido para el servidor de IA."
+                429 -> "Demasiadas solicitudes al servidor de IA. Intenta de nuevo en unos minutos."
+                else -> "Backend proxy error $status: ${detail.ifBlank { "Sin detalle de error" }}"
+            }
+            return BackendException(status, code, msg, obj?.optBoolean("retryable", false) ?: false)
+        }
+
         internal fun parseRecomendaciones(jsonText: String): List<Recomendacion> {
             val cleanJson = extractJsonArray(jsonText)
 
@@ -167,10 +189,13 @@ class GeminiService @Inject constructor(
         notaAprobacion: Float? = null,
         aprobado: Boolean? = null
     ): Result<List<Recomendacion>> = withContext(Dispatchers.IO) {
-        val prompt = buildPrompt(
-            nombreMateria, periodo, componentesInfo,
-            promedio, porcentajeEvaluado, notaAprobacion, aprobado
-        )
+        // Con proxy el prompt lo arma el backend; aquí solo se construye si hace falta una clave directa.
+        val prompt by lazy {
+            buildPrompt(
+                nombreMateria, periodo, componentesInfo,
+                promedio, porcentajeEvaluado, notaAprobacion, aprobado
+            )
+        }
         val errors = mutableListOf<String>()
 
         // ── 1. Backend proxy ───────────────────────────────────────
@@ -186,6 +211,7 @@ class GeminiService @Inject constructor(
                     return@withContext Result.success(result)
                 }
             } catch (e: Exception) {
+                if (e is BackendException && e.fatal) return@withContext Result.failure(e)
                 errors += "Backend: ${e.message}"
                 Timber.w(e, "Backend proxy falló")
             }
@@ -475,7 +501,7 @@ class GeminiService @Inject constructor(
             conn.inputStream.bufferedReader().readText()
         } else {
             val errorBody = conn.errorStream?.bufferedReader()?.readText() ?: ""
-            throw Exception("Backend proxy error $responseCode: ${extractBackendErrorMessage(errorBody)}")
+            throw parseBackendError(responseCode, errorBody)
         }
 
         val json = JSONObject(responseBody)
@@ -493,16 +519,6 @@ class GeminiService @Inject constructor(
                 url = obj.getString("url"),
                 autor = obj.optString("autor", "").takeIf { it != "null" && it.isNotBlank() }
             )
-        }
-    }
-
-    private fun extractBackendErrorMessage(rawBody: String): String {
-        if (rawBody.isBlank()) return "Sin detalle de error"
-        return try {
-            val obj = JSONObject(rawBody)
-            obj.optString("message").ifBlank { rawBody.take(300) }
-        } catch (_: Exception) {
-            rawBody.take(300)
         }
     }
 

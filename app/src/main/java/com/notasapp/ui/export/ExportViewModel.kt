@@ -1,5 +1,10 @@
 package com.notasapp.ui.export
 
+import com.notasapp.ui.UiEvent
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
+import com.notasapp.ui.UiText
+import com.notasapp.R
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -56,6 +61,9 @@ class ExportViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ExportUiState())
     val uiState: StateFlow<ExportUiState> = _uiState.asStateFlow()
 
+    private val _events = Channel<UiEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
+
     init {
         // Cargar nombre de materia para sugerir nombres de archivo
         viewModelScope.launch {
@@ -105,7 +113,7 @@ class ExportViewModel @Inject constructor(
      */
     fun exportarExcelSAF(uri: Uri) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isExporting = true, exportError = null, exportSuccess = false) }
+            _uiState.update { it.copy(isExporting = true, exportSuccess = false) }
             try {
                 val materia = materiaRepository.getMateriaConComponentes(materiaId).first()
                     ?: throw IllegalStateException("Materia no encontrada")
@@ -143,53 +151,10 @@ class ExportViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Error al exportar Excel SAF")
+                _events.trySend(UiEvent.Message(UiText(R.string.exp_err_file)))
                 _uiState.update {
                     it.copy(
                         isExporting = false,
-                        exportError = "[${e.javaClass.simpleName}] ${e.message}${e.cause?.let { c -> " | cause: [${c.javaClass.simpleName}] ${c.message}" } ?: ""}"
-                    )
-                }
-            }
-        }
-    }
-
-    /**
-     * Exporta la materia a .xlsx en el almacenamiento privado de la app (fallback).
-     *
-     * @return Construye un [Intent] de compartir para que el usuario lo envíe.
-     */
-    fun exportarExcel() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isExporting = true, exportError = null) }
-            try {
-                val materia = materiaRepository.getMateriaConComponentes(materiaId).first()
-                    ?: throw IllegalStateException("Materia no encontrada")
-
-                val (file, uri) = withContext(Dispatchers.IO) {
-                    val f = excelExporter.exportar(context, materia)
-                    val u = FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.provider",
-                        f
-                    )
-                    f to u
-                }
-
-                Timber.i("Excel generado: ${file.absolutePath}")
-                _uiState.update {
-                    it.copy(
-                        isExporting      = false,
-                        exportSuccess    = true,
-                        exportedFilePath = file.absolutePath,
-                        exportedFileUri  = uri
-                    )
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "Error al exportar Excel")
-                _uiState.update {
-                    it.copy(
-                        isExporting = false,
-                        exportError = "[${e.javaClass.simpleName}] ${e.message}${e.cause?.let { c -> " | cause: [${c.javaClass.simpleName}] ${c.message}" } ?: ""}"
                     )
                 }
             }
@@ -203,7 +168,7 @@ class ExportViewModel @Inject constructor(
      */
     fun exportarPdfSAF(uri: Uri) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isExporting = true, exportError = null, exportSuccess = false) }
+            _uiState.update { it.copy(isExporting = true, exportSuccess = false) }
             try {
                 val materia = materiaRepository.getMateriaConComponentes(materiaId).first()
                     ?: throw IllegalStateException("Materia no encontrada")
@@ -225,10 +190,10 @@ class ExportViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Error al exportar PDF SAF")
+                _events.trySend(UiEvent.Message(UiText(R.string.exp_err_file)))
                 _uiState.update {
                     it.copy(
                         isExporting = false,
-                        exportError = "[${e.javaClass.simpleName}] ${e.message}${e.cause?.let { c -> " | cause: [${c.javaClass.simpleName}] ${c.message}" } ?: ""}"
                     )
                 }
             }
@@ -238,7 +203,6 @@ class ExportViewModel @Inject constructor(
     fun clearMessages() = _uiState.update {
         it.copy(
             exportSuccess = false,
-            exportError   = null
         )
     }
 
@@ -247,7 +211,6 @@ class ExportViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     isExporting = true,
-                    exportError = null,
                     exportSuccess = false
                 )
             }
@@ -256,7 +219,7 @@ class ExportViewModel @Inject constructor(
                 val materia = materiaRepository.getMateriaConComponentes(materiaId).first()
                     ?: throw IllegalStateException("Materia no encontrada")
                 val userEmail = userPreferencesRepository.userEmail.first()
-                    ?: throw IllegalStateException("Debes iniciar sesión para exportar a Google Drive")
+                    ?: throw NotSignedInException()
 
                 when (val result = sheetsRepository.syncMateria(materia, userEmail)) {
                     is NetworkResult.Success -> {
@@ -280,10 +243,10 @@ class ExportViewModel @Inject constructor(
                                 )
                             }
                         } else {
+                            _events.trySend(UiEvent.Message(UiText(R.string.exp_err_drive)))
                             _uiState.update {
                                 it.copy(
                                     isExporting = false,
-                                    exportError = result.message,
                                     pendingDriveRetry = false
                                 )
                             }
@@ -296,10 +259,10 @@ class ExportViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Error al exportar a Drive")
+                _events.trySend(UiEvent.Message(UiText(if (e is NotSignedInException) R.string.exp_err_login_required else R.string.exp_err_drive)))
                 _uiState.update {
                     it.copy(
                         isExporting = false,
-                        exportError = "[${e.javaClass.simpleName}] ${e.message}",
                         pendingDriveRetry = false
                     )
                 }
@@ -323,9 +286,7 @@ class ExportViewModel @Inject constructor(
         if (granted && shouldRetry) {
             exportarDrive()
         } else if (!granted) {
-            _uiState.update {
-                it.copy(exportError = "No se concedieron permisos de Google Drive")
-            }
+            _events.trySend(UiEvent.Message(UiText(R.string.exp_err_drive_permission)))
         }
     }
 }
@@ -336,7 +297,6 @@ data class ExportUiState(
     val exportedFilePath: String? = null,
     /** URI FileProvider del .xlsx generado, listo para compartir. */
     val exportedFileUri: Uri? = null,
-    val exportError: String? = null,
     val driveWebLink: String? = null,
     val driveRecoveryIntent: Intent? = null,
     val pendingDriveRetry: Boolean = false,
@@ -347,3 +307,5 @@ data class ExportUiState(
     /** Nombre sugerido para el archivo PDF. */
     val suggestedPdfFilename: String = "notas.pdf"
 )
+
+private class NotSignedInException : Exception()

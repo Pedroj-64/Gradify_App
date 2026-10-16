@@ -1,5 +1,8 @@
 package com.notasapp.ui.components
 
+import com.notasapp.R
+import androidx.compose.ui.res.stringResource
+import androidx.annotation.StringRes
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -42,25 +45,18 @@ import androidx.compose.ui.unit.dp
  * Tipos de permisos que la app solicita al usuario.
  */
 enum class PermissionType(
-    val title: String,
+    @StringRes val title: Int,
     val icon: ImageVector,
-    val explanation: String,
-    val whatWeUseItFor: String,
-    val whatHappensIfDenied: String
+    @StringRes val explanation: Int,
+    @StringRes val whatWeUseItFor: Int,
+    @StringRes val whatHappensIfDenied: Int
 ) {
     NOTIFICATIONS(
-        title = "Notificaciones",
+        title = R.string.perm_notif_title,
         icon = Icons.Default.Notifications,
-        explanation = "Gradify necesita tu permiso para enviarte notificaciones cuando se acerque un examen o entrega.",
-        whatWeUseItFor = "Recordatorios de exámenes y evaluaciones programadas en tu calendario académico.",
-        whatHappensIfDenied = "No recibirás alertas de exámenes próximos. Podrás seguir usando la app normalmente."
-    ),
-    STORAGE(
-        title = "Almacenamiento",
-        icon = Icons.Default.Folder,
-        explanation = "Gradify necesita acceso al almacenamiento para guardar tus archivos Excel y PDF de notas.",
-        whatWeUseItFor = "Guardar archivos exportados (.xlsx, .pdf) en la carpeta que elijas.",
-        whatHappensIfDenied = "No podrás exportar tus notas como archivos. La app seguirá funcionando normalmente."
+        explanation = R.string.perm_notif_expl,
+        whatWeUseItFor = R.string.perm_notif_use,
+        whatHappensIfDenied = R.string.perm_notif_denied
     )
 }
 
@@ -92,7 +88,7 @@ fun PermissionExplanationDialog(
         },
         title = {
             Text(
-                text = "Permiso necesario",
+                text = stringResource(R.string.perm_needed),
                 textAlign = TextAlign.Center
             )
         },
@@ -119,7 +115,7 @@ fun PermissionExplanationDialog(
                         )
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            text = permissionType.title,
+                            text = stringResource(permissionType.title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -128,20 +124,20 @@ fun PermissionExplanationDialog(
 
                 // Explicación
                 Text(
-                    text = permissionType.explanation,
+                    text = stringResource(permissionType.explanation),
                     style = MaterialTheme.typography.bodyMedium
                 )
 
                 // Para qué lo usamos
                 Column {
                     Text(
-                        text = "¿Para qué lo usamos?",
+                        text = stringResource(R.string.perm_why),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = permissionType.whatWeUseItFor,
+                        text = stringResource(permissionType.whatWeUseItFor),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -150,13 +146,13 @@ fun PermissionExplanationDialog(
                 // Qué pasa si no lo da
                 Column {
                     Text(
-                        text = "¿Qué pasa si dices que no?",
+                        text = stringResource(R.string.perm_if_no),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.tertiary
                     )
                     Text(
-                        text = permissionType.whatHappensIfDenied,
+                        text = stringResource(permissionType.whatHappensIfDenied),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -181,7 +177,7 @@ fun PermissionExplanationDialog(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "Tus datos permanecen en tu dispositivo. No compartimos nada con terceros.",
+                            text = stringResource(R.string.perm_privacy),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -191,12 +187,12 @@ fun PermissionExplanationDialog(
         },
         confirmButton = {
             Button(onClick = onAccept) {
-                Text("Permitir")
+                Text(stringResource(R.string.perm_allow))
             }
         },
         dismissButton = {
             TextButton(onClick = onDeny) {
-                Text("Ahora no")
+                Text(stringResource(R.string.perm_not_now))
             }
         }
     )

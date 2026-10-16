@@ -1,5 +1,8 @@
 package com.notasapp.ui.materia.create
 
+import com.notasapp.R
+import androidx.compose.ui.res.stringResource
+import com.notasapp.ui.UiEvent
 import com.notasapp.ui.components.gradifyChipColors
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.draw.clip
@@ -77,23 +80,22 @@ fun CreateMateriaWizard(
     val state by viewModel.wizardState.collectAsStateWithLifecycle()
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val ctx = LocalContext.current
 
-    LaunchedEffect(saveState) {
-        when (saveState) {
-            is SaveState.Success -> onWizardComplete()
-            is SaveState.Error -> {
-                snackbarHostState.showSnackbar((saveState as SaveState.Error).message)
-                viewModel.resetSaveState()
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                UiEvent.Done -> onWizardComplete()
+                is UiEvent.Message -> snackbarHostState.showSnackbar(event.text.asString(ctx))
             }
-            else -> Unit
         }
     }
 
     Scaffold(
         topBar = {
             ScreenHeader(
-                title = "Nueva materia",
-                subtitle = "Paso ${state.currentStep} de 3",
+                title = stringResource(R.string.home_fab_add),
+                subtitle = stringResource(R.string.cw_step, state.currentStep),
                 onBack = {
                     if (state.currentStep == 1) onBack()
                     else viewModel.goBack()
@@ -182,7 +184,7 @@ private fun Step1BasicInfo(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Información básica",
+            text = stringResource(R.string.wizard_step1_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
@@ -190,8 +192,8 @@ private fun Step1BasicInfo(
         OutlinedTextField(
             value = state.nombre,
             onValueChange = onNombreChange,
-            label = { Text("Nombre de la materia *") },
-            placeholder = { Text("Ej: Matemáticas") },
+            label = { Text(stringResource(R.string.campo_nombre)) },
+            placeholder = { Text(stringResource(R.string.cw_name_ex)) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Words,
@@ -203,7 +205,7 @@ private fun Step1BasicInfo(
         OutlinedTextField(
             value = state.periodo,
             onValueChange = onPeriodoChange,
-            label = { Text("Semestre / Período *") },
+            label = { Text(stringResource(R.string.campo_periodo)) },
             placeholder = { Text("Ej: 2026-1") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -213,7 +215,7 @@ private fun Step1BasicInfo(
         OutlinedTextField(
             value = state.profesor,
             onValueChange = onProfesorChange,
-            label = { Text("Profesor (opcional)") },
+            label = { Text(stringResource(R.string.edit_subject_teacher)) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Words,
@@ -224,7 +226,7 @@ private fun Step1BasicInfo(
 
         // ── Créditos ──
         Text(
-            text = "Créditos: ${state.creditos}",
+            text = stringResource(R.string.cw_credits, state.creditos),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium
         )
@@ -252,7 +254,7 @@ private fun Step1BasicInfo(
                 .height(56.dp),
             enabled = state.nombre.isNotBlank() && state.periodo.isNotBlank()
         ) {
-            Text("Siguiente")
+            Text(stringResource(R.string.onboard_next))
         }
     }
 }
@@ -275,13 +277,13 @@ private fun Step2Escala(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Escala de calificación",
+            text = stringResource(R.string.wizard_step2_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
 
         Text(
-            text = "¿Qué escala de notas usa esta materia?",
+            text = stringResource(R.string.cw_scale_q),
             style = MaterialTheme.typography.bodyLarge
         )
 
@@ -300,7 +302,7 @@ private fun Step2Escala(
 
         // Nota mínima de aprobación
         Text(
-            text = "Nota mínima para aprobar: ${"%.1f".format(state.notaAprobacion)}",
+            text = stringResource(R.string.cw_pass, state.notaAprobacion),
             style = MaterialTheme.typography.titleMedium
         )
         Slider(
@@ -316,7 +318,7 @@ private fun Step2Escala(
             onClick = onNext,
             modifier = Modifier.fillMaxWidth().height(56.dp)
         ) {
-            Text("Siguiente")
+            Text(stringResource(R.string.onboard_next))
         }
     }
 }
@@ -341,13 +343,13 @@ private fun Step3Componentes(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Componentes de evaluación",
+            text = stringResource(R.string.wizard_step3_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
 
         Text(
-            text = "Define los cortes o parciales con su peso en la nota final.",
+            text = stringResource(R.string.wizard_step3_hint),
             style = MaterialTheme.typography.bodyLarge
         )
 
@@ -370,7 +372,7 @@ private fun Step3Componentes(
                         OutlinedTextField(
                             value = componente.nombre,
                             onValueChange = { onNombreChange(index, it) },
-                            label = { Text("Nombre") },
+                            label = { Text(stringResource(R.string.edit_subject_name)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true
                         )
@@ -378,7 +380,7 @@ private fun Step3Componentes(
                             IconButton(onClick = { onRemoveComponente(index) }) {
                                 Icon(
                                     Icons.Default.DeleteOutline,
-                                    contentDescription = "Eliminar componente",
+                                    contentDescription = stringResource(R.string.wizard_delete_component),
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             }
@@ -417,7 +419,7 @@ private fun Step3Componentes(
             MaterialTheme.colorScheme.error
 
         Text(
-            text = "Total: ${kotlin.math.round(state.sumaPorcentajes * 100).toInt()}% ${if (state.porcentajesValidos) "✓" else "(debe ser 100%)"}",
+            text = stringResource(if (state.porcentajesValidos) R.string.cw_total_ok else R.string.cw_total_bad, kotlin.math.round(state.sumaPorcentajes * 100).toInt()),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = totalColor
@@ -429,7 +431,7 @@ private fun Step3Componentes(
             modifier = Modifier.fillMaxWidth()
         ) {
             Icon(Icons.Default.Add, contentDescription = null)
-            Text("Agregar componente")
+            Text(stringResource(R.string.btn_agregar_componente))
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -443,7 +445,7 @@ private fun Step3Componentes(
             if (isSaving) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
             } else {
-                Text("Guardar materia")
+                Text(stringResource(R.string.btn_guardar_materia))
             }
         }
     }

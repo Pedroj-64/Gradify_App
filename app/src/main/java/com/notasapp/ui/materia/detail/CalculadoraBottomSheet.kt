@@ -1,5 +1,8 @@
 package com.notasapp.ui.materia.detail
 
+import com.notasapp.ui.UiText
+import com.notasapp.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -59,7 +62,7 @@ import com.notasapp.domain.usecase.CalcularNotaNecesariaUseCase
  * ver qué promedio necesita obtener en las evaluaciones pendientes.
  *
  * Consume [MateriaDetailViewModel.notaNecesariaResult] y llama a
- * [MateriaDetailViewModel.calcularNotaNecesaria] al presionar "Calcular".
+ * [MateriaDetailViewModel.calcularNotaNecesaria] al presionar stringResource(R.string.calc_calculate).
  *
  * @param escalaMax          Nota máxima de la materia (para validación y hints).
  * @param resultado          Resultado actual del caso de uso (puede ser null = sin calcular).
@@ -113,7 +116,7 @@ private fun CalculadoraContent(
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
     var inputMeta by remember { mutableStateOf("") }
-    var inputError by remember { mutableStateOf<String?>(null) }
+    var inputError by remember { mutableStateOf<UiText?>(null) }
 
     Column(
         modifier = modifier
@@ -131,7 +134,7 @@ private fun CalculadoraContent(
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = "¿Qué nota necesito?",
+                text = stringResource(R.string.detail_what_grade_needed),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold
             )
@@ -140,7 +143,7 @@ private fun CalculadoraContent(
         Spacer(Modifier.height(4.dp))
 
         Text(
-            text = "Ingresa la nota final que deseas alcanzar",
+            text = stringResource(R.string.calc_enter_target),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -157,10 +160,10 @@ private fun CalculadoraContent(
                 val sanitized = raw.filter { it.isDigit() || it == '.' }
                 if (sanitized.count { it == '.' } <= 1) inputMeta = sanitized
             },
-            label = { Text("Meta final (máx ${"%.1f".format(escalaMax)})") },
+            label = { Text(stringResource(R.string.calc_goal_label, escalaMax)) },
             singleLine = true,
             isError = inputError != null,
-            supportingText = inputError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+            supportingText = inputError?.let { { Text(it.asString(androidx.compose.ui.platform.LocalContext.current), color = MaterialTheme.colorScheme.error) } },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Decimal,
                 imeAction = ImeAction.Done
@@ -185,7 +188,7 @@ private fun CalculadoraContent(
         ) {
             Icon(Icons.Default.Calculate, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text("Calcular")
+            Text(stringResource(R.string.calc_calculate))
         }
 
         // Resultado animado
@@ -217,8 +220,8 @@ private fun ResultadoCard(resultado: CalcularNotaNecesariaUseCase.Resultado) {
         is CalcularNotaNecesariaUseCase.Resultado.MetaYaAlcanzada -> {
             ResultBanner(
                 icon = Icons.Default.CheckCircle,
-                title = "¡Meta ya alcanzada!",
-                subtitle = if (resultado.aprobado) "Ya tienes nota suficiente para aprobar." else "Ya cumpliste tu meta propuesta.",
+                title = stringResource(R.string.calc_goal_reached),
+                subtitle = stringResource(if (resultado.aprobado) R.string.calc_done_pass else R.string.calc_done_goal),
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             )
@@ -228,8 +231,8 @@ private fun ResultadoCard(resultado: CalcularNotaNecesariaUseCase.Resultado) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ResultBanner(
                     icon = Icons.Default.TrendingUp,
-                    title = "Necesitas: ${"%.2f".format(resultado.notaNecesaria)}",
-                    subtitle = "Promedio en las ${resultado.componentesFaltantes} evaluación(es) pendiente(s).",
+                    title = stringResource(R.string.calc_need, resultado.notaNecesaria),
+                    subtitle = stringResource(R.string.calc_avg_pending, resultado.componentesFaltantes.size),
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -239,8 +242,8 @@ private fun ResultadoCard(resultado: CalcularNotaNecesariaUseCase.Resultado) {
         is CalcularNotaNecesariaUseCase.Resultado.Imposible -> {
             ResultBanner(
                 icon = Icons.Default.Error,
-                title = "Meta inalcanzable",
-                subtitle = "Se necesitaría ${"%.2f".format(resultado.notaNecesariaCalculada)} puntos, lo cual supera la nota máxima.",
+                title = stringResource(R.string.goal_unreachable),
+                subtitle = stringResource(R.string.calc_unreachable_sub, resultado.notaNecesariaCalculada),
                 containerColor = MaterialTheme.colorScheme.errorContainer,
                 contentColor = MaterialTheme.colorScheme.onErrorContainer
             )
@@ -249,7 +252,7 @@ private fun ResultadoCard(resultado: CalcularNotaNecesariaUseCase.Resultado) {
         is CalcularNotaNecesariaUseCase.Resultado.Error -> {
             ResultBanner(
                 icon = Icons.Default.Info,
-                title = "No se pudo calcular",
+                title = stringResource(R.string.calc_error),
                 subtitle = resultado.mensaje,
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -306,13 +309,13 @@ private fun calcular(
     input: String,
     escalaMax: Float,
     onCalcular: (Float) -> Unit,
-    onError: (String) -> Unit
+    onError: (UiText) -> Unit
 ) {
     val meta = input.toFloatOrNull()
     when {
-        meta == null -> onError("Ingresa una nota válida")
-        meta <= 0f -> onError("La meta debe ser mayor que 0")
-        meta > escalaMax -> onError("La meta no puede superar ${"%.1f".format(escalaMax)}")
+        meta == null -> onError(UiText(R.string.calc_invalid_grade))
+        meta <= 0f -> onError(UiText(R.string.calc_goal_positive))
+        meta > escalaMax -> onError(UiText(R.string.calc_goal_max, escalaMax))
         else -> onCalcular(meta)
     }
 }

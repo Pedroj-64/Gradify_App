@@ -189,13 +189,6 @@ fun StatPair(value: String, label: String, modifier: Modifier = Modifier, tone: 
     }
 }
 
-@Composable
-fun RowSpacer(width: Int = 12) = Spacer(Modifier.width(width.dp))
-
-@Composable
-fun FullWidthColumn(modifier: Modifier = Modifier, spacing: Int = 12, content: @Composable ColumnScope.() -> Unit) =
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(spacing.dp), content = content)
-
 class MenuAction(val label: String, val destructive: Boolean = false, val onClick: () -> Unit)
 
 /** Menú ⋮ de una fila: reemplaza la fila de íconos (lápiz, papelera, expandir…). */

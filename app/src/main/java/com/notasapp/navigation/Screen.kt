@@ -22,8 +22,6 @@ sealed class Screen(val route: String) {
 
     // ── Crear Materia (Wizard de 3 pasos) ──────────────────────
     data object CreateMateriaBasicInfo : Screen("create_materia/basic_info")
-    data object CreateMateriaScale : Screen("create_materia/scale")
-    data object CreateMateriaComponents : Screen("create_materia/components")
 
     // ── Detalle de Materia ──────────────────────────────────────
     data object MateriaDetail : Screen("materia/{materiaId}") {
@@ -35,12 +33,6 @@ sealed class Screen(val route: String) {
     data object EditPorcentajes : Screen("materia/{materiaId}/edit_porcentajes") {
         const val ARG_MATERIA_ID = "materiaId"
         fun createRoute(materiaId: Long) = "materia/$materiaId/edit_porcentajes"
-    }
-
-    // ── Calculadora ────────────────────────────────────────────
-    data object Calculator : Screen("materia/{materiaId}/calculator") {
-        const val ARG_MATERIA_ID = "materiaId"
-        fun createRoute(materiaId: Long) = "materia/$materiaId/calculator"
     }
 
     // ── Exportar / Sincronizar ──────────────────────────────────

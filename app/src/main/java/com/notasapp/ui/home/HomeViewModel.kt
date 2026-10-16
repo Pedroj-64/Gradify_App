@@ -1,5 +1,9 @@
 package com.notasapp.ui.home
 
+import androidx.lifecycle.SavedStateHandle
+import com.notasapp.ui.savedFlow
+import com.notasapp.ui.UiText
+import com.notasapp.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notasapp.data.local.dao.UsuarioDao
@@ -42,15 +46,16 @@ enum class OrdenMateria(val label: String) {
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val usuarioDao: UsuarioDao,
-    private val materiaRepository: MateriaRepository
+    private val materiaRepository: MateriaRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     // ── Filtros y búsqueda ─────────────────────────────────────
 
-    private val _searchQuery = MutableStateFlow("")
+    private val _searchQuery = savedFlow(savedStateHandle, "q", "")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _filtroSemestre = MutableStateFlow<String?>(null)
+    private val _filtroSemestre = savedFlow<String?>(savedStateHandle, "semestre", null)
     val filtroSemestre: StateFlow<String?> = _filtroSemestre.asStateFlow()
 
     private val _orden = MutableStateFlow(OrdenMateria.NOMBRE)
@@ -150,8 +155,8 @@ class HomeViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
+    private val _error = MutableStateFlow<UiText?>(null)
+    val error: StateFlow<UiText?> = _error.asStateFlow()
 
     // ── Semestres cerrados ─────────────────────────────────────
 
@@ -170,7 +175,7 @@ class HomeViewModel @Inject constructor(
                 if (!archivado) _verArchivadas.value = false
             } catch (e: Exception) {
                 Timber.e(e, "Error al cambiar el estado del semestre")
-                _error.value = "No se pudo actualizar el semestre"
+                _error.value = UiText(R.string.err_update_semester)
             }
         }
     }
@@ -195,7 +200,7 @@ class HomeViewModel @Inject constructor(
                 Timber.i("Materia $materiaId eliminada")
             } catch (e: Exception) {
                 Timber.e(e, "Error al eliminar materia")
-                _error.value = "No se pudo eliminar la materia"
+                _error.value = UiText(R.string.err_delete_subject)
             } finally {
                 _hiddenIds.update { it - materiaId }
                 deleteJobs.remove(materiaId)

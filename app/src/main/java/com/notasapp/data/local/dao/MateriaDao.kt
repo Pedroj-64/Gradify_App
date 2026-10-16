@@ -38,9 +38,6 @@ interface MateriaDao {
     fun getMateriasByUsuario(usuarioId: String): Flow<List<MateriaEntity>>
 
     @Query("SELECT * FROM materias WHERE id = :id")
-    fun getMateriaById(id: Long): Flow<MateriaEntity?>
-
-    @Query("SELECT * FROM materias WHERE id = :id")
     suspend fun getMateriaByIdOnce(id: Long): MateriaEntity?
 
     /**
@@ -58,10 +55,6 @@ interface MateriaDao {
     @Transaction
     @Query("SELECT * FROM materias WHERE usuarioId = :usuarioId ORDER BY periodo DESC, nombre ASC")
     fun getMateriasConComponentesByUsuario(usuarioId: String): Flow<List<MateriaConComponentes>>
-
-    /** Total de materias del usuario (para mostrar badge en Home). */
-    @Query("SELECT COUNT(*) FROM materias WHERE usuarioId = :usuarioId")
-    fun countByUsuario(usuarioId: String): Flow<Int>
 
     /** Actualiza el ID de la hoja de Google Sheets vinculada. */
     @Query("UPDATE materias SET googleSheetsId = :sheetsId WHERE id = :id")

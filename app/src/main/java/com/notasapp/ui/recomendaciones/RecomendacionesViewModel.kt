@@ -1,11 +1,15 @@
 package com.notasapp.ui.recomendaciones
 
+import com.notasapp.ui.UiText
+import com.notasapp.R
+import com.notasapp.navigation.Screen
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notasapp.data.local.cache.RecomendacionesCache
 import com.notasapp.data.local.dao.UsuarioDao
 import com.notasapp.data.remote.ai.GeminiService
+import com.notasapp.data.remote.ai.GeminiService.Companion.BackendException
 import com.notasapp.data.remote.ai.Recomendacion
 import com.notasapp.domain.model.Materia
 import com.notasapp.domain.repository.MateriaRepository
@@ -30,7 +34,7 @@ data class RecomendacionesUiState(
     val isLoading: Boolean = false,
     val materiaSeleccionada: Materia? = null,
     val recomendaciones: List<Recomendacion> = emptyList(),
-    val error: String? = null,
+    val error: UiText? = null,
     val apiKeyFaltante: Boolean = false
 )
 
@@ -52,7 +56,7 @@ class RecomendacionesViewModel @Inject constructor(
 
     /** materiaId opcional inyectado desde la ruta de navegación. */
     private val preSelectId: Long? =
-        savedStateHandle.get<Long>("materiaId")?.takeIf { it > 0 }
+        savedStateHandle.get<Long>(Screen.RecomendacionesMateria.ARG_MATERIA_ID)?.takeIf { it > 0 }
 
     private val _uiState = MutableStateFlow(RecomendacionesUiState())
     val uiState: StateFlow<RecomendacionesUiState> = _uiState.asStateFlow()
@@ -183,14 +187,15 @@ class RecomendacionesViewModel @Inject constructor(
                     Timber.e(error, "Error generando recomendaciones")
                     val isApiKeyMissing = error is IllegalStateException &&
                             error.message?.contains("GEMINI_API_KEY") == true
-                    val rawMsg = buildString {
-                        append("[${error.javaClass.simpleName}] ${error.message}")
-                        error.cause?.let { append(" | cause: [${it.javaClass.simpleName}] ${it.message}") }
+                    val errorText = when ((error as? BackendException)?.status) {
+                        401 -> UiText(R.string.recs_err_token)
+                        429 -> UiText(R.string.recs_err_rate)
+                        else -> UiText(R.string.recs_err_generic)
                     }
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = if (isApiKeyMissing) null else rawMsg,
+                            error = if (isApiKeyMissing) null else errorText,
                             apiKeyFaltante = isApiKeyMissing
                         )
                     }

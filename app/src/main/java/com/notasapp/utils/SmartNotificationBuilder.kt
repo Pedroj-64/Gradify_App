@@ -1,5 +1,7 @@
 package com.notasapp.utils
 
+import android.content.Context
+import com.notasapp.R
 import com.notasapp.domain.model.Materia
 import com.notasapp.domain.model.TipoEvento
 
@@ -29,19 +31,20 @@ object SmartNotificationBuilder {
      * @param minutesBefore Minutos de antelación del recordatorio
      */
     fun buildContent(
+        context: Context,
         eventTitle: String,
         eventType: TipoEvento,
         materia: Materia?,
         minutesBefore: Int = 60
     ): SmartContent {
         val emoji = eventType.emoji
-        val timeLabel = formatMinutes(minutesBefore)
+        val timeLabel = formatMinutes(context, minutesBefore)
 
         // Sin datos de materia → notificación genérica
         if (materia == null) {
             return SmartContent(
                 title = "$emoji $eventTitle",
-                message = "Tienes un evento académico $timeLabel. ¡Prepárate!"
+                message = context.getString(R.string.sn_generic, timeLabel)
             )
         }
 
@@ -57,43 +60,43 @@ object SmartNotificationBuilder {
         val (tag, motivationalMsg) = when {
             // Sin notas aún
             promedio == null -> "INICIO" to
-                    "Es tu primera evaluación en $materiaNombre. ¡Da lo mejor de ti!"
+                    context.getString(R.string.sn_inicio, materiaNombre)
 
             // Ya aprobó la materia
             yaAprobo -> "EXCELENTE" to
-                    "Llevas ${formatNota(promedio)}/${formatNota(notaAprobacion)} en $materiaNombre. ¡Ya la tienes aprobada, sigue así!"
+                    context.getString(R.string.sn_excelente, formatNota(promedio), formatNota(notaAprobacion), materiaNombre)
 
             // Aprobando con buen margen (>20% arriba de la nota mínima)
             promedio >= notaAprobacion * 1.2f -> "MUY_BIEN" to
-                    "Vas muy bien en $materiaNombre con ${formatNota(promedio)}. ¡Mantén el ritmo!"
+                    context.getString(R.string.sn_muy_bien, materiaNombre, formatNota(promedio))
 
             // Aprobando justo
             promedio >= notaAprobacion -> "APROBANDO" to
-                    "Llevas ${formatNota(promedio)} en $materiaNombre, justo en el límite. Este evento es clave para asegurar."
+                    context.getString(R.string.sn_aprobando, formatNota(promedio), materiaNombre)
 
             // Cerca de aprobar (falta poco)
             notaNecesaria != null && notaNecesaria <= materia.escalaMax * 0.7f -> "RECUPERABLE" to
-                    "Necesitas ${formatNota(notaNecesaria)} en lo que queda de $materiaNombre. ¡Aún es posible, enfoca tu estudio!"
+                    context.getString(R.string.sn_recuperable, formatNota(notaNecesaria), materiaNombre)
 
             // En riesgo alto
             notaNecesaria != null && notaNecesaria <= materia.escalaMax -> "RIESGO" to
-                    "Necesitas ${formatNota(notaNecesaria)} para aprobar $materiaNombre. Este evento es crucial — ¡dale con todo!"
+                    context.getString(R.string.sn_riesgo, formatNota(notaNecesaria), materiaNombre)
 
             // Situación muy difícil
             else -> "CRITICO" to
-                    "La situación en $materiaNombre es difícil (${formatNota(promedio)}/${formatNota(notaAprobacion)}). Cada punto cuenta, ¡no te rindas!"
+                    context.getString(R.string.sn_critico, materiaNombre, formatNota(promedio), formatNota(notaAprobacion))
         }
 
         // ── Título dinámico ──────────────────────────────────────────────
         val title = when (tag) {
             "EXCELENTE", "MUY_BIEN" -> "$emoji $eventTitle ⭐"
-            "RIESGO", "CRITICO" -> "$emoji ¡Atención! $eventTitle"
+            "RIESGO", "CRITICO" -> context.getString(R.string.sn_attention, emoji, eventTitle)
             else -> "$emoji $eventTitle"
         }
 
         // ── Mensaje compuesto ────────────────────────────────────────────
         val progressInfo = if (porcentajeEvaluado > 0f) {
-            "\n📊 Progreso: ${kotlin.math.round(porcentajeEvaluado * 100).toInt()}% del curso evaluado."
+            context.getString(R.string.sn_progress, kotlin.math.round(porcentajeEvaluado * 100).toInt())
         } else ""
 
         val message = "$motivationalMsg$progressInfo"
@@ -103,12 +106,12 @@ object SmartNotificationBuilder {
 
     private fun formatNota(nota: Float): String = "%.1f".format(nota)
 
-    private fun formatMinutes(minutes: Int): String = when {
-        minutes <= 0 -> "ahora"
-        minutes < 60 -> "en $minutes minutos"
-        minutes == 60 -> "en 1 hora"
-        minutes < 1440 -> "en ${minutes / 60} horas"
-        minutes == 1440 -> "mañana"
-        else -> "en ${minutes / 1440} días"
+    private fun formatMinutes(context: Context, minutes: Int): String = when {
+        minutes <= 0 -> context.getString(R.string.sn_now)
+        minutes < 60 -> context.getString(R.string.sn_minutes, minutes)
+        minutes == 60 -> context.getString(R.string.sn_hour)
+        minutes < 1440 -> context.getString(R.string.sn_hours, minutes / 60)
+        minutes == 1440 -> context.getString(R.string.sn_tomorrow)
+        else -> context.getString(R.string.sn_days, minutes / 1440)
     }
 }

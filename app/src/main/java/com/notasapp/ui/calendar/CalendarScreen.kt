@@ -124,9 +124,10 @@ fun CalendarScreen(
         calendarAuthLauncher.launch(intent)
     }
 
+    val msgContext = androidx.compose.ui.platform.LocalContext.current
     LaunchedEffect(uiState.successMessage, uiState.error) {
         val msg = uiState.successMessage ?: uiState.error ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(msg)
+        snackbarHostState.showSnackbar(msg.asString(msgContext))
         viewModel.clearMessages()
     }
 

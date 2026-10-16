@@ -1,5 +1,8 @@
 package com.notasapp.ui.materia.detail
 
+import androidx.annotation.StringRes
+import com.notasapp.ui.UiText
+import com.notasapp.R
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -57,8 +60,8 @@ class MateriaDetailViewModel @Inject constructor(
     val notaNecesariaResult: StateFlow<CalcularNotaNecesariaUseCase.Resultado?> =
         _notaNecesariaResult.asStateFlow()
 
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
+    private val _error = MutableStateFlow<UiText?>(null)
+    val error: StateFlow<UiText?> = _error.asStateFlow()
 
     // ── Simulador "¿Qué pasa si saco X?" ──────────────────────
 
@@ -81,7 +84,7 @@ class MateriaDetailViewModel @Inject constructor(
                 materiaRepository.updateSubNotaValor(subNotaId, valor)
             } catch (e: Exception) {
                 Timber.e(e, "Error al actualizar sub-nota $subNotaId")
-                _error.value = "No se pudo guardar la nota"
+                _error.value = UiText(R.string.err_save_grade)
             }
         }
     }
@@ -104,10 +107,10 @@ class MateriaDetailViewModel @Inject constructor(
                     )
                 )
             } catch (e: IllegalArgumentException) {
-                _error.value = e.message ?: "No se pudo agregar la nota"
+                _error.value = UiText(R.string.err_percent_invalid)
             } catch (e: Exception) {
                 Timber.e(e, "Error al agregar sub-nota al componente $componenteId")
-                _error.value = "No se pudo agregar la nota"
+                _error.value = UiText(R.string.err_add_grade)
             }
         }
     }
@@ -121,7 +124,7 @@ class MateriaDetailViewModel @Inject constructor(
                 materiaRepository.deleteSubNota(subNotaId)
             } catch (e: Exception) {
                 Timber.e(e, "Error al eliminar sub-nota $subNotaId")
-                _error.value = "No se pudo eliminar la nota"
+                _error.value = UiText(R.string.err_delete_grade)
             }
         }
     }
@@ -146,10 +149,10 @@ class MateriaDetailViewModel @Inject constructor(
                     )
                 )
             } catch (e: IllegalArgumentException) {
-                _error.value = e.message ?: "No se pudo agregar el detalle"
+                _error.value = UiText(R.string.err_percent_invalid)
             } catch (e: Exception) {
                 Timber.e(e, "Error al agregar detalle a sub-nota $subNotaId")
-                _error.value = "No se pudo agregar el detalle"
+                _error.value = UiText(R.string.err_add_detail)
             }
         }
     }
@@ -163,7 +166,7 @@ class MateriaDetailViewModel @Inject constructor(
                 materiaRepository.updateSubNotaDetalleValor(detalleId, valor)
             } catch (e: Exception) {
                 Timber.e(e, "Error al actualizar detalle $detalleId")
-                _error.value = "No se pudo guardar el detalle"
+                _error.value = UiText(R.string.err_save_detail)
             }
         }
     }
@@ -177,7 +180,7 @@ class MateriaDetailViewModel @Inject constructor(
                 materiaRepository.deleteSubNotaDetalle(detalleId)
             } catch (e: Exception) {
                 Timber.e(e, "Error al eliminar detalle $detalleId")
-                _error.value = "No se pudo eliminar el detalle"
+                _error.value = UiText(R.string.err_delete_detail)
             }
         }
     }
@@ -213,53 +216,6 @@ class MateriaDetailViewModel @Inject constructor(
         )
     }
 
-    /**
-     * Duplica la materia actual con un nuevo nombre.
-     */
-    fun duplicarMateria(nuevoNombre: String? = null) {
-        viewModelScope.launch {
-            try {
-                val original = materia.value ?: return@launch
-                val nombre = nuevoNombre ?: "${original.nombre} (copia)"
-                val nueva = original.copy(
-                    id = 0,
-                    nombre = nombre,
-                    googleSheetsId = null,
-                    componentes = original.componentes.map { comp ->
-                        comp.copy(
-                            id = 0,
-                            subNotas = comp.subNotas.map { sn ->
-                                sn.copy(id = 0, valor = null, detalles = sn.detalles.map { d ->
-                                    d.copy(id = 0, valor = null)
-                                })
-                            }
-                        )
-                    }
-                )
-                val newMateriaId = materiaRepository.insertMateria(nueva)
-                nueva.componentes.forEachIndexed { _, comp ->
-                    val newCompId = materiaRepository.insertComponente(
-                        comp.copy(materiaId = newMateriaId)
-                    )
-                    comp.subNotas.forEach { sn ->
-                        val newSnId = materiaRepository.insertSubNota(
-                            sn.copy(componenteId = newCompId)
-                        )
-                        sn.detalles.forEach { det ->
-                            materiaRepository.insertSubNotaDetalle(
-                                det.copy(subNotaId = newSnId)
-                            )
-                        }
-                    }
-                }
-                Timber.i("Materia duplicada: $nombre (id=$newMateriaId)")
-            } catch (e: Exception) {
-                Timber.e(e, "Error al duplicar materia")
-                _error.value = "No se pudo duplicar la materia"
-            }
-        }
-    }
-
     // ── Metas y notas ─────────────────────────────────────────────
 
     /**
@@ -273,7 +229,7 @@ class MateriaDetailViewModel @Inject constructor(
                 Timber.i("Nota meta actualizada: $notaMeta")
             } catch (e: Exception) {
                 Timber.e(e, "Error al actualizar nota meta")
-                _error.value = "No se pudo guardar la meta"
+                _error.value = UiText(R.string.err_save_goal)
             }
         }
     }
@@ -289,7 +245,7 @@ class MateriaDetailViewModel @Inject constructor(
                 Timber.i("Notas actualizadas")
             } catch (e: Exception) {
                 Timber.e(e, "Error al actualizar notas")
-                _error.value = "No se pudo guardar las notas"
+                _error.value = UiText(R.string.err_save_grades)
             }
         }
     }
@@ -297,7 +253,7 @@ class MateriaDetailViewModel @Inject constructor(
     // ── Renombrar / editar datos básicos ──────────────────────
 
     fun editarMateria(nombre: String, periodo: String, profesor: String?, creditos: Int) =
-        guardar("No se pudo guardar la materia") {
+        guardar(R.string.err_save_subject) {
             materiaRepository.updateMateriaInfo(
                 materiaId, nombre.trim(), periodo.trim(), profesor?.trim()?.takeIf { it.isNotEmpty() }, creditos
             )
@@ -305,7 +261,7 @@ class MateriaDetailViewModel @Inject constructor(
 
     fun renombrar(kind: RenameKind, id: Long, nuevo: String) {
         val nombre = nuevo.trim().takeIf { it.isNotEmpty() } ?: return
-        guardar("No se pudo renombrar") {
+        guardar(R.string.err_rename) {
             when (kind) {
                 RenameKind.COMPONENTE -> materiaRepository.renameComponente(id, nombre)
                 RenameKind.SUBNOTA -> materiaRepository.renameSubNota(id, nombre)
@@ -314,11 +270,11 @@ class MateriaDetailViewModel @Inject constructor(
         }
     }
 
-    private fun guardar(errorMsg: String, block: suspend () -> Unit) {
+    private fun guardar(@StringRes errorMsg: Int, block: suspend () -> Unit) {
         viewModelScope.launch {
             try { block() } catch (e: Exception) {
-                Timber.e(e, errorMsg)
-                _error.value = errorMsg
+                Timber.e(e, "guardar falló")
+                _error.value = UiText(errorMsg)
             }
         }
     }

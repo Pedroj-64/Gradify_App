@@ -90,7 +90,6 @@ import com.notasapp.ui.components.EstadoBadge
 import com.notasapp.ui.components.GradeLinearIndicator
 import com.notasapp.ui.components.MateriaCardShimmer
 import com.notasapp.ui.components.SwipeToDeleteWrapper
-import com.notasapp.ui.theme.rememberResponsiveDimens
 import kotlinx.coroutines.delay
 
 /**
@@ -139,9 +138,10 @@ fun HomeScreen(
         }
     }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
     LaunchedEffect(error) {
         error?.let {
-            snackbarHostState.showSnackbar(it)
+            snackbarHostState.showSnackbar(it.asString(context))
             viewModel.clearError()
         }
     }
@@ -467,7 +467,7 @@ private fun MateriaCard(
                     text = buildString {
                         append(materia.periodo)
                         materia.profesor?.let { append(" · $it") }
-                        if (materia.creditos > 0) append(" · ${materia.creditos} cr")
+                        if (materia.creditos > 0) append(stringResource(R.string.home_credits_short, materia.creditos))
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

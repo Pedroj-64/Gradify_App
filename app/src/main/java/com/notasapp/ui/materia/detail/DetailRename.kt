@@ -41,36 +41,6 @@ enum class RenameKind { COMPONENTE, SUBNOTA, DETALLE }
 internal val LocalRename =
     staticCompositionLocalOf<(RenameKind, Long, String) -> Unit> { { _, _, _ -> } }
 
-/** Texto con lápiz que, al tocarlo, abre el diálogo de renombrar. */
-@Composable
-internal fun RenameableText(
-    text: String,
-    kind: RenameKind,
-    id: Long,
-    current: String,
-    style: TextStyle,
-    modifier: Modifier = Modifier,
-    fontWeight: FontWeight? = null
-) {
-    val rename = LocalRename.current
-    Row(
-        modifier = modifier.clickable(
-            onClickLabel = stringResource(R.string.rename_action),
-            role = Role.Button
-        ) { rename(kind, id, current) },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Text(text = text, style = style, fontWeight = fontWeight, modifier = Modifier.weight(1f, fill = false))
-        Icon(
-            Icons.Default.Edit,
-            contentDescription = null,
-            modifier = Modifier.size(14.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
 @Composable
 internal fun RenameDialog(initial: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
     var text by remember { mutableStateOf(initial) }

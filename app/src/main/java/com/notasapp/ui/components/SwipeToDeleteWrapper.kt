@@ -1,5 +1,7 @@
 package com.notasapp.ui.components
 
+import com.notasapp.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -84,7 +86,7 @@ fun SwipeToDeleteWrapper(
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar materia",
+                    contentDescription = stringResource(R.string.delete_subject),
                     tint = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.scale(iconScale)
                 )

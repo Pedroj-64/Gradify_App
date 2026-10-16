@@ -91,7 +91,6 @@ import com.notasapp.ui.components.AnimatedText
 import com.notasapp.ui.components.EstadoBadge
 import com.notasapp.ui.components.GradeLinearIndicator
 import com.notasapp.ui.components.MateriaDetailShimmer
-import com.notasapp.ui.components.PromedioGauge
 import kotlinx.coroutines.launch
 
 @Composable
@@ -127,7 +126,7 @@ internal fun MetaYNotasSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Meta",
+                text = stringResource(R.string.dm_goal),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f)
             )
@@ -161,12 +160,12 @@ internal fun MetaYNotasSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Notas",
+                text = stringResource(R.string.dm_notes),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f)
             )
             Text(
-                text = if (tieneNotas) materia.notas!!.lineSequence().first() else "Añadir",
+                text = if (tieneNotas) materia.notas!!.lineSequence().first() else stringResource(R.string.dm_add),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (tieneNotas) MaterialTheme.colorScheme.onSurfaceVariant
                 else MaterialTheme.colorScheme.primary,
@@ -206,7 +205,7 @@ internal fun MetaDialog(
                 OutlinedTextField(
                     value = metaText,
                     onValueChange = { metaText = it },
-                    label = { Text("Nota meta") },
+                    label = { Text(stringResource(R.string.dm_goal_label)) },
                     placeholder = { Text("0.0 - ${escalaMax.toInt()}") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -214,11 +213,11 @@ internal fun MetaDialog(
                     supportingText = {
                         if (parsedMeta != null && parsedMeta > escalaMax) {
                             Text(
-                                text = "Máximo: ${escalaMax.toInt()}",
+                                text = stringResource(R.string.dm_max, escalaMax.toInt()),
                                 color = MaterialTheme.colorScheme.error
                             )
                         } else {
-                            Text("Deja vacío para quitar meta")
+                            Text(stringResource(R.string.dm_goal_hint))
                         }
                     },
                     isError = !isValid
@@ -258,7 +257,7 @@ internal fun MetaDialog(
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
             title = { Text(stringResource(R.string.goal_remove)) },
-            text = { Text("¿Quitar la meta académica?") },
+            text = { Text(stringResource(R.string.dm_goal_remove_q)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -304,13 +303,13 @@ internal fun NotasDialog(
                 OutlinedTextField(
                     value = notasText,
                     onValueChange = { notasText = it },
-                    label = { Text("Notas") },
+                    label = { Text(stringResource(R.string.dm_notes)) },
                     placeholder = { Text(stringResource(R.string.notes_placeholder)) },
                     minLines = 3,
                     maxLines = 6,
                     modifier = Modifier.fillMaxWidth(),
                     supportingText = {
-                        Text("Deja vacío para quitar notas")
+                        Text(stringResource(R.string.dm_notes_hint))
                     }
                 )
 
@@ -321,7 +320,7 @@ internal fun NotasDialog(
                             contentColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("Eliminar notas")
+                        Text(stringResource(R.string.dm_notes_delete))
                     }
                 }
             }
@@ -346,8 +345,8 @@ internal fun NotasDialog(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Eliminar notas") },
-            text = { Text("¿Eliminar todas las notas personales?") },
+            title = { Text(stringResource(R.string.dm_notes_delete)) },
+            text = { Text(stringResource(R.string.dm_notes_delete_q)) },
             confirmButton = {
                 Button(
                     onClick = {

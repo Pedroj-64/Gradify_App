@@ -42,11 +42,4 @@ interface UsuarioDao {
     @Query("SELECT * FROM usuarios WHERE googleId = :googleId")
     suspend fun getUsuarioById(googleId: String): UsuarioEntity?
 
-    /** Elimina todos los usuarios (para logout). */
-    @Query("DELETE FROM usuarios")
-    suspend fun deleteAll()
-
-    /** Actualiza el timestamp de la última sincronización. */
-    @Query("UPDATE usuarios SET ultimaSyncMs = :timestampMs WHERE googleId = :googleId")
-    suspend fun updateUltimaSync(googleId: String, timestampMs: Long)
 }

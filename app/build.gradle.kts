@@ -197,9 +197,6 @@ dependencies {
     // Logging (solo en debug)
     implementation(libs.timber)
 
-    // Seguridad (EncryptedSharedPreferences)
-    implementation(libs.androidx.security.crypto)
-
     // DataStore
     implementation(libs.androidx.datastore.preferences)
 

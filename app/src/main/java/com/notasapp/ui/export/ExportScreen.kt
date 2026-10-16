@@ -1,5 +1,6 @@
 package com.notasapp.ui.export
 
+import com.notasapp.ui.UiEvent
 import com.notasapp.ui.components.ScreenHeader
 import android.app.Activity
 import android.content.Intent
@@ -103,15 +104,16 @@ fun ExportScreen(
     }
 
     // Mensajes de resultado
-    LaunchedEffect(uiState.exportSuccess, uiState.exportError) {
-        when {
-            uiState.exportSuccess ->
-                snackbarHostState.showSnackbar(context.getString(R.string.export_file_saved))
-
-            uiState.exportError != null ->
-                snackbarHostState.showSnackbar(uiState.exportError ?: "")
+    LaunchedEffect(uiState.exportSuccess) {
+        if (uiState.exportSuccess) {
+            snackbarHostState.showSnackbar(context.getString(R.string.export_file_saved))
+            viewModel.clearMessages()
         }
-        viewModel.clearMessages()
+    }
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            if (event is UiEvent.Message) snackbarHostState.showSnackbar(event.text.asString(context))
+        }
     }
 
     Scaffold(

@@ -1,5 +1,7 @@
 package com.notasapp.ui.materia.edit
 
+import com.notasapp.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.SliderDefaults
 import com.notasapp.ui.components.ScreenHeader
@@ -72,9 +74,10 @@ fun EditPorcentajesScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val haptic = LocalHapticFeedback.current
 
+    val context = androidx.compose.ui.platform.LocalContext.current
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
-            snackbarHostState.showSnackbar(it)
+            snackbarHostState.showSnackbar(it.asString(context))
             viewModel.clearError()
         }
     }
@@ -95,7 +98,7 @@ fun EditPorcentajesScreen(
     }
 
     Scaffold(
-        topBar = { ScreenHeader(title = "Editar porcentajes", onBack = onBack) },
+        topBar = { ScreenHeader(title = stringResource(R.string.edit_pct_title), onBack = onBack) },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
@@ -112,8 +115,7 @@ fun EditPorcentajesScreen(
                 MaterialTheme.colorScheme.error
 
             Text(
-                text = "Total: ${kotlin.math.round(sumaTotal * 100).toInt()}%  " +
-                        if (kotlin.math.abs(sumaTotal - 1f) <= 0.01f) "✓" else "≠ 100%",
+                text = stringResource(if (kotlin.math.abs(sumaTotal - 1f) <= 0.01f) R.string.ep_total_ok else R.string.ep_total_bad, kotlin.math.round(sumaTotal * 100).toInt()),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = totalColor,
@@ -121,7 +123,7 @@ fun EditPorcentajesScreen(
             )
 
             Text(
-                text = "Mantén pulsado el ≡ para reordenar",
+                text = stringResource(R.string.edit_pct_drag_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -166,7 +168,7 @@ fun EditPorcentajesScreen(
                                     // Handle de arrastre con feedback háptico
                                     Icon(
                                         imageVector = Icons.Default.DragHandle,
-                                        contentDescription = "Reordenar",
+                                        contentDescription = stringResource(R.string.edit_pct_reorder),
                                         modifier = Modifier
                                             .size(24.dp)
                                             .draggableHandle(
@@ -229,7 +231,7 @@ fun EditPorcentajesScreen(
                     .height(52.dp),
                 enabled = kotlin.math.abs(sumaTotal - 1f) <= 0.01f
             ) {
-                Text("Guardar cambios")
+                Text(stringResource(R.string.edit_pct_save))
             }
 
             Spacer(Modifier.height(8.dp))

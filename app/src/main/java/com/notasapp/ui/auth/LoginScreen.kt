@@ -1,5 +1,6 @@
 package com.notasapp.ui.auth
 
+import com.notasapp.ui.UiEvent
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.ui.draw.clip
@@ -51,7 +52,7 @@ import kotlinx.coroutines.launch
  * Pantalla de login con Google Sign-In.
  *
  * Usa la nueva Credential Manager API (Jetpack) para el flujo de autenticación.
- * El botón "Iniciar sesión con Google" lanza el selector de cuentas del sistema.
+ * El botón stringResource(R.string.login_google_button) lanza el selector de cuentas del sistema.
  *
  * **Configuración requerida**: sustituir el valor de `GOOGLE_CLIENT_ID` en
  * `gradle.properties` (o `local.properties`) con el Web Client ID de tu proyecto
@@ -69,14 +70,12 @@ fun LoginScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(uiState) {
-        when (uiState) {
-            is LoginUiState.Success -> onLoginSuccess()
-            is LoginUiState.Error   -> {
-                snackbarHostState.showSnackbar((uiState as LoginUiState.Error).message)
-                viewModel.resetError()
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                UiEvent.Done -> onLoginSuccess()
+                is UiEvent.Message -> snackbarHostState.showSnackbar(event.text.asString(context))
             }
-            else -> Unit
         }
     }
 
@@ -148,7 +147,7 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth().height(56.dp)
                     ) {
                         Text(
-                            text = "Iniciar sesión con Google",
+                            text = stringResource(R.string.login_google_button),
                             style = MaterialTheme.typography.titleMedium
                         )
                     }

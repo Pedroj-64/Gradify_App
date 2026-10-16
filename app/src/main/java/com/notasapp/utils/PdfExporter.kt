@@ -103,11 +103,6 @@ class PdfExporter @Inject constructor() {
         return "${safe}_${ts}.pdf"
     }
 
-    fun sugerirNombreResumen(): String {
-        val ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"))
-        return "Gradify_Resumen_${ts}.pdf"
-    }
-
     /**
      * Genera un PDF con todas las materias y lo escribe en el [OutputStream].
      */

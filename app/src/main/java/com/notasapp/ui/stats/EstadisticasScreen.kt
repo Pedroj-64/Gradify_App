@@ -76,7 +76,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.notasapp.R
 import com.notasapp.domain.model.Materia
 import com.notasapp.domain.model.Semestre
-import com.notasapp.ui.components.PromedioGauge
 import kotlinx.coroutines.delay
 
 /** CompositionLocal holder to pass stats down without threading params. */
@@ -613,7 +612,7 @@ private fun SemestreRow(semestre: Semestre) {
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${semestre.totalMaterias} materias · ${semestre.totalCreditos} créditos",
+                    text = stringResource(R.string.st_sem_summary, semestre.totalMaterias, semestre.totalCreditos),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -626,7 +625,7 @@ private fun SemestreRow(semestre: Semestre) {
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "${semestre.aprobadas}/${semestre.materiasConNotas.size} aprobadas",
+                    text = stringResource(R.string.st_sem_passed, semestre.aprobadas, semestre.materiasConNotas.size),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

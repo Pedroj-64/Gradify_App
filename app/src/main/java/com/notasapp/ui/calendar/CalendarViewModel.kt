@@ -1,5 +1,7 @@
 package com.notasapp.ui.calendar
 
+import com.notasapp.ui.UiText
+import com.notasapp.R
 import android.content.Intent
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -54,8 +56,8 @@ data class CalendarUiState(
     val showGoogleCalendarDialog: Boolean = false,
     val googleCalendarRecoveryIntent: Intent? = null,
     val pendingImportMateriaId: Long? = null,
-    val error: String? = null,
-    val successMessage: String? = null
+    val error: UiText? = null,
+    val successMessage: UiText? = null
 )
 
 /**
@@ -298,14 +300,14 @@ class CalendarViewModel @Inject constructor(
                     showCreateDialog = false,
                     showEditDialog = false,
                     editingEvent = null,
-                    successMessage = if (isEdit) "Evento actualizado" else "Evento creado"
+                    successMessage = UiText(if (isEdit) R.string.cal_event_updated else R.string.cal_event_created)
                 )
             }
             Timber.i("Evento guardado: ${event.titulo}")
         } catch (e: Exception) {
             Timber.e(e, "Error al guardar evento")
             _uiState.update {
-                it.copy(isLoading = false, error = "No se pudo guardar el evento")
+                it.copy(isLoading = false, error = UiText(R.string.cal_err_save))
             }
         }
     }
@@ -316,11 +318,11 @@ class CalendarViewModel @Inject constructor(
                 calendarRepository.deleteEvent(event.id)
                 alarmScheduler.cancelAlarm(event.id)
                 _uiState.update {
-                    it.copy(successMessage = "Evento eliminado")
+                    it.copy(successMessage = UiText(R.string.cal_event_deleted))
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Error al eliminar evento")
-                _uiState.update { it.copy(error = "No se pudo eliminar el evento") }
+                _uiState.update { it.copy(error = UiText(R.string.cal_err_delete)) }
             }
         }
     }
@@ -361,7 +363,7 @@ class CalendarViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isImportingGoogleCalendar = false,
-                            error = "Debes iniciar sesión para importar de Google Calendar"
+                            error = UiText(R.string.cal_err_login_required)
                         )
                     }
                     return@launch
@@ -382,7 +384,7 @@ class CalendarViewModel @Inject constructor(
                     it.copy(
                         isImportingGoogleCalendar = false,
                         pendingImportMateriaId = null,
-                        successMessage = "$imported eventos importados de Google Calendar"
+                        successMessage = UiText(R.string.cal_imported, imported)
                     )
                 }
                 Timber.i("Google Calendar: $imported eventos importados")
@@ -400,7 +402,7 @@ class CalendarViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isImportingGoogleCalendar = false,
-                        error = "[${e.javaClass.simpleName}] ${e.message}"
+                        error = UiText(R.string.cal_err_import)
                     )
                 }
             }
@@ -419,7 +421,7 @@ class CalendarViewModel @Inject constructor(
             _uiState.update {
                 it.copy(
                     pendingImportMateriaId = null,
-                    error = "No se concedieron permisos de Google Calendar"
+                    error = UiText(R.string.cal_err_permission)
                 )
             }
         }

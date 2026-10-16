@@ -83,7 +83,6 @@ import com.notasapp.ui.components.AnimatedText
 import com.notasapp.ui.components.EstadoBadge
 import com.notasapp.ui.components.GradeLinearIndicator
 import com.notasapp.ui.components.MateriaDetailShimmer
-import com.notasapp.ui.components.PromedioGauge
 import kotlinx.coroutines.launch
 
 @Composable
@@ -101,27 +100,27 @@ internal fun AgregarDetalleDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Elem. de «$subNotaNombre»") },
+        title = { Text(stringResource(R.string.dd_items_of, subNotaNombre)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = descripcion,
                     onValueChange = { descripcion = it },
                     label = { Text(stringResource(R.string.detail_description)) },
-                    placeholder = { Text("Ej: Primer intento") },
+                    placeholder = { Text(stringResource(R.string.detail_example_first_attempt)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = porcentajeText,
                     onValueChange = { porcentajeText = it },
-                    label = { Text("Peso (% dentro de la actividad)") },
+                    label = { Text(stringResource(R.string.dd_weight_activity)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     supportingText = {
                         Text(
-                            text = "Disponible: ${disponible.toInt()}%",
+                            text = stringResource(R.string.dd_available, disponible.toInt()),
                             color = if (pct != null && pct > disponible)
                                 MaterialTheme.colorScheme.error
                             else
@@ -198,7 +197,7 @@ internal fun QuickEntryBottomSheet(
             }
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "${pending.size} nota(s) pendiente(s)",
+                text = stringResource(R.string.dd_pending, pending.size),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -206,7 +205,7 @@ internal fun QuickEntryBottomSheet(
 
             if (pending.isEmpty()) {
                 Text(
-                    text = "¡Todas las notas están ingresadas!",
+                    text = stringResource(R.string.detail_all_grades_entered),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 24.dp)
@@ -304,27 +303,27 @@ internal fun AgregarSubNotaDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Agregar nota · $componenteNombre") },
+        title = { Text(stringResource(R.string.dd_add_grade, componenteNombre)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = descripcion,
                     onValueChange = { descripcion = it },
                     label = { Text(stringResource(R.string.detail_description)) },
-                    placeholder = { Text("Ej: Parcial 1") },
+                    placeholder = { Text(stringResource(R.string.detail_example_partial_1)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = porcentajeText,
                     onValueChange = { porcentajeText = it },
-                    label = { Text("Peso (% del corte)") },
+                    label = { Text(stringResource(R.string.dd_weight_cut)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     supportingText = {
                         Text(
-                            text = "Disponible: ${disponible.toInt()}%",
+                            text = stringResource(R.string.dd_available, disponible.toInt()),
                             color = if (pct != null && pct > disponible)
                                 MaterialTheme.colorScheme.error
                             else
