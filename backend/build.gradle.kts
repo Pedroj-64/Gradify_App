@@ -23,7 +23,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
     // OkHttp para llamadas HTTP directas a la REST API de Gemini
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp:5.5.0")
 
     // JSON
     implementation("com.google.code.gson:gson:2.11.0")
