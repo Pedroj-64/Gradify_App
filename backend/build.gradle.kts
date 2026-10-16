@@ -29,7 +29,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
 
     // Rate limiting
-    implementation("com.bucket4j:bucket4j_jdk17-core:8.14.0")
+    implementation("com.bucket4j:bucket4j_jdk17-core:8.21.0")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
