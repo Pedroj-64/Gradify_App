@@ -4,8 +4,8 @@ Plan completo: [plan.md](plan.md). Verificación base tras cada tarea (JDK 17 o 
 `./gradlew testDebugUnitTest lintDebug assembleDebug` · backend: `cd backend && gradle test`.
 
 ## Fase 0 – Seguridad y legal
-- [ ] 0.1 Rotar/restringir key de Google (paquete + SHA-1); decidir `filter-repo`. *Manual.* AC: gitleaks en CI pasa o historial en allowlist.
-- [ ] 0.2 Un solo titular en `LICENSE`/READMEs/CHANGELOG; quitar email y línea informal. AC: `git grep` sin email.
+- [x] 0.1 Rotar/restringir key de Google (paquete + SHA-1); decidir `filter-repo`. *Manual.* AC: gitleaks en CI pasa o historial en allowlist.
+- [x] 0.2 Un solo titular en `LICENSE`/READMEs/CHANGELOG; quitar email y línea informal. AC: `git grep` sin email.
 - [ ] 0.3 `git rm --cached .vscode`, limpiar `.gitignore`, borrar rama `fase-0-1-ia-y-build`.
 - [ ] **Checkpoint 0**: licencia coherente, sin datos personales.
 

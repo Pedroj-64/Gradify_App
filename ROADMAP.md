@@ -13,8 +13,8 @@
 - Rediseño con sistema de diseño propio en Inicio, Detalle, Estadísticas, Calendario, Recursos, Ajustes, Login y Onboarding.
 
 ## Fase 0 – Seguridad y legal (antes de promocionar el repo)
-- [ ] Rotar/restringir la API key de Google que quedó en el historial (`4415198`…`25427de`); decidir `git filter-repo` o asumirla comprometida
-- [ ] Unificar titular de `LICENSE`, READMEs y CHANGELOG; quitar email y datos personales públicos
+- [x] Rotar/restringir la API key de Google que quedó en el historial (`4415198`…`25427de`): ya cambiada (2026-10-16)
+- [x] Unificar titular de `LICENSE`, READMEs y CHANGELOG; quitar email y datos personales públicos
 - [ ] Dejar de versionar `.vscode/`; limpiar `.gitignore`; borrar rama mergeada `fase-0-1-ia-y-build`
 
 ## Fase 1 – Eliminar lo no usado (~1.150 líneas, ~6 %)
@@ -50,16 +50,16 @@
 - [ ] `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `PRIVACY.md`
 - [ ] Plantillas de issue y PR, `CODEOWNERS`, `dependabot.yml`, `.editorconfig`
 - [ ] CI: permisos mínimos, `concurrency`, artifacts, job de emulador con `androidTest`
-- [ ] README en inglés sincronizado, árbol de arquitectura regenerado, capturas reales
+- [x] Icono nuevo (`docs/assets/icon.svg`) y demo animada en el README
+- [ ] README en inglés sincronizado, árbol de arquitectura regenerado, capturas reales (la demo actual es una maqueta SVG)
 - [ ] `docs/RELEASING.md` y `backend/README.md` actualizados
 - [ ] Metadatos fastlane (`es-CO`, `en-US`); evaluar F-Droid (flavor sin servicios de Google)
 - [ ] Etiquetar 8-10 issues `good first issue`; tag `v2.3.0` con Release
 
-## Infraestructura pendiente (no es código)
-- [ ] Desplegar backend y fijar `BACKEND_URL`/`BACKEND_TOKEN` (opcional)
-- [ ] Verificar nombres de modelos con `ListModels`
+## Infraestructura (no es del proyecto)
+Gradify solo ofrece código y releases. Backend, claves, Firebase, firma y bases de datos las pone cada quien: ver [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md).
+- [ ] Verificar nombres de modelos de IA con `ListModels`
 - [ ] Ejecutar el test de migración en emulador
-- [ ] Keystore propia con SHA-1 registrado en Firebase para que el login funcione en el APK público
 
 ## Ideas (sin compromiso)
 Pomodoro, metas por materia, multi-estudiante, historial gráfico, colores de nota personalizados, importar CSV, versión web, gamificación.

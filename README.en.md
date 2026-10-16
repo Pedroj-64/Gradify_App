@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/assets/icon.png" alt="Gradify" width="128" />
+
 [🇪🇸 Español](README.md) · **🇬🇧 English**
 
 # 📚 Gradify - Academic Management System
@@ -76,6 +78,18 @@ Gradify is much more than a grade calculator. It is a **complete academic ecosys
 - 🎭 **Smooth animations**: soft transitions and haptic feedback
 - 🌐 **Multilingual**: Spanish and English
 - 🏠 **Widgets**: see your averages right from the home screen
+
+---
+
+## 📸 Demo
+
+<div align="center">
+
+<img src="docs/assets/demo.svg" alt="Animated Gradify demo" width="300" />
+
+*Illustrative animated demo: pick a scale → enter grades → what do I need? (SVG mock-up; real screenshots will land with v2.3.0).*
+
+</div>
 
 ---
 
@@ -301,6 +315,8 @@ See also [ROADMAP.md](ROADMAP.md) and [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
+> 🧩 **Open source**: the project only ships the code and releases. API keys, backend, Firebase, signing and databases belong to whoever deploys their own build; see [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md).
+
 ## 🤝 Contributing
 
 Contributions are welcome!
@@ -331,6 +347,23 @@ Open a [GitHub Issue](https://github.com/Pedroj-64/Gradify_App/issues) including
 - Android version and device model
 
 ---
+
+## 🌎 Country grading scales
+
+When creating a subject you can pick a template; each sets minimum, maximum and passing grade (editable later):
+
+| Country | Scale | Pass |
+|---|---|---|
+| Colombia | 0 – 5 | 3.0 |
+| Mexico | 0 – 10 | 6.0 |
+| Spain | 0 – 10 | 5.0 |
+| Chile | 1.0 – 7.0 | 4.0 |
+| Peru | 0 – 20 | 11 |
+| Venezuela | 0 – 20 | 10 |
+| Argentina | 1 – 10 | 4 |
+| Brazil | 0 – 10 | 6.0 |
+| Costa Rica | 0 – 100 | 70 |
+| Custom | you define | you define |
 
 ## 📱 Support & Contact
 

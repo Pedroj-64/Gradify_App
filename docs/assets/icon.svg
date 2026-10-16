@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#0D1B4A"/><stop offset=".5" stop-color="#5C258D"/><stop offset="1" stop-color="#00838F"/>
+    </linearGradient>
+  </defs>
+  <rect width="108" height="108" rx="24" fill="url(#bg)"/>
+  <!-- birrete -->
+  <path d="M37,50 V60 Q37,67 54,67 Q71,67 71,60 V50 L54,57 Z" fill="#DDE3FF"/>
+  <path d="M54,28 L88,42 L54,56 L20,42 Z" fill="#FFFFFF"/>
+  <!-- borla -->
+  <path d="M26,43.5 V62" stroke="#FFD54F" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <circle cx="26" cy="65" r="3.6" fill="#FFD54F"/>
+  <!-- progreso -->
+  <path d="M28,88 L46,79 L58,83 L80,70" stroke="#FFD54F" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M74,67 L83,68.5 L80,76.5 Z" fill="#FFD54F"/>
+</svg>

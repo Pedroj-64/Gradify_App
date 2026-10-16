@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/assets/icon.png" alt="Gradify" width="128" />
+
 **🇪🇸 Español** · [🇬🇧 English](README.en.md)
 
 # 📚 Gradify - Sistema de Gestión Académica
@@ -81,8 +83,13 @@ Gradify es mucho más que una simple calculadora de notas. Es un **ecosistema ac
 
 ## 📸 Capturas de Pantalla
 
-<!-- Aquí puedes agregar capturas más adelante -->
-*Próximamente: capturas de pantalla de la aplicación en acción*
+<div align="center">
+
+<img src="docs/assets/demo.svg" alt="Demo animada de Gradify" width="300" />
+
+*Demo animada ilustrativa del flujo: elegir escala → registrar notas → ¿qué nota necesito? (maqueta SVG; las capturas reales llegarán con v2.3.0).*
+
+</div>
 
 ---
 
@@ -383,6 +390,8 @@ Gradify toma en serio la seguridad de tus datos:
 
 ---
 
+> 🧩 **Open source**: el proyecto solo ofrece el código y las releases. Claves de API, backend, Firebase, firma y bases de datos son de quien despliegue su versión; mira [docs/SELF-HOSTING.md](docs/SELF-HOSTING.md).
+
 ## 🤝 Cómo Contribuir
 
 ¡Las contribuciones son bienvenidas! Si quieres mejorar Gradify:
@@ -414,6 +423,23 @@ Si encuentras un error, por favor abre un [Issue en GitHub](https://github.com/P
 - Versión de Android y modelo de dispositivo
 
 ---
+
+## 🌎 Escalas por país
+
+Al crear una materia puedes elegir una plantilla; cada una fija mínimo, máximo y nota de aprobación (modificable después):
+
+| País | Escala | Aprueba |
+|---|---|---|
+| Colombia | 0 – 5 | 3.0 |
+| México | 0 – 10 | 6.0 |
+| España | 0 – 10 | 5.0 |
+| Chile | 1.0 – 7.0 | 4.0 |
+| Perú | 0 – 20 | 11 |
+| Venezuela | 0 – 20 | 10 |
+| Argentina | 1 – 10 | 4 |
+| Brasil | 0 – 10 | 6.0 |
+| Costa Rica | 0 – 100 | 70 |
+| Personalizada | tú defines | tú defines |
 
 ## 📱 Soporte y Contacto
 
