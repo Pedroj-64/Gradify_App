@@ -1,6 +1,6 @@
 # Changelog
 
-Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Contacto: kelequel@gmail.com
+Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [2.2.0] - 2026-10-01
 

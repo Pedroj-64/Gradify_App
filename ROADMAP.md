@@ -1,97 +1,71 @@
-# Gradify – Roadmap de retoma (v2.1.1 → v2.2+)
+# Gradify – Roadmap público
 
-> Análisis hecho el 2026-10-01 sobre `main` (commit `05bc6ad`). ~19k líneas Kotlin, app Android (Compose + Room + Hilt) + backend Spring Boot proxy de Gemini.
+> Actualizado: 2026-10-14. Estado real: v2.2.0 en `main`. El historial de análisis anterior está en [CHANGELOG.md](CHANGELOG.md) y en `git log`.
+> Plan y razonamiento: [`tasks/plan.md`](tasks/plan.md) · Tareas con criterios de aceptación: [`tasks/todo.md`](tasks/todo.md).
 
-## 0. Hallazgos del análisis
+**Misión:** que cualquier estudiante de Latinoamérica lleve sus notas con la escala de su país, sin cuenta obligatoria, sin anuncios y sin enviar sus datos a nadie salvo que él lo decida.
 
-### Claves / APIs (lo roto)
-| # | Hallazgo | Severidad |
-|---|----------|-----------|
-| K1 | **API key de Google (`AIzaSyBjb8…`) y `google-services.json` quedaron en el historial git** (commits `4415198` v1.06 → borrado en `25427de` v1.09). Borrarlo del árbol no lo saca del historial. | Alta |
-| K2 | Modelos de IA obsoletos/retirados en `GeminiService.kt`: `gemini-1.5-flash(-latest)`, `gemini-pro`, Groq `mixtral-8x7b-32768`, OpenRouter `…:free` (rotan). En el **backend**, `application.yml` usa `gemini-1.5-flash / 1.5-pro / pro` → **el proxy hoy falla siempre**. | Alta |
-| K3 | Claves de IA (`GEMINI/GROQ/OPENROUTER`) se compilan en `BuildConfig` → quedan extraíbles del APK. El backend proxy existe justo para evitarlo, pero `BACKEND_URL` no está desplegado/configurado. | Alta |
-| K4 | Sin `local.properties` ni `google-services.json` en el repo → **el proyecto no compila en limpio** (plugin `google-services` exige el json). Falta guía/plantilla real. | Media |
-| K5 | Backend declara `rate-limit` en yml pero **no hay código que lo aplique**; sin auth → cualquiera con la URL gasta la cuota de Gemini. | Media |
-| K6 | Build release firmado con `debug` keystore; `fallbackToDestructiveMigration()` en prod (puede borrar notas del usuario si falta una migración). `allowBackup=true`. | Media |
-| K7 | README dice "Gemini SDK" pero el código usa REST; versión `generativeAi` huérfana en `libs.versions.toml`. | Baja |
+## Ya hecho (resumen)
+- Room v7 con migraciones probadas, respaldo JSON a carpeta elegida, cerrar/reabrir semestre.
+- Recordatorios de exámenes con alarmas (reprogramación tras reinicio); widgets que se refrescan al cambiar notas.
+- IA: Gemini/Groq/OpenRouter con clave del propio usuario; backend proxy opcional (rate-limit por IP, token opcional).
+- CI (gitleaks, tests, lint, build, backend) y release firmado por tag.
+- Rediseño con sistema de diseño propio en Inicio, Detalle, Estadísticas, Calendario, Recursos, Ajustes, Login y Onboarding.
 
-### Calidad / UX
-- Pantallas gigantes: `MateriaDetailScreen` 1532 líneas, `CalendarScreen` 909, `EstadisticasScreen` 842 → difíciles de mantener y de pulir visualmente.
-- Solo 6 tests (dominio). Cero tests de UI/DAO/migraciones.
-- Cadena de IA con throttle global y reintentos largos (hasta ~minutos) sin feedback claro al usuario.
-- Entorno local: JDK 25 (el proyecto exige 17; AGP 8.7.3 / Kotlin 2.1.0 no soportan 25) → usar JDK 17 para compilar.
+## Fase 0 – Seguridad y legal (antes de promocionar el repo)
+- [ ] Rotar/restringir la API key de Google que quedó en el historial (`4415198`…`25427de`); decidir `git filter-repo` o asumirla comprometida
+- [ ] Unificar titular de `LICENSE`, READMEs y CHANGELOG; quitar email y datos personales públicos
+- [ ] Dejar de versionar `.vscode/`; limpiar `.gitignore`; borrar rama mergeada `fase-0-1-ia-y-build`
 
-## 1. Roadmap
+## Fase 1 – Eliminar lo no usado (~1.150 líneas, ~6 %)
+- [ ] Decidir simulador "¿y si saco X?": conectarlo (recomendado) o borrarlo (`SimuladorBottomSheet`, `SimularNotaUseCase`, su test)
+- [ ] Borrar `PromedioGauge`, `ResponsiveDimens`, `GradeBadges`, helpers y rutas muertas (`Screen.kt`)
+- [ ] Decidir `ConversorLetras` (solo lo usa su test) y exportación Excel muerta
+- [ ] Quitar ~20 métodos de DAO/repositorio sin llamadores
+- [ ] Dependencias `androidx-security-crypto`; permisos `WRITE_EXTERNAL_STORAGE`/`ACCESS_NETWORK_STATE`; colores sin uso
 
-### Fase 0 – Higiene y seguridad (primero, ~1 día)
-- [ ] **Rotar/restringir** la API key filtrada en Google Cloud Console (restricción por package + SHA-1) y regenerar `google-services.json`. Opcional: limpiar historial con `git filter-repo` (repo público → asumir la key como comprometida igual).
-- [ ] Documentar setup mínimo: `local.properties` + `google-services.json` + JDK 17 (sección en README).
-- [ ] Verificar que `./gradlew assembleDebug` y `testDebugUnitTest` pasen en limpio con JDK 17.
-- [ ] Quitar `GEMINI/GROQ/OPENROUTER_API_KEY` de `BuildConfig` en release (solo debug), dejando backend como único camino en producción.
+## Fase 2 – Interfaces coherentes
+- [ ] La app lee `error`/`retryable` del backend (401/429 con mensaje propio, sin caer en silencio a claves directas)
+- [ ] Un solo dueño del prompt de IA (backend si hay proxy)
+- [ ] Argumentos de navegación por constante, sin parámetros duplicados
 
-### Fase 1 – Arreglar IA y backend (~2-3 días)
-- [ ] Actualizar modelos: Gemini `gemini-2.5-flash` / `-flash-lite` (verificar lista actual con `GET /v1beta/models`), Groq `llama-3.3-70b-versatile` + `llama-3.1-8b-instant`, quitar mixtral.
-- [ ] Mover lista de modelos a config remota del backend (un solo lugar para cambiar sin lanzar APK).
-- [ ] Backend: actualizar `application.yml`, implementar rate-limit real (Bucket4j por IP) y header/token simple de app, health endpoint, deploy (Cloud Run/Render/Fly) y setear `BACKEND_URL`.
-- [ ] Cliente: timeouts cortos, un solo mensaje de error claro, caché ya existente (`RecomendacionesCache`) con TTL visible, botón "reintentar".
-- [ ] Test de contrato del parseo JSON (respuestas con fences, vacías, malformadas).
+## Fase 3 – Textos y eventos (inglés de verdad)
+- [ ] `UiText` en ViewModels (~60 mensajes), nunca `e.message` al usuario
+- [ ] Eventos de una sola vez con `Channel` (snackbars, navegación)
+- [ ] ~110 textos fijos a `strings.xml` (ES/EN); `SavedStateHandle` para wizard y búsqueda
 
-### Fase 2 – Estabilidad y bugs (~1 semana)
-- [ ] Auditar: migraciones Room 2→6 con test (`MigrationTestHelper`), eliminar `fallbackToDestructiveMigration`.
-- [ ] Revisar workers (`SheetsSyncWorker`, `AutoBackupWorker`, `ReminderWorker`) y `ExamAlarmReceiver`: permisos de alarmas exactas (Android 12+/14), reprogramación tras reinicio, errores de red/token expirado de Drive/Sheets/Calendar.
-- [ ] Validaciones de porcentajes ya iniciadas en v2.1.0: extender a edición y simulador; casos borde de `GradeCalculator` (0 notas, escala letras, redondeo).
-- [ ] Release: keystore propio, `allowBackup` revisado, reglas R8 probadas con APK release real.
-- [ ] CI GitHub Actions: build + unit tests + lint en cada PR.
+## Fase 4 – Diseño completo y accesibilidad
+- [ ] `GradifySheet`, `GradifyDialog`, `ResultCard`, `EmptyState`, `ErrorBanner`, `LoadingBlock`
+- [ ] Migrar calculadora, simulador, entrada rápida, permisos, Exportar, Recomendaciones, wizard pasos 2-3
+- [ ] Partir `CalendarScreen`, `EstadisticasScreen`, `RecomendacionesScreen` + previews
+- [ ] Roles y `onClickLabel`, objetivos táctiles ≥ 48 dp, semántica en gráficos
 
-### Fase 3 – Diseño y experiencia (~2 semanas)
-- [ ] Partir `MateriaDetailScreen`, `CalendarScreen`, `EstadisticasScreen` en composables pequeños + previews.
-- [ ] Sistema de diseño: tokens (color, espaciado, tipografía), Material You (dynamic color) opcional, modo oscuro revisado, estados vacío/carga/error consistentes (ya hay `ShimmerLoading`).
-- [ ] Home: resumen del semestre arriba (promedio, en riesgo, próximo examen), tarjetas con progreso y color por estado.
-- [ ] Onboarding más corto + datos de ejemplo; wizard de materia con plantillas (Colombia 0-5, México 0-10, etc.).
-- [ ] Microinteracciones: transiciones de navegación, haptics, undo en borrado (Snackbar) en vez de diálogos.
-- [ ] Accesibilidad: contentDescription, contraste, tamaños táctiles, fuentes escaladas.
+## Fase 5 – Producto
+- [ ] Plantillas de escala por país: CO 0-5, MX/ES 0-10, CL 1.0-7.0, PE/VE 0-20, AR 1-10, BR 0-10, CR 0-100
+- [ ] "¿Qué necesito?" accesible desde la tarjeta de materia
+- [ ] Widgets con acciones directas
+- [ ] Tests Compose de 3 flujos (crear materia, ingresar nota, ver promedio)
 
-### Fase 4 – Calidad de vida (~2 semanas)
-- [ ] Widgets más útiles y con acciones directas.
-- [ ] Recordatorios inteligentes configurables (ya existe `SmartNotificationBuilder`).
-- [ ] Importar/Exportar más fácil (compartir PDF/Excel desde detalle).
-- [ ] Metas por materia y "qué necesito" accesible desde la tarjeta.
-- [ ] Tests UI (Compose) de los 3 flujos críticos: crear materia, ingresar nota, ver promedio.
+## Fase 6 – Comunidad y lanzamiento
+- [ ] `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `PRIVACY.md`
+- [ ] Plantillas de issue y PR, `CODEOWNERS`, `dependabot.yml`, `.editorconfig`
+- [ ] CI: permisos mínimos, `concurrency`, artifacts, job de emulador con `androidTest`
+- [ ] README en inglés sincronizado, árbol de arquitectura regenerado, capturas reales
+- [ ] `docs/RELEASING.md` y `backend/README.md` actualizados
+- [ ] Metadatos fastlane (`es-CO`, `en-US`); evaluar F-Droid (flavor sin servicios de Google)
+- [ ] Etiquetar 8-10 issues `good first issue`; tag `v2.3.0` con Release
 
-### Fase 5 – Release
-- [ ] v2.2.0: Fases 0-2 (estable + IA arreglada). v2.3.0: Fase 3. v2.4.0: Fase 4.
-- [ ] Play Console / APK firmado, changelog, capturas actualizadas.
+## Infraestructura pendiente (no es código)
+- [ ] Desplegar backend y fijar `BACKEND_URL`/`BACKEND_TOKEN` (opcional)
+- [ ] Verificar nombres de modelos con `ListModels`
+- [ ] Ejecutar el test de migración en emulador
+- [ ] Keystore propia con SHA-1 registrado en Firebase para que el login funcione en el APK público
 
-## 2. Orden recomendado para empezar
-1. Fase 0 (rotar key + que compile con JDK 17).
-2. Fase 1 (IA funcionando de verdad vía backend).
-3. Migraciones/tests (Fase 2) antes de tocar UI, para no perder datos de usuarios.
+## Ideas (sin compromiso)
+Pomodoro, metas por materia, multi-estudiante, historial gráfico, colores de nota personalizados, importar CSV, versión web, gamificación.
 
----
-
-## 3. Estado de avance (sin commit/push)
-
-**Hecho y verificado** (`testDebugUnitTest`, `lintDebug`, `assembleDebug`, `assembleDebugAndroidTest`, backend `gradle test`):
-- Modelos de IA actualizados (app + backend); claves de IA solo en debug; `BACKEND_TOKEN` enviado como `X-Gradify-Token`.
-- Backend: compilaba mal (dependencia bucket4j inexistente) → corregido; rate-limit por IP, token opcional, Dockerfile multi-stage, test.
-- Room: eliminado `fallbackToDestructiveMigration`; test de migración v2→v6 (compila, **no ejecutado**: requiere dispositivo/emulador).
-- **Bug real**: los recordatorios del calendario nunca programaban alarmas (`ExamAlarmScheduler` sin uso). Ahora se programan/cancelan al guardar/borrar, se reprograman tras reinicio (`BootReceiver`) y el receiver usa `goAsync`.
-- Firma de release configurable por `local.properties`; CI en GitHub Actions; lint sin errores.
-- `MateriaDetailScreen` partida en 5 archivos; borrado de materias con "Deshacer" (antes: swipe + diálogo).
-- Tests de parseo de respuestas de IA.
-
-**Correcciones al análisis inicial:** el backend sí tenía rate-limit global y `/health`; Home sí tenía tarjeta resumen (`DashboardCard`).
-
-**Pendiente:** deploy del backend y `BACKEND_URL`/`BACKEND_TOKEN`; verificar nombres de modelo con `ListModels`; partir `CalendarScreen`/`EstadisticasScreen`; sistema de diseño/Material You; onboarding/plantillas; widgets; tests de UI Compose; probar R8 en release; ejecutar el test de migración en dispositivo.
-
-**Decisión (APK público en GitHub):** sin claves dentro del APK. Cada usuario pega su clave gratuita de Gemini en Ajustes (`UserPreferencesRepository.geminiApiKey`). El backend queda opcional. Para que el login con Google funcione en el APK público, el release debe firmarse con una keystore propia cuyo SHA-1 esté registrado en Firebase/Google Cloud.
-
-**Rediseño de UI (verificado en emulador, claro y oscuro):** sistema de diseño propio (`ui/components/DesignSystem.kt`): encabezado único, superficies tonales planas, cifras grandes tabulares, estado solo en color de punto/número. Pantallas: Inicio, Detalle, Estadísticas, Calendario, Recursos, Ajustes, Login, Onboarding, Wizard (cabecera), Editar porcentajes, Exportar (cabecera). Pendiente de pulido fino: pasos 2 y 3 del wizard, Exportar, bottom sheets (calculadora, simulador, entrada rápida) y diálogos.
-
-**Avance del plan de mejora (verificado en emulador, R8 incluido):**
-- Fase 1: respaldo seguro (transacción, idempotente, JSON escapado, carpeta elegida por el usuario, eventos/meta/notas incluidos) + reglas de manifiesto.
-- Fase 2: 0 real visible, escalas con mínimo ≠ 0, aviso si los pesos no suman 100 %, campo de nota sin reformateo ni valores inválidos, 100 % exigido al guardar.
-- Fase 3: widgets se refrescan al cambiar notas (observador de Room) y con `goAsync()`.
-- Fase 4: cerrar/reabrir semestre (Room v7, migración probada); el promedio ponderado por créditos y el historial ya existían en Estadísticas.
-- Fase 5 (parcial): `collectAsStateWithLifecycle`, animaciones acotadas, `distinctUntilChanged`, 48 dp táctiles. Pendiente: textos fijos/errores de ViewModels a recursos, eventos de una sola vez, SavedStateHandle, pruebas de ViewModels.
-- Fase 6 (parcial): worker de Sheets eliminado (la subida a Drive de Exportar se conserva), reglas R8 recortadas, PLANIFICACION.md reemplazado por guía en el README.
+## Versiones
+| Versión | Contenido |
+|---|---|
+| v2.3.0 | Fases 0-4 y 6 (limpia, coherente, publicable) |
+| v2.4.0 | Fase 5 (escalas por país, simulador, tests UI) |

@@ -334,7 +334,6 @@ Open a [GitHub Issue](https://github.com/Pedroj-64/Gradify_App/issues) including
 
 ## 📱 Support & Contact
 
-- **Email**: kelequel@gmail.com
 - **GitHub Issues**: [Open a ticket](https://github.com/Pedroj-64/Gradify_App/issues)
 
 ---
@@ -375,6 +374,6 @@ Licensed under the **MIT License** — see [LICENSE](LICENSE).
 
 [⬆ Back to top](#-gradify---academic-management-system)
 
-**© 2026 Pedro José Soto Rivera | Universidad del Quindío**
+**© 2026 MargaDev-Society**
 
 </div>

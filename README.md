@@ -115,7 +115,7 @@ Gradify está construida con las tecnologías más modernas y robustas del ecosi
 | **Preferencias** | DataStore (reemplazo de SharedPreferences) |
 | **Autenticación** | Google Sign-In (Credential Manager API) |
 | **Cloud Sync** | Google Sheets API v4 + Google Drive API |
-| **Tareas en Background** | WorkManager - Sincronización periódica |
+| **Tareas en Background** | WorkManager - Respaldo automático a carpeta local y recordatorios |
 
 ### Funcionalidades Avanzadas
 | Feature | Librería |
@@ -124,13 +124,12 @@ Gradify está construida con las tecnologías más modernas y robustas del ecosi
 | **Exportación Excel** | [Apache POI](https://poi.apache.org/) - Generación de .xlsx |
 | **Exportación PDF** | Android PDF API nativa |
 | **Drag & Drop** | [sh.calvin.reorderable](https://github.com/Calvin-LL/Reorderable) |
-| **Seguridad** | AndroidX Security Crypto (EncryptedSharedPreferences) |
 | **Logging** | [Timber](https://github.com/JakeWharton/timber) |
 
 ### Testing & CI/CD
-- **Unit Testing**: JUnit 5 + MockK
-- **UI Testing**: Compose UI Test
-- **Code Quality**: Detekt + ktlint
+- **Unit Testing**: JUnit 4 (dominio y parseo de IA) + tests instrumentados de Room (migraciones, archivar semestre, respaldo)
+- **CI**: GitHub Actions (gitleaks, tests, lint, build, backend, release firmado por tag)
+- **Pendiente** (ver [ROADMAP](ROADMAP.md)): tests de UI con Compose, ejecutar `androidTest` en CI, Detekt/ktlint
 
 ---
 
@@ -350,9 +349,8 @@ O simplemente presiona el botón **▶ Run** en Android Studio.
 ### ✅ Fase 3 - Cloud & Exportación (COMPLETADA)
 - [x] Exportación a Excel (.xlsx) con Apache POI
 - [x] Exportación a PDF con formato profesional
-- [x] Integración con Google Sheets API
-- [x] Sincronización automática con WorkManager
-- [x] Modo offline-first con sincronización en background
+- [x] Exportación manual a Google Sheets / Drive (no hay sincronización automática: el worker se eliminó en v2.2.0)
+- [x] Modo offline-first (todo local en Room) con respaldo JSON a carpeta elegida
 
 ### ✅ Fase 4 - Funcionalidades Avanzadas (COMPLETADA)
 - [x] Sistema de notificaciones inteligente
@@ -363,14 +361,8 @@ O simplemente presiona el botón **▶ Run** en Android Studio.
 - [x] Sistema multiidioma (ES/EN)
 - [x] Soporte para tablets y landscape
 
-### 🚀 Fase 5 - Mejoras Futuras (EN PLANIFICACIÓN)
-- [ ] Modo de estudio con Pomodoro integrado
-- [ ] Compartir progreso en redes sociales
-- [ ] Comparación anónima con compañeros
-- [ ] Integración con calendarios institucionales
-- [ ] App para tablets con vista de múltiples materias
-- [ ] Versión web con sincronización en tiempo real
-- [ ] Gamificación (logros, racha de estudio)
+### 🚀 Lo que sigue
+El plan vigente (limpieza, interfaz coherente, escalas por país, comunidad y lanzamiento v2.3) vive en **[ROADMAP.md](ROADMAP.md)**; el detalle por tarea en [`tasks/todo.md`](tasks/todo.md). Ideas lejanas (Pomodoro, versión web, gamificación) están en la sección "Ideas" del ROADMAP.
 
 ---
 
@@ -379,7 +371,7 @@ O simplemente presiona el botón **▶ Run** en Android Studio.
 Gradify toma en serio la seguridad de tus datos:
 
 - ✅ **OAuth 2.0**: Autenticación segura con Google sin almacenar contraseñas
-- ✅ **Encrypted Storage**: Las credenciales se guardan con `EncryptedSharedPreferences`
+- ✅ **Sin contraseñas guardadas**: el inicio de sesión es de Google; la clave de IA que pegas en Ajustes queda en DataStore local de la app (privado al sistema Android)
 - ✅ **HTTPS Only**: Todas las comunicaciones con APIs externas usan TLS 1.3
 - ✅ **Local First**: Tus calificaciones se almacenan localmente en Room (SQLite)
 - ✅ **Permisos mínimos**: Solo solicita permisos estrictamente necesarios
@@ -401,12 +393,13 @@ Gradify toma en serio la seguridad de tus datos:
 4. **Push** a la rama (`git push origin feature/amazing-feature`)
 5. Abre un **Pull Request**
 
-### Lineamientos de Código
-- Usa **Kotlin** idiomático y best practices
-- Sigue los principios **SOLID** y **Clean Architecture**
-- Documenta funciones públicas con **KDoc**
-- Agrega **tests unitarios** para lógica crítica
-- Usa **ktlint** para mantener el estilo consistente
+Lee primero **[CONTRIBUTING.md](CONTRIBUTING.md)** (setup con JDK 17/21, tests, estilo, commits) y el [ROADMAP](ROADMAP.md): busca issues con la etiqueta `good first issue`.
+
+### Lineamientos de Código (resumen)
+- **Kotlin** idiomático, MVVM + Clean Architecture (`data` / `domain` / `ui`)
+- Textos de UI siempre en `strings.xml` (ES y EN), nunca literales en Kotlin
+- Componentes visuales desde `ui/components/DesignSystem.kt`
+- **Tests unitarios** para lógica de dominio
 
 ---
 
@@ -424,7 +417,6 @@ Si encuentras un error, por favor abre un [Issue en GitHub](https://github.com/P
 
 ## 📱 Soporte y Contacto
 
-- **Email**: kelequel@gmail.com
 - **GitHub Issues**: [Abrir ticket](https://github.com/Pedroj-64/Gradify_App/issues)
 - **Documentación**: [Wiki del proyecto](https://github.com/Pedroj-64/Gradify_App/wiki)
 
@@ -476,7 +468,7 @@ Este proyecto está licenciado bajo la **MIT License** - ve el archivo [LICENSE]
 ```
 MIT License
 
-Copyright (c) 2026 Pedro José Soto Rivera
+Copyright (c) 2026 MargaDev-Society and contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -516,6 +508,6 @@ Si Gradify te ha sido útil, considera:
 
 ---
 
-**© 2026 Pedro José Soto Rivera | Universidad del Quindío**
+**© 2026 MargaDev-Society**
 
 </div>
