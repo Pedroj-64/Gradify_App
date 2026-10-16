@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17 }
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       # google-services.json real no está en el repo: se genera uno de relleno para compilar
       - name: google-services.json de relleno
         run: |
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17 }
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with: { gradle-version: "8.9" }
       - run: gradle test
         working-directory: backend
@@ -56,7 +56,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17 }
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       # Google (opcional). Con GOOGLE_SERVICES_JSON_BASE64 (secreto) y GOOGLE_CLIENT_ID (variable) el APK
       # incluye el inicio de sesión con Google; sin ellos sale con uno de relleno y funciona sin cuenta.
