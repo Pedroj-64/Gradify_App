@@ -1,5 +1,8 @@
 package com.notasapp.ui.stats
 
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.notasapp.ui.components.EmptyState
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
@@ -107,7 +110,12 @@ fun EstadisticasScreen(
         }
     ) { paddingValues ->
         if (stats.totalMaterias == 0) {
-            EmptyEstadisticas(Modifier.padding(paddingValues))
+            EmptyState(
+                icon = Icons.Default.BarChart,
+                title = stringResource(R.string.stats_empty),
+                hint = stringResource(R.string.stats_empty_hint),
+                modifier = Modifier.padding(paddingValues).fillMaxSize()
+            )
         } else {
             EstadisticasContent(
                 stats = stats,
@@ -356,7 +364,7 @@ private fun MateriaRankingRow(
     esPositivo: Boolean
 ) {
     val promedio = materia.promedio ?: return
-    val progress = (promedio / materia.escalaMax).coerceIn(0f, 1f)
+    val progress = materia.fraccionEscala(promedio)
     val tone = if (materia.aprobado) Tone.OK else Tone.BAD
 
     Column(Modifier.fillMaxWidth().padding(vertical = 7.dp)) {
@@ -399,271 +407,7 @@ private fun MateriaRankingRow(
 
 // ── Gráfico de evolución por semestre (línea) ─────────────────────────────────
 
-@Composable
-private fun SemesterEvolutionChart(
-    semestres: List<Semestre>,
-    modifier: Modifier = Modifier
-) {
-    val lineColor = MaterialTheme.colorScheme.primary
-    val dotColor = MaterialTheme.colorScheme.primary
-    val gridColor = MaterialTheme.colorScheme.outlineVariant
-    val textColor = MaterialTheme.colorScheme.onSurface
-    val fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
-
-    // Filter semestres that have a promedio
-    val dataSemestres = semestres.filter { it.promedioSimple != null }
-    if (dataSemestres.size < 2) return
-
-    val promedios = dataSemestres.map { it.promedioSimple!! }
-    val maxVal = promedios.max().coerceAtLeast(5f)
-    val minVal = 0f
-
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Default.School,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.stats_evolution),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            Spacer(Modifier.height(16.dp))
-
-            Canvas(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-            ) {
-                val leftPadding = 40.dp.toPx()
-                val rightPadding = 16.dp.toPx()
-                val topPadding = 12.dp.toPx()
-                val bottomPadding = 32.dp.toPx()
-
-                val chartWidth = size.width - leftPadding - rightPadding
-                val chartHeight = size.height - topPadding - bottomPadding
-                val range = (maxVal - minVal).coerceAtLeast(1f)
-
-                val pointCount = dataSemestres.size
-                val stepX = if (pointCount > 1) chartWidth / (pointCount - 1) else chartWidth
-
-                // Y axis grid lines (4 lines)
-                val gridSteps = 4
-                for (i in 0..gridSteps) {
-                    val yVal = minVal + (range / gridSteps) * i
-                    val y = topPadding + chartHeight - (chartHeight * ((yVal - minVal) / range))
-                    drawLine(
-                        color = gridColor,
-                        start = Offset(leftPadding, y),
-                        end = Offset(size.width - rightPadding, y),
-                        strokeWidth = 1.dp.toPx()
-                    )
-                    // Y axis label
-                    drawContext.canvas.nativeCanvas.drawText(
-                        "%.1f".format(yVal),
-                        4.dp.toPx(),
-                        y + 4.dp.toPx(),
-                        android.graphics.Paint().apply {
-                            color = textColor.hashCode()
-                            textSize = 10.sp.toPx()
-                            isAntiAlias = true
-                        }
-                    )
-                }
-
-                // Calculate points
-                val points = dataSemestres.mapIndexed { index, semestre ->
-                    val x = leftPadding + index * stepX
-                    val normalized = ((semestre.promedioSimple!! - minVal) / range).coerceIn(0f, 1f)
-                    val y = topPadding + chartHeight - (chartHeight * normalized)
-                    Offset(x, y)
-                }
-
-                // Fill area under the line
-                if (points.size >= 2) {
-                    val fillPath = Path().apply {
-                        moveTo(points.first().x, topPadding + chartHeight)
-                        lineTo(points.first().x, points.first().y)
-                        for (i in 1 until points.size) {
-                            lineTo(points[i].x, points[i].y)
-                        }
-                        lineTo(points.last().x, topPadding + chartHeight)
-                        close()
-                    }
-                    drawPath(fillPath, fillColor)
-                }
-
-                // Draw line
-                if (points.size >= 2) {
-                    val linePath = Path().apply {
-                        moveTo(points.first().x, points.first().y)
-                        for (i in 1 until points.size) {
-                            lineTo(points[i].x, points[i].y)
-                        }
-                    }
-                    drawPath(
-                        linePath,
-                        color = lineColor,
-                        style = Stroke(
-                            width = 3.dp.toPx(),
-                            cap = StrokeCap.Round,
-                            join = StrokeJoin.Round
-                        )
-                    )
-                }
-
-                // Draw dots and X axis labels
-                points.forEachIndexed { index, point ->
-                    // Dot
-                    drawCircle(
-                        color = Color.White,
-                        radius = 6.dp.toPx(),
-                        center = point
-                    )
-                    drawCircle(
-                        color = dotColor,
-                        radius = 4.dp.toPx(),
-                        center = point
-                    )
-
-                    // X label (semester name)
-                    val label = dataSemestres[index].periodo
-                    val shortLabel = if (label.length > 7) label.takeLast(7) else label
-                    drawContext.canvas.nativeCanvas.drawText(
-                        shortLabel,
-                        point.x - 16.dp.toPx(),
-                        size.height - 4.dp.toPx(),
-                        android.graphics.Paint().apply {
-                            color = textColor.hashCode()
-                            textSize = 9.sp.toPx()
-                            isAntiAlias = true
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
 // ── Historial de semestres ───────────────────────────────────────────────────
-
-@Composable
-private fun SemestresHistorialCard(
-    semestres: List<Semestre>,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Default.School,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.stats_history),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            semestres.forEach { semestre ->
-                SemestreRow(semestre = semestre)
-            }
-        }
-    }
-}
-
-@Composable
-private fun SemestreRow(semestre: Semestre) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = semestre.periodo,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = stringResource(R.string.st_sem_summary, semestre.totalMaterias, semestre.totalCreditos),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = semestre.promedioPonderadoDisplay,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = stringResource(R.string.st_sem_passed, semestre.aprobadas, semestre.materiasConNotas.size),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
 
 // ── Estado vacío ─────────────────────────────────────────────────────────────
 
-@Composable
-private fun EmptyEstadisticas(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(32.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.BarChart,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = stringResource(R.string.stats_empty),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = stringResource(R.string.stats_empty_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}

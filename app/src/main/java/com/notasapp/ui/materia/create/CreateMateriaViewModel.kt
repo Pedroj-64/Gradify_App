@@ -1,5 +1,6 @@
 package com.notasapp.ui.materia.create
 
+import com.notasapp.domain.model.ScaleTemplate
 import androidx.lifecycle.SavedStateHandle
 import com.notasapp.ui.savedFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -65,6 +66,9 @@ class CreateMateriaViewModel @Inject constructor(
             escalaMax = tipo.escalaMax,
             notaAprobacion = tipo.notaAprobacion
         )
+    }
+    fun applyTemplate(t: ScaleTemplate) = _wizardState.update {
+        it.copy(tipoEscala = t.tipo, escalaMin = t.min, escalaMax = t.max, notaAprobacion = t.aprobacion)
     }
     fun updateEscalaMin(min: Float) = _wizardState.update { it.copy(escalaMin = min) }
     fun updateEscalaMax(max: Float) = _wizardState.update { it.copy(escalaMax = max) }

@@ -578,4 +578,21 @@ Get it at aistudio.google.com/app/apikey</string>
     <string name="widget_description">Shows the semester average on your home screen</string>
     <string name="widget_materia_description">Shows the featured subject with grade and progress</string>
     <string name="widget_resumen_description">Full semester panel: average, subjects, progress and motivation</string>
+    <string name="calc_err_percent">The section percentages don\'t add up to 100 %</string>
+    <string name="cal_select_day">Select day</string>
+    <string name="cal_edit_event">Edit event</string>
+    <string name="dm_goal_edit">Edit goal</string>
+    <string name="dm_notes_edit">Edit notes</string>
+    <string name="dc_toggle">Show or hide parts</string>
+    <string name="st_chart_desc">Average by semester chart. %1$s</string>
+    <string name="scale_co">Colombia · 0 – 5 (pass 3.0)</string>
+    <string name="scale_mx">Mexico · 0 – 10 (pass 6.0)</string>
+    <string name="scale_es">Spain · 0 – 10 (pass 5.0)</string>
+    <string name="scale_cl">Chile · 1.0 – 7.0 (pass 4.0)</string>
+    <string name="scale_pe">Peru · 0 – 20 (pass 11)</string>
+    <string name="scale_ve">Venezuela · 0 – 20 (pass 10)</string>
+    <string name="scale_ar">Argentina · 1 – 10 (pass 4)</string>
+    <string name="scale_br">Brazil · 0 – 10 (pass 6.0)</string>
+    <string name="scale_cr">Costa Rica · 0 – 100 (pass 70)</string>
+    <string name="scale_custom">Custom</string>
 </resources>

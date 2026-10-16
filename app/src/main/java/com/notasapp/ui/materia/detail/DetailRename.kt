@@ -1,5 +1,6 @@
 package com.notasapp.ui.materia.detail
 
+import com.notasapp.ui.components.GradifyDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,24 +45,20 @@ internal val LocalRename =
 @Composable
 internal fun RenameDialog(initial: String, onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
     var text by remember { mutableStateOf(initial) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.rename_title)) },
-        text = {
-            OutlinedTextField(
-                value = text,
-                onValueChange = { text = it },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(text) }, enabled = text.isNotBlank()) {
-                Text(stringResource(R.string.btn_save))
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } }
-    )
+    GradifyDialog(
+        title = stringResource(R.string.rename_title),
+        onDismiss = onDismiss,
+        confirmText = stringResource(R.string.btn_save),
+        confirmEnabled = text.isNotBlank(),
+        onConfirm = { onConfirm(text) }
+    ) {
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
 
 @Composable
@@ -74,28 +71,21 @@ internal fun EditMateriaDialog(
     var periodo by remember { mutableStateOf(materia.periodo) }
     var profesor by remember { mutableStateOf(materia.profesor.orEmpty()) }
     var creditos by remember { mutableStateOf(materia.creditos.toString()) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.edit_subject_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(nombre, { nombre = it }, singleLine = true,
-                    label = { Text(stringResource(R.string.edit_subject_name)) }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(periodo, { periodo = it }, singleLine = true,
-                    label = { Text(stringResource(R.string.edit_subject_period)) }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(profesor, { profesor = it }, singleLine = true,
-                    label = { Text(stringResource(R.string.edit_subject_teacher)) }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(creditos, { creditos = it.filter(Char::isDigit).take(2) }, singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    label = { Text(stringResource(R.string.edit_subject_credits)) }, modifier = Modifier.fillMaxWidth())
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onSave(nombre, periodo, profesor.ifBlank { null }, creditos.toIntOrNull() ?: 0) },
-                enabled = nombre.isNotBlank() && periodo.isNotBlank()
-            ) { Text(stringResource(R.string.btn_save)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) } }
-    )
+    GradifyDialog(
+        title = stringResource(R.string.edit_subject_title),
+        onDismiss = onDismiss,
+        confirmText = stringResource(R.string.btn_save),
+        confirmEnabled = nombre.isNotBlank() && periodo.isNotBlank(),
+        onConfirm = { onSave(nombre, periodo, profesor.ifBlank { null }, creditos.toIntOrNull() ?: 0) }
+    ) {
+        OutlinedTextField(nombre, { nombre = it }, singleLine = true,
+            label = { Text(stringResource(R.string.edit_subject_name)) }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(periodo, { periodo = it }, singleLine = true,
+            label = { Text(stringResource(R.string.edit_subject_period)) }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(profesor, { profesor = it }, singleLine = true,
+            label = { Text(stringResource(R.string.edit_subject_teacher)) }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(creditos, { creditos = it.filter(Char::isDigit).take(2) }, singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            label = { Text(stringResource(R.string.edit_subject_credits)) }, modifier = Modifier.fillMaxWidth())
+    }
 }

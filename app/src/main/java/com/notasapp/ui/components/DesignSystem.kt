@@ -1,5 +1,19 @@
 package com.notasapp.ui.components
 
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -134,7 +148,7 @@ fun SurfaceCard(
             .fillMaxWidth()
             .clip(shape)
             .background(container)
-            .let { if (onClick != null) it.clickable(onClick = onClick) else it }
+            .let { if (onClick != null) it.clickable(role = Role.Button, onClick = onClick) else it }
             .padding(18.dp),
         content = content
     )
@@ -228,3 +242,129 @@ fun gradifyChipColors() = androidx.compose.material3.FilterChipDefaults.filterCh
     selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
     selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer
 )
+
+// ── Estados y contenedores compartidos ──────────────────────────────────────
+
+/** Estado vacío: icono tonal, título, pista y acción opcional. */
+@Composable
+fun EmptyState(
+    icon: ImageVector,
+    title: String,
+    hint: String? = null,
+    modifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null
+) {
+    Box(modifier = modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 48.dp), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(56.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+            if (hint != null) {
+                Text(hint, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            }
+            if (action != null) {
+                Spacer(Modifier.height(8.dp))
+                action()
+            }
+        }
+    }
+}
+
+/** Aviso de error en superficie tonal; el reintento es opcional. */
+@Composable
+fun ErrorBanner(message: String, modifier: Modifier = Modifier, onRetry: (() -> Unit)? = null) {
+    SurfaceCard(modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(8.dp).clip(CircleShape).background(Tone.BAD.color()))
+            Text(message, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+            if (onRetry != null) {
+                TextButton(onClick = onRetry) { Text(stringResource(R.string.recommendations_retry)) }
+            }
+        }
+    }
+}
+
+/** Resultado de un cálculo: icono con el color del estado, título y detalle. */
+@Composable
+fun ResultCard(icon: ImageVector, title: String, subtitle: String, tone: Tone, modifier: Modifier = Modifier) {
+    SurfaceCard(modifier = modifier) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+            Icon(icon, contentDescription = null, tint = tone.color(), modifier = Modifier.size(28.dp))
+            Column {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+/** Indicador de carga centrado con texto opcional (anunciado por TalkBack). */
+@Composable
+fun LoadingBlock(modifier: Modifier = Modifier, text: String? = null) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
+        if (text != null) Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** Diálogo estándar: título, contenido, confirmar y cancelar con los mismos estilos en toda la app. */
+@Composable
+fun GradifyDialog(
+    title: String,
+    onDismiss: () -> Unit,
+    confirmText: String,
+    onConfirm: () -> Unit,
+    modifier: Modifier = Modifier,
+    dismissText: String? = stringResource(R.string.btn_cancel),
+    confirmEnabled: Boolean = true,
+    destructive: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit = {}
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        title = { Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) },
+        text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp), content = content) },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = confirmEnabled) {
+                Text(confirmText, color = if (destructive) MaterialTheme.colorScheme.error else Color.Unspecified)
+            }
+        },
+        dismissButton = dismissText?.let { { TextButton(onClick = onDismiss) { Text(it) } } }
+    )
+}
+
+/** Bottom sheet estándar: mismo asa y color. El scroll lo maneja cada contenido (no anidar verticalScroll aquí). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GradifySheet(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    content: @Composable ColumnScope.() -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        dragHandle = {
+            Box(
+                Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .size(width = 40.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
+            )
+        }
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+            content = content
+        )
+    }
+}

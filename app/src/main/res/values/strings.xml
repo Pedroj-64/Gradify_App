@@ -586,4 +586,21 @@ La consigues en aistudio.google.com/app/apikey</string>
     <string name="nch_exams_desc">Alertas de exámenes, entregas y evaluaciones programadas</string>
     <string name="dc_of_cut">%1$d%% del corte</string>
     <string name="home_credits_short"> · %1$d cr</string>
+    <string name="calc_err_percent">Los porcentajes de los cortes no suman 100 %</string>
+    <string name="cal_select_day">Seleccionar día</string>
+    <string name="cal_edit_event">Editar evento</string>
+    <string name="dm_goal_edit">Editar meta</string>
+    <string name="dm_notes_edit">Editar notas</string>
+    <string name="dc_toggle">Mostrar u ocultar partes</string>
+    <string name="st_chart_desc">Gráfico de promedio por semestre. %1$s</string>
+    <string name="scale_co">Colombia · 0 – 5 (aprueba 3.0)</string>
+    <string name="scale_mx">México · 0 – 10 (aprueba 6.0)</string>
+    <string name="scale_es">España · 0 – 10 (aprueba 5.0)</string>
+    <string name="scale_cl">Chile · 1.0 – 7.0 (aprueba 4.0)</string>
+    <string name="scale_pe">Perú · 0 – 20 (aprueba 11)</string>
+    <string name="scale_ve">Venezuela · 0 – 20 (aprueba 10)</string>
+    <string name="scale_ar">Argentina · 1 – 10 (aprueba 4)</string>
+    <string name="scale_br">Brasil · 0 – 10 (aprueba 6.0)</string>
+    <string name="scale_cr">Costa Rica · 0 – 100 (aprueba 70)</string>
+    <string name="scale_custom">Personalizada</string>
 </resources>

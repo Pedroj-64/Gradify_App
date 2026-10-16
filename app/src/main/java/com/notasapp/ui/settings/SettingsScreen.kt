@@ -1,5 +1,8 @@
 package com.notasapp.ui.settings
 
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.selectable
+import com.notasapp.ui.components.GradifyDialog
 import com.notasapp.utils.BackupFolder
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -334,37 +337,13 @@ fun SettingsScreen(
 
     // ── Diálogo de confirmación de logout ──────────────────────────────────────────
     if (uiState.showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissLogoutDialog() },
-            icon = {
-                Icon(
-                    imageVector        = Icons.Default.Logout,
-                    contentDescription = null,
-                    tint               = MaterialTheme.colorScheme.error
-                )
-            },
-            title = { Text(stringResource(R.string.settings_logout)) },
-            text  = {
-                Text(
-                    stringResource(R.string.settings_logout_confirm)
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = { viewModel.logout() },
-                    colors  = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text(stringResource(R.string.settings_logout))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.dismissLogoutDialog() }) {
-                    Text(stringResource(R.string.btn_cancel))
-                }
-            }
-        )
+        GradifyDialog(
+            title = stringResource(R.string.settings_logout),
+            onDismiss = { viewModel.dismissLogoutDialog() },
+            confirmText = stringResource(R.string.settings_logout),
+            destructive = true,
+            onConfirm = { viewModel.logout() }
+        ) { Text(stringResource(R.string.settings_logout_confirm)) }
     }
 }
 
@@ -576,7 +555,11 @@ private fun RedondeoConfigCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onConfigChange(config.copy(modoRedondeo = modo)) }
+                        .selectable(
+                            selected = config.modoRedondeo == modo,
+                            role = Role.RadioButton,
+                            onClick = { onConfigChange(config.copy(modoRedondeo = modo)) }
+                        )
                         .padding(vertical = 4.dp)
                 ) {
                     RadioButton(

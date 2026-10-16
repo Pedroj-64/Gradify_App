@@ -266,6 +266,7 @@ fun MateriaDetailScreen(
                         ComponenteCard(
                             componente = componente,
                             escalaMax = mat.escalaMax,
+                            escalaMin = mat.escalaMin,
                             onSubNotaValueChange = { subNotaId, valor ->
                                 viewModel.actualizarSubNota(subNotaId, valor)
                             },
@@ -319,6 +320,7 @@ fun MateriaDetailScreen(
             SimuladorBottomSheet(
                 componentesFaltantes = mat.componentes.filter { it.aporteAlFinal == null },
                 escalaMax = mat.escalaMax,
+                escalaMin = mat.escalaMin,
                 notaAprobacion = mat.notaAprobacion,
                 resultado = simuladorResult,
                 onSimular = viewModel::simularNota,
@@ -357,6 +359,7 @@ fun MateriaDetailScreen(
             MetaDialog(
                 currentMeta = mat.notaMeta,
                 escalaMax = mat.escalaMax,
+                escalaMin = mat.escalaMin,
                 onDismiss = { showMetaDialog = false },
                 onSave = { newMeta ->
                     viewModel.actualizarNotaMeta(newMeta)

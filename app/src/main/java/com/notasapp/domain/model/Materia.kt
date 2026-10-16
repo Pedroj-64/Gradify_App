@@ -58,6 +58,10 @@ data class Materia(
     /**
      * True si el promedio actual supera la nota mínima de aprobación.
      */
+    /** Posición de [valor] dentro de la escala, 0..1 (respeta escalas que no empiezan en 0, como 1–7). */
+    fun fraccionEscala(valor: Float): Float =
+        ((valor - escalaMin) / (escalaMax - escalaMin)).coerceIn(0f, 1f)
+
     val aprobado: Boolean get() = (promedio ?: 0f) >= notaAprobacion
 
     /**
@@ -165,7 +169,7 @@ data class Materia(
             val restante = 1f - porcentajeEvaluado
             if (restante <= 0f) return null
             val necesita = (meta - acumulado) / restante
-            return if (necesita in 0f..escalaMax) necesita else null
+            return if (necesita in escalaMin..escalaMax) necesita else null
         }
 
     /**

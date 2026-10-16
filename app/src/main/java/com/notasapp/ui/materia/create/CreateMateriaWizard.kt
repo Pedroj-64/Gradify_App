@@ -1,5 +1,6 @@
 package com.notasapp.ui.materia.create
 
+import com.notasapp.domain.model.ScaleTemplate
 import com.notasapp.R
 import androidx.compose.ui.res.stringResource
 import com.notasapp.ui.UiEvent
@@ -146,7 +147,7 @@ fun CreateMateriaWizard(
                     )
                     2 -> Step2Escala(
                         state = state,
-                        onTipoEscalaChange = viewModel::updateTipoEscala,
+                        onTemplateChange = viewModel::applyTemplate,
                         onNotaAprobacionChange = viewModel::updateNotaAprobacion,
                         onNext = viewModel::goToStep3
                     )
@@ -264,7 +265,7 @@ private fun Step1BasicInfo(
 @Composable
 private fun Step2Escala(
     state: WizardState,
-    onTipoEscalaChange: (TipoEscala) -> Unit,
+    onTemplateChange: (ScaleTemplate) -> Unit,
     onNotaAprobacionChange: (Float) -> Unit,
     onNext: () -> Unit
 ) {
@@ -289,12 +290,12 @@ private fun Step2Escala(
 
         // Chips de selección de tipo de escala
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            TipoEscala.entries.forEach { tipo ->
+            ScaleTemplate.entries.forEach { t ->
                 FilterChip(
                     colors = gradifyChipColors(),
-                    selected = state.tipoEscala == tipo,
-                    onClick = { onTipoEscalaChange(tipo) },
-                    label = { Text(tipo.getDisplayName(context)) },
+                    selected = state.escalaMin == t.min && state.escalaMax == t.max && state.notaAprobacion == t.aprobacion,
+                    onClick = { onTemplateChange(t) },
+                    label = { Text(stringResource(t.label)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }

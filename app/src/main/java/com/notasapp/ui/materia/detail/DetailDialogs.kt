@@ -1,5 +1,6 @@
 package com.notasapp.ui.materia.detail
 
+import com.notasapp.ui.components.GradifySheet
 import java.util.Locale
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -160,23 +161,21 @@ internal fun QuickEntryBottomSheet(
     data class PendingEntry(
         val componenteNombre: String,
         val subNota: SubNota,
-        val escalaMax: Float
+        val escalaMax: Float,
+        val escalaMin: Float
     )
 
     val pending = materia.componentes.flatMap { comp ->
         comp.subNotas
             .filter { !it.esCompuesta && it.valor == null }
-            .map { PendingEntry(comp.nombre, it, materia.escalaMax) }
+            .map { PendingEntry(comp.nombre, it, materia.escalaMax, materia.escalaMin) }
     }
 
-    androidx.compose.material3.ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
-    ) {
+    GradifySheet(onDismiss = onDismiss, sheetState = sheetState) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 24.dp, vertical = 8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -220,6 +219,7 @@ internal fun QuickEntryBottomSheet(
                             componenteNombre = entry.componenteNombre,
                             subNota = entry.subNota,
                             escalaMax = entry.escalaMax,
+                            escalaMin = entry.escalaMin,
                             onValueChange = { valor -> onValueChange(entry.subNota.id, valor) }
                         )
                     }
@@ -235,6 +235,7 @@ internal fun QuickEntryRow(
     componenteNombre: String,
     subNota: SubNota,
     escalaMax: Float,
+    escalaMin: Float,
     onValueChange: (Float?) -> Unit
 ) {
     var textValue by remember(subNota.valor) {
@@ -269,7 +270,7 @@ internal fun QuickEntryRow(
                 onValueChange = { input ->
                     textValue = input
                     val parsed = input.parseGrade()
-                    if (parsed != null && parsed in 0f..escalaMax) {
+                    if (parsed != null && parsed in escalaMin..escalaMax) {
                         onValueChange(parsed)
                     } else if (input.isEmpty()) {
                         onValueChange(null)
@@ -279,7 +280,7 @@ internal fun QuickEntryRow(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
                 placeholder = {
-                    Text("0-${escalaMax.toInt()}", style = MaterialTheme.typography.bodySmall)
+                    Text("${escalaMin.toInt()}-${escalaMax.toInt()}", style = MaterialTheme.typography.bodySmall)
                 }
             )
         }

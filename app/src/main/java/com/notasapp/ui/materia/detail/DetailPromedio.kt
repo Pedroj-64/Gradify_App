@@ -143,9 +143,8 @@ internal fun PromedioResumen(
         Spacer(Modifier.height(18.dp))
 
         GradeTrack(
-            promedio = materia.promedio,
-            aprobacion = materia.notaAprobacion,
-            max = materia.escalaMax,
+            fill = materia.promedio?.let(materia::fraccionEscala) ?: 0f,
+            mark = materia.fraccionEscala(materia.notaAprobacion),
             tone = tone
         )
 
@@ -197,9 +196,7 @@ internal fun PromedioResumen(
 
 /** Barra de 0 a la nota máxima con una marca en la nota mínima de aprobación. */
 @Composable
-private fun GradeTrack(promedio: Float?, aprobacion: Float, max: Float, tone: Tone) {
-    val fill = ((promedio ?: 0f) / max).coerceIn(0f, 1f)
-    val mark = (aprobacion / max).coerceIn(0f, 1f)
+private fun GradeTrack(fill: Float, mark: Float, tone: Tone) {
     BoxWithConstraints(Modifier.fillMaxWidth().height(14.dp)) {
         Box(
             Modifier
@@ -251,8 +248,8 @@ internal fun getMensajeMotivacional(materia: Materia): Pair<String, Int>? {
     if (materia.yaAprobo) return null // El banner de felicitación ya maneja esto
 
     // Mensajes según porcentaje evaluado y rendimiento
-    val rendimiento = materia.promedio!! / materia.escalaMax // 0.0 – 1.0
-    val aprobacionRatio = materia.notaAprobacion / materia.escalaMax
+    val rendimiento = materia.fraccionEscala(materia.promedio!!) // 0.0 – 1.0
+    val aprobacionRatio = materia.fraccionEscala(materia.notaAprobacion)
 
     return when {
         // Primer corte (0-25%)

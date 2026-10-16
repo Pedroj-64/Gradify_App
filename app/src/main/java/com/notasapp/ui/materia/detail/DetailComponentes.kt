@@ -1,5 +1,6 @@
 package com.notasapp.ui.materia.detail
 
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.semantics.error
@@ -110,6 +111,7 @@ import kotlinx.coroutines.launch
 internal fun ComponenteCard(
     componente: Componente,
     escalaMax: Float,
+    escalaMin: Float = 0f,
     onSubNotaValueChange: (Long, Float?) -> Unit,
     onAgregarSubNota: (descripcion: String, porcentaje: Float) -> Unit,
     onEliminarSubNota: (Long) -> Unit,
@@ -170,6 +172,7 @@ internal fun ComponenteCard(
             SubNotaRow(
                 subNota = subNota,
                 escalaMax = escalaMax,
+                escalaMin = escalaMin,
                 onValueChange = { valor -> onSubNotaValueChange(subNota.id, valor) },
                 onEliminar = { onEliminarSubNota(subNota.id) },
                 onAgregarDetalle = { desc, pct -> onAgregarDetalle(subNota.id, desc, pct) },
@@ -205,10 +208,10 @@ internal fun ComponenteCard(
 internal val GRADE_INPUT = Regex("^\\d{0,3}([.,]\\d{0,2})?$")
 
 /** True si el texto no es una nota válida en 0..[max] (se pinta en rojo y NO se guarda). */
-internal fun isGradeInvalid(text: String, max: Float): Boolean {
+internal fun isGradeInvalid(text: String, max: Float, min: Float = 0f): Boolean {
     if (text.isEmpty()) return false
     val v = text.parseGrade() ?: return true
-    return v !in 0f..max
+    return v !in min..max
 }
 
 /**
@@ -277,6 +280,7 @@ internal fun GradeField(
 internal fun SubNotaRow(
     subNota: SubNota,
     escalaMax: Float,
+    escalaMin: Float = 0f,
     onValueChange: (Float?) -> Unit,
     onEliminar: () -> Unit,
     onAgregarDetalle: (descripcion: String, porcentaje: Float) -> Unit,
@@ -296,7 +300,10 @@ internal fun SubNotaRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 52.dp)
-                .let { if (subNota.esCompuesta) it.clickable { expanded = !expanded } else it },
+                .let { if (subNota.esCompuesta) it.clickable(
+                    onClickLabel = stringResource(R.string.dc_toggle),
+                    role = Role.Button
+                ) { expanded = !expanded } else it },
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -331,12 +338,12 @@ internal fun SubNotaRow(
                 GradeField(
                     value = textValue,
                     label = stringResource(R.string.grade_field_desc, subNota.descripcion),
-                    isError = isGradeInvalid(textValue, escalaMax),
+                    isError = isGradeInvalid(textValue, escalaMax, escalaMin),
                     onFocusChange = { enfocado = it },
                     onValueChange = { input ->
                         textValue = input
                         val parsed = input.parseGrade()
-                        if (parsed != null && parsed in 0f..escalaMax) {
+                        if (parsed != null && parsed in escalaMin..escalaMax) {
                             onValueChange(parsed)
                         } else if (input.isEmpty()) {
                             onValueChange(null)
@@ -372,6 +379,7 @@ internal fun SubNotaRow(
                     DetalleRow(
                         detalle = detalle,
                         escalaMax = escalaMax,
+                escalaMin = escalaMin,
                         onValueChange = { valor -> onActualizarDetalle(detalle.id, valor) },
                         onEliminar = { onEliminarDetalle(detalle.id) }
                     )
@@ -403,6 +411,7 @@ internal fun SubNotaRow(
 internal fun DetalleRow(
     detalle: SubNotaDetalle,
     escalaMax: Float,
+    escalaMin: Float = 0f,
     onValueChange: (Float?) -> Unit,
     onEliminar: () -> Unit,
     modifier: Modifier = Modifier
@@ -428,12 +437,12 @@ internal fun DetalleRow(
         GradeField(
             value = textValue,
             label = stringResource(R.string.grade_field_desc, detalle.descripcion),
-            isError = isGradeInvalid(textValue, escalaMax),
+            isError = isGradeInvalid(textValue, escalaMax, escalaMin),
             onFocusChange = { enfocado = it },
             onValueChange = { input ->
                 textValue = input
                 val parsed = input.parseGrade()
-                if (parsed != null && parsed in 0f..escalaMax) {
+                if (parsed != null && parsed in escalaMin..escalaMax) {
                     onValueChange(parsed)
                 } else if (input.isEmpty()) {
                     onValueChange(null)

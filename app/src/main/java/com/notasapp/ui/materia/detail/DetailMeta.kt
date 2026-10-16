@@ -1,5 +1,8 @@
 package com.notasapp.ui.materia.detail
 
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.minimumInteractiveComponentSize
+import com.notasapp.ui.components.GradifyDialog
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -121,7 +124,12 @@ internal fun MetaYNotasSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .clickable(onClick = onEditMeta)
+                .minimumInteractiveComponentSize()
+                .clickable(
+                    onClickLabel = stringResource(R.string.dm_goal_edit),
+                    role = Role.Button,
+                    onClick = onEditMeta
+                )
                 .padding(vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -155,7 +163,12 @@ internal fun MetaYNotasSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .clickable(onClick = onEditNotas)
+                .minimumInteractiveComponentSize()
+                .clickable(
+                    onClickLabel = stringResource(R.string.dm_notes_edit),
+                    role = Role.Button,
+                    onClick = onEditNotas
+                )
                 .padding(vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -183,75 +196,25 @@ internal fun MetaYNotasSection(
 internal fun MetaDialog(
     currentMeta: Float?,
     escalaMax: Float,
+    escalaMin: Float = 0f,
     onDismiss: () -> Unit,
     onSave: (Float?) -> Unit
 ) {
     var metaText by remember { mutableStateOf(currentMeta?.toInputString() ?: "") }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     val parsedMeta = metaText.parseGrade()
-    val isValid = metaText.isEmpty() || (parsedMeta != null && parsedMeta > 0f && parsedMeta <= escalaMax)
+    val isValid = metaText.isEmpty() || (parsedMeta != null && parsedMeta > 0f && parsedMeta in escalaMin..escalaMax)
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.goal_set)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    text = stringResource(R.string.goal_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                OutlinedTextField(
-                    value = metaText,
-                    onValueChange = { metaText = it },
-                    label = { Text(stringResource(R.string.dm_goal_label)) },
-                    placeholder = { Text("0.0 - ${escalaMax.toInt()}") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth(),
-                    supportingText = {
-                        if (parsedMeta != null && parsedMeta > escalaMax) {
-                            Text(
-                                text = stringResource(R.string.dm_max, escalaMax.toInt()),
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        } else {
-                            Text(stringResource(R.string.dm_goal_hint))
-                        }
-                    },
-                    isError = !isValid
-                )
-
-                if (currentMeta != null) {
-                    TextButton(
-                        onClick = { showDeleteConfirm = true },
-                        colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        Text(stringResource(R.string.goal_remove))
-                    }
-                }
+    GradifyDialog(
+            title = stringResource(R.string.goal_remove),
+            onDismiss = { showDeleteConfirm = false },
+            confirmText = stringResource(R.string.btn_delete),
+            destructive = true,
+            onConfirm = {
+                onSave(null)
+                showDeleteConfirm = false
             }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val meta = if (metaText.isEmpty()) null else parsedMeta
-                    onSave(meta)
-                },
-                enabled = isValid
-            ) {
-                Text(stringResource(R.string.btn_save))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.btn_cancel))
-            }
-        }
-    )
+        ) { Text(stringResource(R.string.dm_goal_remove_q)) }
 
     if (showDeleteConfirm) {
         AlertDialog(
@@ -343,28 +306,15 @@ internal fun NotasDialog(
     )
 
     if (showDeleteConfirm) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirm = false },
-            title = { Text(stringResource(R.string.dm_notes_delete)) },
-            text = { Text(stringResource(R.string.dm_notes_delete_q)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        onSave(null)
-                        showDeleteConfirm = false
-                    },
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text(stringResource(R.string.btn_delete))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text(stringResource(R.string.btn_cancel))
-                }
+        GradifyDialog(
+            title = stringResource(R.string.dm_notes_delete),
+            onDismiss = { showDeleteConfirm = false },
+            confirmText = stringResource(R.string.btn_delete),
+            destructive = true,
+            onConfirm = {
+                onSave(null)
+                showDeleteConfirm = false
             }
-        )
+        ) { Text(stringResource(R.string.dm_notes_delete_q)) }
     }
 }

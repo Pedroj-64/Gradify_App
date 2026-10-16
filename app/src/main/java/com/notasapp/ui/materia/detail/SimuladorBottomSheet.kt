@@ -1,5 +1,6 @@
 package com.notasapp.ui.materia.detail
 
+import com.notasapp.ui.components.GradifySheet
 import com.notasapp.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedContent
@@ -63,28 +64,18 @@ import com.notasapp.domain.usecase.SimularNotaUseCase
 fun SimuladorBottomSheet(
     componentesFaltantes: List<Componente>,
     escalaMax: Float,
+    escalaMin: Float = 0f,
     notaAprobacion: Float,
     resultado: SimularNotaUseCase.Resultado?,
     onSimular: (Map<Long, Float>) -> Unit,
     onDismiss: () -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 ) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        dragHandle = {
-            Box(
-                modifier = Modifier
-                    .padding(top = 12.dp, bottom = 4.dp)
-                    .size(width = 40.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
-            )
-        }
-    ) {
+    GradifySheet(onDismiss = onDismiss, sheetState = sheetState) {
         SimuladorContent(
             componentesFaltantes = componentesFaltantes,
             escalaMax = escalaMax,
+            escalaMin = escalaMin,
             notaAprobacion = notaAprobacion,
             resultado = resultado,
             onSimular = onSimular,
@@ -97,6 +88,7 @@ fun SimuladorBottomSheet(
 private fun SimuladorContent(
     componentesFaltantes: List<Componente>,
     escalaMax: Float,
+    escalaMin: Float = 0f,
     notaAprobacion: Float,
     resultado: SimularNotaUseCase.Resultado?,
     onSimular: (Map<Long, Float>) -> Unit,
@@ -173,7 +165,7 @@ private fun SimuladorContent(
                 onClick = {
                     val notasMap = componentesFaltantes.associate { comp ->
                         val valor = notasInputs[comp.id]?.toFloatOrNull() ?: 0f
-                        comp.id to valor.coerceIn(0f, escalaMax)
+                        comp.id to valor.coerceIn(escalaMin, escalaMax)
                     }
                     onSimular(notasMap)
                 },

@@ -1,5 +1,6 @@
 package com.notasapp.ui.home
 
+import com.notasapp.ui.components.EmptyState
 import com.notasapp.ui.components.gradifyChipColors
 import androidx.compose.material.icons.filled.Check
 import com.notasapp.ui.components.gradeStyle
@@ -208,10 +209,19 @@ fun HomeScreen(
             // --- Lista vacía (sin materias reales, no solo sin filtro) ---
             materias.isEmpty() && searchQuery.isBlank() && filtroSemestre == null && !verArchivadas && !hayArchivadas -> {
                 EmptyState(
+                    icon = Icons.Default.School,
+                    title = stringResource(R.string.home_welcome),
+                    hint = stringResource(R.string.home_welcome_hint),
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-                    onAddMateria = onNavigateToCreateMateria
+                    action = {
+                        Button(onClick = onNavigateToCreateMateria) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.home_add_first))
+                        }
+                    }
                 )
             }
 
@@ -525,49 +535,3 @@ private fun MateriaCard(
     }
 }
 
-@Composable
-private fun EmptyState(
-    onAddMateria: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(horizontal = 40.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.School,
-                contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = stringResource(R.string.home_welcome),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = stringResource(R.string.home_welcome_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            Spacer(Modifier.height(8.dp))
-            Button(
-                onClick = onAddMateria,
-                modifier = Modifier.fillMaxWidth(0.75f)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.home_add_first))
-            }
-        }
-    }
-}

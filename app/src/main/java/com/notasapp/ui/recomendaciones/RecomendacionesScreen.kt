@@ -1,5 +1,7 @@
 ﻿package com.notasapp.ui.recomendaciones
 
+import com.notasapp.ui.components.ErrorBanner
+import com.notasapp.ui.components.EmptyState
 import com.notasapp.ui.components.SectionLabel
 import com.notasapp.ui.components.SurfaceCard
 import com.notasapp.ui.components.ScreenHeader
@@ -93,31 +95,6 @@ import kotlinx.coroutines.delay
 
 // ── Metadata por tipo ──────────────────────────────────────────
 
-private data class TipoMeta(
-    val icon: ImageVector,
-    val accentColor: Color,
-    val label: String
-)
-
-@Composable
-private fun tipoMeta(tipo: TipoRecomendacion): TipoMeta = when (tipo) {
-    TipoRecomendacion.YOUTUBE -> TipoMeta(
-        icon = Icons.Default.PlayCircle,
-        accentColor = Color(0xFFEF5350),
-        label = stringResource(R.string.recs_video)
-    )
-    TipoRecomendacion.LIBRO -> TipoMeta(
-        icon = Icons.Default.AutoStories,
-        accentColor = Color(0xFF7B1FA2),
-        label = stringResource(R.string.recs_book)
-    )
-    TipoRecomendacion.RECURSO -> TipoMeta(
-        icon = Icons.Default.Language,
-        accentColor = Color(0xFF00897B),
-        label = stringResource(R.string.recs_web)
-    )
-}
-
 /**
  * Pantalla de recomendaciones de estudio generadas por Gemini AI.
  *
@@ -160,7 +137,13 @@ fun RecomendacionesScreen(
 
             // Selector de materias
             if (materias.isEmpty()) {
-                item { EmptyMaterias() }
+                item {
+                    EmptyState(
+                        icon = Icons.Default.School,
+                        title = stringResource(R.string.recs_no_subjects),
+                        hint = stringResource(R.string.recs_no_subjects_hint)
+                    )
+                }
             } else {
                 item {
                     MateriaSelector(
@@ -327,172 +310,7 @@ private fun SectionDivider(tipo: TipoRecomendacion, title: String) {
 
 // ── Card de recomendacion ─────────────────────────────────────
 
-@Composable
-private fun AnimatedRecomendacionCard(
-    recomendacion: Recomendacion,
-    index: Int,
-    onOpenUrl: (String) -> Unit
-) {
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        delay(minOf(index, 8) * 60L)
-        visible = true
-    }
-    AnimatedVisibility(
-        visible = visible,
-        enter = slideInVertically(
-            animationSpec = tween(280, easing = androidx.compose.animation.core.FastOutSlowInEasing)
-        ) { it / 3 } + fadeIn(tween(280))
-    ) {
-        RecomendacionCard(recomendacion = recomendacion, onOpenUrl = onOpenUrl)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun RecomendacionCard(
-    recomendacion: Recomendacion,
-    onOpenUrl: (String) -> Unit
-) {
-    val meta = tipoMeta(recomendacion.tipo)
-
-    Card(
-        onClick = { onOpenUrl(recomendacion.url) },
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-            // Acento lateral de color
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(topStart = 14.dp, bottomStart = 14.dp))
-                    .background(meta.accentColor)
-            )
-
-            Spacer(Modifier.width(12.dp))
-
-            // Icono tipo en caja redonda
-            Box(
-                modifier = Modifier
-                    .padding(top = 16.dp)
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(meta.accentColor.copy(alpha = 0.10f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(meta.icon, null, tint = meta.accentColor, modifier = Modifier.size(20.dp))
-            }
-
-            Spacer(Modifier.width(12.dp))
-
-            // Texto
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(vertical = 14.dp)
-            ) {
-                Text(
-                    text = recomendacion.titulo,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                recomendacion.autor?.takeIf { it.isNotBlank() }?.let { autor ->
-                    Text(
-                        text = autor,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = meta.accentColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 1.dp)
-                    )
-                }
-                Text(
-                    text = recomendacion.descripcion,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-
-            // Flecha "abrir"
-            Box(
-                modifier = Modifier
-                    .padding(end = 12.dp)
-                    .align(Alignment.CenterVertically)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                    contentDescription = stringResource(R.string.recs_open),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-    }
-}
-
 // ── Skeleton de carga ─────────────────────────────────────────
-
-@Composable
-private fun RecomendacionCardSkeleton(index: Int) {
-    val infiniteTransition = rememberInfiniteTransition(label = "shimmer_$index")
-    val shimmerOffset by infiniteTransition.animateFloat(
-        initialValue = -300f,
-        targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1100, delayMillis = index * 160, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_offset_$index"
-    )
-    val shimmerBrush = Brush.linearGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-            MaterialTheme.colorScheme.surfaceVariant
-        ),
-        start = Offset(shimmerOffset, 0f),
-        end = Offset(shimmerOffset + 300f, 200f)
-    )
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-            Box(Modifier.width(4.dp).fillMaxHeight().background(shimmerBrush))
-            Spacer(Modifier.width(12.dp))
-            Box(
-                modifier = Modifier
-                    .padding(top = 16.dp)
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(shimmerBrush)
-            )
-            Spacer(Modifier.width(12.dp))
-            Column(
-                modifier = Modifier.weight(1f).padding(vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Box(Modifier.fillMaxWidth(0.75f).height(14.dp).clip(RoundedCornerShape(4.dp)).background(shimmerBrush))
-                Box(Modifier.fillMaxWidth(0.45f).height(10.dp).clip(RoundedCornerShape(4.dp)).background(shimmerBrush))
-                Box(Modifier.fillMaxWidth(0.90f).height(10.dp).clip(RoundedCornerShape(4.dp)).background(shimmerBrush))
-            }
-            Spacer(Modifier.width(16.dp))
-        }
-    }
-}
 
 // ── Banners de estado ─────────────────────────────────────────
 
@@ -521,48 +339,6 @@ private fun LoadingBanner(materia: String) {
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp)),
             strokeCap = StrokeCap.Round
         )
-    }
-}
-
-@Composable
-private fun ErrorBanner(message: String, onRetry: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.errorContainer
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.recs_error),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f)
-                )
-            }
-            TextButton(onClick = onRetry) {
-                Icon(
-                    Icons.Default.Refresh, null,
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onErrorContainer
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    stringResource(R.string.recommendations_retry),
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
-        }
     }
 }
 
@@ -624,34 +400,3 @@ private fun SelectMateriaHint() {
     }
 }
 
-@Composable
-private fun EmptyMaterias() {
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 64.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(
-                Icons.Default.School, null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-            )
-            Text(
-                text = stringResource(R.string.recs_no_subjects),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = stringResource(R.string.recs_no_subjects_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}

@@ -1,5 +1,6 @@
 package com.notasapp.ui.export
 
+import com.notasapp.ui.components.SurfaceCard
 import com.notasapp.ui.UiEvent
 import com.notasapp.ui.components.ScreenHeader
 import android.app.Activity
@@ -145,7 +146,6 @@ fun ExportScreen(
                 actionIcon = Icons.Default.FileDownload,
                 isLoading = uiState.isExporting,
                 isDone = false,
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
                 onAction = {
                     createDocumentLauncher.launch(viewModel.sugerirNombreArchivo())
                 }
@@ -153,14 +153,8 @@ fun ExportScreen(
 
             // Mensaje de éxito tras guardar
             if (uiState.exportSuccess) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors   = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
-                ) {
+                SurfaceCard {
                     Row(
-                        modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
@@ -188,7 +182,6 @@ fun ExportScreen(
                 actionIcon = Icons.Default.PictureAsPdf,
                 isLoading = uiState.isExporting,
                 isDone = false,
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 onAction = {
                     createPdfLauncher.launch(viewModel.sugerirNombrePdf())
                 }
@@ -204,7 +197,6 @@ fun ExportScreen(
                 actionIcon = Icons.Default.CloudUpload,
                 isLoading = uiState.isExporting,
                 isDone = false,
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 onAction = {
                     viewModel.exportarDrive()
                 }
@@ -233,16 +225,11 @@ private fun ExportCard(
     actionIcon: androidx.compose.ui.graphics.vector.ImageVector,
     isLoading: Boolean,
     isDone: Boolean,
-    containerColor: androidx.compose.ui.graphics.Color,
     onAction: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = containerColor)
-    ) {
+    SurfaceCard(modifier = modifier) {
         Column(
-            modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(

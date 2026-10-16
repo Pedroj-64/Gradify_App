@@ -1,5 +1,8 @@
 package com.notasapp.ui.materia.detail
 
+import com.notasapp.ui.components.GradifySheet
+import com.notasapp.ui.components.Tone
+import com.notasapp.ui.components.ResultCard
 import com.notasapp.ui.UiText
 import com.notasapp.R
 import androidx.compose.ui.res.stringResource
@@ -78,11 +81,7 @@ fun CalculadoraBottomSheet(
     onDismiss: () -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 ) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        dragHandle = { BottomSheetDragHandle() }
-    ) {
+    GradifySheet(onDismiss = onDismiss, sheetState = sheetState) {
         CalculadoraContent(
             escalaMax = escalaMax,
             resultado = resultado,
@@ -93,17 +92,6 @@ fun CalculadoraBottomSheet(
 }
 
 // ── Handle ──────────────────────────────────────────────────────────────────
-
-@Composable
-private fun BottomSheetDragHandle() {
-    Box(
-        modifier = Modifier
-            .padding(top = 12.dp, bottom = 4.dp)
-            .size(width = 40.dp, height = 4.dp)
-            .clip(RoundedCornerShape(2.dp))
-            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
-    )
-}
 
 // ── Contenido principal ──────────────────────────────────────────────────────
 
@@ -218,86 +206,40 @@ private fun CalculadoraContent(
 private fun ResultadoCard(resultado: CalcularNotaNecesariaUseCase.Resultado) {
     when (resultado) {
         is CalcularNotaNecesariaUseCase.Resultado.MetaYaAlcanzada -> {
-            ResultBanner(
+            ResultCard(
                 icon = Icons.Default.CheckCircle,
                 title = stringResource(R.string.calc_goal_reached),
                 subtitle = stringResource(if (resultado.aprobado) R.string.calc_done_pass else R.string.calc_done_goal),
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                tone = Tone.OK
             )
         }
 
         is CalcularNotaNecesariaUseCase.Resultado.Posible -> {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ResultBanner(
+                ResultCard(
                     icon = Icons.Default.TrendingUp,
                     title = stringResource(R.string.calc_need, resultado.notaNecesaria),
                     subtitle = stringResource(R.string.calc_avg_pending, resultado.componentesFaltantes.size),
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    tone = Tone.NONE
                 )
             }
         }
 
         is CalcularNotaNecesariaUseCase.Resultado.Imposible -> {
-            ResultBanner(
+            ResultCard(
                 icon = Icons.Default.Error,
                 title = stringResource(R.string.goal_unreachable),
                 subtitle = stringResource(R.string.calc_unreachable_sub, resultado.notaNecesariaCalculada),
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                tone = Tone.BAD
             )
         }
 
         is CalcularNotaNecesariaUseCase.Resultado.Error -> {
-            ResultBanner(
+            ResultCard(
                 icon = Icons.Default.Info,
                 title = stringResource(R.string.calc_error),
-                subtitle = resultado.mensaje,
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun ResultBanner(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    containerColor: Color,
-    contentColor: Color
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(containerColor)
-            .padding(16.dp),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = contentColor,
-            modifier = Modifier
-                .size(28.dp)
-                .padding(top = 2.dp)
-        )
-        Column {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = contentColor
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = contentColor.copy(alpha = 0.85f)
+                subtitle = stringResource(R.string.calc_err_percent),
+                tone = Tone.WARN
             )
         }
     }
