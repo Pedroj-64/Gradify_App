@@ -71,8 +71,8 @@ google-api-client-android = { group = "com.google.api-client", name = "google-ap
 
 # WorkManager
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
-androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version = "1.2.0" }
-androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version = "1.2.0" }
+androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version = "1.4.0" }
+androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version = "1.4.0" }
 
 
 # Reorderable (drag & drop)
