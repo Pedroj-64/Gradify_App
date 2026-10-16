@@ -128,7 +128,7 @@ jobs:
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           "$APKSIGNER" verify --print-certs app/build/outputs/apk/release/gradify.apk | grep -E "Signer #1 certificate (DN|SHA-256)"
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           name: Gradify ${{ github.ref_name }}
           body_path: release_notes.md
