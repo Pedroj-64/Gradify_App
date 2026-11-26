@@ -133,7 +133,7 @@ jobs:
           echo "$CERTS" | grep -E "certificate SHA-256 digest: 56806244f69b4bacb113e10074a98e8e3576b5750de368e789c83a50cbc571d7" \
             || { echo "::error::El APK no está firmado con la llave oficial de Gradify"; exit 1; }
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           name: Gradify ${{ github.ref_name }}
           body_path: release_notes.md
