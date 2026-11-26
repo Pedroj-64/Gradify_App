@@ -18,6 +18,28 @@ object GradeCalculator {
     /** Configuración por defecto: 2 decimales, redondeo matemático. */
     private val DEFAULT_CONFIG = ConfiguracionNota()
 
+    // ── Porcentajes ─────────────────────────────────────────────
+
+    /**
+     * Reparte lo que falta para llegar a 100 % entre los componentes en 0; si no hay ninguno en 0,
+     * se lo suma (o resta, si se pasa) al último. Fracciones 0..1, redondeadas a 0.01 %.
+     */
+    fun repartirRestante(pcts: List<Float>): List<Float> {
+        if (pcts.isEmpty()) return pcts
+        val resto = 1.0 - pcts.sumOf { it.toDouble() }
+        val vacios = pcts.indices.filter { pcts[it] == 0f }
+        val destino = vacios.ifEmpty { listOf(pcts.lastIndex) }
+        val parte = resto / destino.size
+        val out = pcts.mapIndexed { i, p -> if (i in destino) snapPct(p + parte) else p }.toMutableList()
+        // El redondeo puede dejar ±0.01 %: lo absorbe el último destino.
+        val ajuste = 1.0 - out.sumOf { it.toDouble() }
+        out[destino.last()] = snapPct(out[destino.last()] + ajuste)
+        return out
+    }
+
+    /** Fracción redondeada a 0.01 % (4 decimales), sin negativos. */
+    fun snapPct(p: Double): Float = (Math.round(p.coerceIn(0.0, 1.0) * 10_000) / 10_000.0).toFloat()
+
     // ── Redondeo ────────────────────────────────────────────────
 
     /**

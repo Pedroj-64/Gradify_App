@@ -292,6 +292,28 @@ fun SettingsScreen(
                 }
             }
             // ── Sección: Acerca de ────────────────────────────────────────────
+            // ── Actualizaciones (solo en builds que las buscan en GitHub) ──────────
+            if (BuildConfig.UPDATE_REPO.isNotBlank()) {
+                SettingsSection(title = stringResource(R.string.settings_updates)) {
+                  SurfaceCard {
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.settings_update_check), style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                stringResource(R.string.settings_update_check_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        androidx.compose.material3.Switch(
+                            checked = uiState.updateCheck,
+                            onCheckedChange = { viewModel.setUpdateCheck(it) }
+                        )
+                    }
+                  }
+                }
+            }
+
             SettingsSection(title = stringResource(R.string.settings_about)) {
                 SurfaceCard {
                     Column {

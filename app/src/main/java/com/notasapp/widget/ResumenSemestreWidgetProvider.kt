@@ -85,21 +85,25 @@ class ResumenSemestreWidgetProvider : AppWidgetProvider() {
                         val periodo = materias.firstOrNull()?.periodo ?: ""
 
                         // Mensaje motivacional
-                        val mensaje = when {
-                            promedios.isEmpty() -> "✏️ Registra tus primeras notas"
-                            promedios.average() >= 4.5 -> "🌟 ¡Rendimiento excepcional!"
-                            promedios.average() >= 4.0 -> "🔥 ¡Vas muy bien, sigue así!"
-                            promedios.average() >= 3.5 -> "💪 Buen trabajo, puedes mejorar"
-                            promedios.average() >= 3.0 -> "📚 Mantén el esfuerzo"
-                            else -> "⚡ ¡No te rindas, tú puedes!"
-                        }
+                        // Sobre la fracción de la escala de cada materia: antes los umbrales eran fijos
+                        // de 0–5 (4.5, 4.0…) y en escalas 0–10 o 0–20 siempre decía "excepcional".
+                        val fracciones = materias.mapNotNull { m -> m.promedio?.let { m.fraccionEscala(it) } }
+                        val f = fracciones.average()
+                        val mensaje = context.getString(when {
+                            fracciones.isEmpty() -> R.string.wr_msg_empty
+                            f >= 0.9 -> R.string.wr_msg_top
+                            f >= 0.8 -> R.string.wr_msg_great
+                            f >= 0.7 -> R.string.wr_msg_good
+                            f >= 0.6 -> R.string.wr_msg_ok
+                            else -> R.string.wr_msg_push
+                        })
 
                         views.setTextViewText(R.id.tv_resumen_promedio, promedioStr)
                         views.setTextViewText(R.id.tv_resumen_materias, "$total")
                         views.setTextViewText(R.id.tv_resumen_aprobadas, "$aprobando")
                         views.setTextViewText(R.id.tv_resumen_riesgo, "$enRiesgo")
                         views.setProgressBar(R.id.pb_resumen_progreso, 100, progresoSemestre, false)
-                        views.setTextViewText(R.id.tv_resumen_progreso_label, "$progresoSemestre% del semestre evaluado")
+                        views.setTextViewText(R.id.tv_resumen_progreso_label, context.getString(R.string.wr_progress, progresoSemestre))
                         views.setTextViewText(R.id.tv_widget_periodo, periodo)
                         views.setTextViewText(R.id.tv_resumen_mensaje, mensaje)
                     } else {
@@ -108,7 +112,7 @@ class ResumenSemestreWidgetProvider : AppWidgetProvider() {
                         views.setTextViewText(R.id.tv_resumen_aprobadas, "0")
                         views.setTextViewText(R.id.tv_resumen_riesgo, "0")
                         views.setProgressBar(R.id.pb_resumen_progreso, 100, 0, false)
-                        views.setTextViewText(R.id.tv_resumen_progreso_label, "Inicia sesión para ver datos")
+                        views.setTextViewText(R.id.tv_resumen_progreso_label, context.getString(R.string.w_open_app))
                         views.setTextViewText(R.id.tv_resumen_mensaje, "")
                     }
 

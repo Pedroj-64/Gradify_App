@@ -1,5 +1,11 @@
 package com.notasapp.ui.materia.detail
 
+import androidx.compose.material3.AssistChip
+import androidx.compose.runtime.LaunchedEffect
+import com.notasapp.ui.components.AxoMood
+import com.notasapp.ui.components.GRADE_INPUT
+import com.notasapp.ui.components.parseGrade
+import com.notasapp.ui.components.toInputString
 import com.notasapp.ui.components.GradifySheet
 import com.notasapp.ui.components.Tone
 import com.notasapp.ui.components.ResultCard
@@ -76,6 +82,8 @@ import com.notasapp.domain.usecase.CalcularNotaNecesariaUseCase
 @Composable
 fun CalculadoraBottomSheet(
     escalaMax: Float,
+    notaAprobacion: Float,
+    notaMeta: Float?,
     resultado: CalcularNotaNecesariaUseCase.Resultado?,
     onCalcular: (Float) -> Unit,
     onDismiss: () -> Unit,
@@ -84,6 +92,8 @@ fun CalculadoraBottomSheet(
     GradifySheet(onDismiss = onDismiss, sheetState = sheetState) {
         CalculadoraContent(
             escalaMax = escalaMax,
+            notaAprobacion = notaAprobacion,
+            notaMeta = notaMeta,
             resultado = resultado,
             onCalcular = onCalcular,
             modifier = Modifier.padding(bottom = 32.dp)
@@ -98,13 +108,22 @@ fun CalculadoraBottomSheet(
 @Composable
 private fun CalculadoraContent(
     escalaMax: Float,
+    notaAprobacion: Float,
+    notaMeta: Float?,
     resultado: CalcularNotaNecesariaUseCase.Resultado?,
     onCalcular: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
-    var inputMeta by remember { mutableStateOf("") }
+    // Abre ya calculado con la meta (o con la nota para pasar): la pregunta típica es "¿qué necesito?".
+    var inputMeta by remember { mutableStateOf((notaMeta ?: notaAprobacion).toInputString()) }
     var inputError by remember { mutableStateOf<UiText?>(null) }
+    LaunchedEffect(Unit) { calcular(inputMeta, escalaMax, onCalcular) { inputError = it } }
+    val usar = { valor: Float ->
+        inputMeta = valor.toInputString()
+        inputError = null
+        onCalcular(valor)
+    }
 
     Column(
         modifier = modifier
@@ -144,9 +163,7 @@ private fun CalculadoraContent(
             value = inputMeta,
             onValueChange = { raw ->
                 inputError = null
-                // Solo números y un punto decimal
-                val sanitized = raw.filter { it.isDigit() || it == '.' }
-                if (sanitized.count { it == '.' } <= 1) inputMeta = sanitized
+                if (GRADE_INPUT.matches(raw)) inputMeta = raw   // coma o punto
             },
             label = { Text(stringResource(R.string.calc_goal_label, escalaMax)) },
             singleLine = true,
@@ -164,6 +181,20 @@ private fun CalculadoraContent(
             ),
             modifier = Modifier.fillMaxWidth()
         )
+
+        // Atajos: un toque y listo, sin teclear.
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            AssistChip(
+                onClick = { usar(notaAprobacion) },
+                label = { Text(stringResource(R.string.calc_chip_pass, notaAprobacion.toInputString())) }
+            )
+            if (notaMeta != null) {
+                AssistChip(
+                    onClick = { usar(notaMeta) },
+                    label = { Text(stringResource(R.string.calc_chip_goal, notaMeta.toInputString())) }
+                )
+            }
+        }
 
         Spacer(Modifier.height(12.dp))
 
@@ -210,7 +241,8 @@ private fun ResultadoCard(resultado: CalcularNotaNecesariaUseCase.Resultado) {
                 icon = Icons.Default.CheckCircle,
                 title = stringResource(R.string.calc_goal_reached),
                 subtitle = stringResource(if (resultado.aprobado) R.string.calc_done_pass else R.string.calc_done_goal),
-                tone = Tone.OK
+                tone = Tone.OK,
+                mood = AxoMood.FELIZ
             )
         }
 
@@ -220,7 +252,8 @@ private fun ResultadoCard(resultado: CalcularNotaNecesariaUseCase.Resultado) {
                     icon = Icons.Default.TrendingUp,
                     title = stringResource(R.string.calc_need, resultado.notaNecesaria),
                     subtitle = stringResource(R.string.calc_avg_pending, resultado.componentesFaltantes.size),
-                    tone = Tone.NONE
+                    tone = Tone.NONE,
+                    mood = AxoMood.ESTUDIANDO
                 )
             }
         }
@@ -230,7 +263,8 @@ private fun ResultadoCard(resultado: CalcularNotaNecesariaUseCase.Resultado) {
                 icon = Icons.Default.Error,
                 title = stringResource(R.string.goal_unreachable),
                 subtitle = stringResource(R.string.calc_unreachable_sub, resultado.notaNecesariaCalculada),
-                tone = Tone.BAD
+                tone = Tone.BAD,
+                mood = AxoMood.PREOCUPADO
             )
         }
 
@@ -253,7 +287,7 @@ private fun calcular(
     onCalcular: (Float) -> Unit,
     onError: (UiText) -> Unit
 ) {
-    val meta = input.toFloatOrNull()
+    val meta = input.parseGrade()
     when {
         meta == null -> onError(UiText(R.string.calc_invalid_grade))
         meta <= 0f -> onError(UiText(R.string.calc_goal_positive))

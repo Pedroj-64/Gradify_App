@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="background">#F6F8FC</color>
+    <!-- Azul Gradify: acento de los selectores nativos de fecha y hora -->
+    <color name="brand_primary">#2B59C3</color>
+    <color name="brand_primary_dark">#1B418F</color>
     <color name="splash_background">#0D1B4A</color>
 </resources>

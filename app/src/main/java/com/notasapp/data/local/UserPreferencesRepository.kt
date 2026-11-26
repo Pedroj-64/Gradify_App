@@ -37,6 +37,8 @@ class UserPreferencesRepository @Inject constructor(
         private val KEY_BACKUP_FOLDER     = stringPreferencesKey("backup_folder_uri")
         private val KEY_LOCAL_MODE        = booleanPreferencesKey("local_mode")
         private val KEY_DYNAMIC_COLOR     = booleanPreferencesKey("dynamic_color")
+        private val KEY_UPDATE_CHECK      = booleanPreferencesKey("update_check")
+        private val KEY_UPDATE_DISMISSED  = stringPreferencesKey("update_dismissed")
         private val KEY_GEMINI_API_KEY    = stringPreferencesKey("gemini_api_key")
         private val KEY_USER_EMAIL        = stringPreferencesKey("user_email")
         private val KEY_LAST_SYNC_MS      = stringPreferencesKey("last_sync_ms")
@@ -77,6 +79,24 @@ class UserPreferencesRepository @Inject constructor(
 
     suspend fun setUseDynamicColor(enabled: Boolean) {
         context.dataStore.edit { prefs -> prefs[KEY_DYNAMIC_COLOR] = enabled }
+    }
+
+    // ── Actualizaciones desde GitHub ─────────────────────────────
+
+    /** true = al abrir la app, preguntar a GitHub si hay una versión nueva. */
+    val updateCheck: Flow<Boolean> = context.dataStore.data
+        .map { prefs -> prefs[KEY_UPDATE_CHECK] ?: true }
+
+    suspend fun setUpdateCheck(enabled: Boolean) {
+        context.dataStore.edit { prefs -> prefs[KEY_UPDATE_CHECK] = enabled }
+    }
+
+    /** Versión a la que el usuario dijo "Ahora no" (no se vuelve a ofrecer). */
+    val updateDismissed: Flow<String?> = context.dataStore.data
+        .map { prefs -> prefs[KEY_UPDATE_DISMISSED] }
+
+    suspend fun setUpdateDismissed(version: String) {
+        context.dataStore.edit { prefs -> prefs[KEY_UPDATE_DISMISSED] = version }
     }
 
     // ── Clave de Gemini del propio usuario (BYOK) ────────────────

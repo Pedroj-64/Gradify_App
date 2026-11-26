@@ -34,8 +34,8 @@ android {
         applicationId = "com.notasapp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "2.2.0"
+        versionCode = 7
+        versionName = "3.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField(
@@ -47,6 +47,13 @@ android {
             "String",
             "BACKEND_TOKEN",
             "\"${secretOrEmpty("BACKEND_TOKEN")}\""
+        )
+        // "dueño/repo" de GitHub donde se publican las releases con el APK. Vacío = no buscar
+        // actualizaciones (obligatorio para Play Store y F-Droid). Un fork pone aquí el suyo.
+        buildConfigField(
+            "String",
+            "UPDATE_REPO",
+            "\"${secretOrEmpty("UPDATE_REPO").ifEmpty { "Pedroj-64/Gradify_App" }}\""
         )
         buildConfigField(
             "String",

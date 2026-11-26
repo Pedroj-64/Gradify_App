@@ -2,8 +2,10 @@ package com.notasapp.ui.materia.edit
 
 import com.notasapp.R
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.graphics.Color
-import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.layout.width
+import com.notasapp.ui.components.DecimalField
+import com.notasapp.ui.components.toInputString
 import com.notasapp.ui.components.ScreenHeader
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +31,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -57,7 +58,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
  * Soporta:
  * - Reordenamiento por drag & drop con handle visible y retroalimentación háptica.
  * - Elevación dinámica en el ítem que se está arrastrando.
- * - Ajuste de porcentaje en tiempo real con Sliders.
+ * - Porcentaje escrito (admite decimales, p. ej. 33,33 %).
  * - Validación: el total siempre debe sumar 100%.
  *
  * @param materiaId ID de la materia cuyos componentes se editarán.
@@ -115,7 +116,7 @@ fun EditPorcentajesScreen(
                 MaterialTheme.colorScheme.error
 
             Text(
-                text = stringResource(if (kotlin.math.abs(sumaTotal - 1f) <= 0.01f) R.string.ep_total_ok else R.string.ep_total_bad, kotlin.math.round(sumaTotal * 100).toInt()),
+                text = stringResource(if (kotlin.math.abs(sumaTotal - 1f) <= 0.01f) R.string.ep_total_ok else R.string.ep_total_bad, (Math.round(sumaTotal * 10_000.0) / 100.0).toFloat().toInputString()),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = totalColor,
@@ -194,32 +195,27 @@ fun EditPorcentajesScreen(
                                             .padding(horizontal = 8.dp)
                                     )
 
-                                    Text(
-                                        text = "${kotlin.math.round(componente.porcentaje * 100).toInt()}%",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
+                                    DecimalField(
+                                        value = componente.porcentaje * 100f,
+                                        onValueChange = { viewModel.onPorcentajeChange(componente.id, it / 100f) },
+                                        label = stringResource(R.string.cw_weight_label),
+                                        min = 0f,
+                                        max = 100f,
+                                        suffix = "%",
+                                        modifier = Modifier.width(120.dp)
                                     )
                                 }
-
-                                Slider(
-                                    value = componente.porcentaje,
-                                    onValueChange = { nuevoPct ->
-                                        viewModel.onPorcentajeChange(componente.id, nuevoPct)
-                                    },
-                                    valueRange = 0f..1f,
-                                    steps = 99,
-                                    colors = SliderDefaults.colors(
-                                        inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                        activeTickColor = Color.Transparent,
-                                        inactiveTickColor = Color.Transparent
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
-                                )
                             }
                         }
                     }
                 }
+            }
+
+            if (sumaTotal < 0.995f && componentes.isNotEmpty()) {
+                OutlinedButton(
+                    onClick = viewModel::repartirRestante,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                ) { Text(stringResource(R.string.cw_fill_rest)) }
             }
 
             Spacer(Modifier.height(8.dp))

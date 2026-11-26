@@ -42,6 +42,9 @@ interface MateriaRepository {
     /** Elimina una sub-nota por su ID. */
     suspend fun deleteSubNota(subNotaId: Long)
 
+    /** Vuelve a insertar una sub-nota borrada (mismo id) con sus detalles: para "Deshacer". */
+    suspend fun restoreSubNota(subNota: SubNota)
+
     // ── Sub-Nota Detalles ────────────────────────────────────────
 
     /** Inserta un detalle y devuelve su ID generado. */

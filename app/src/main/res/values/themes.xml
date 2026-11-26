@@ -2,7 +2,11 @@
 <resources>
 
     <!-- Tema base de la app (AppCompat para soporte de idiomas per-app) -->
-    <style name="Theme.NotasApp" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="Theme.NotasApp" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Los selectores nativos (fecha, hora) toman estos colores: azul de marca, no el verde de AppCompat -->
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorPrimaryDark">@color/brand_primary_dark</item>
+        <item name="colorAccent">@color/brand_primary</item>
         <!-- Configuración básica de color (se sobrescribe con Dynamic Color en código Compose) -->
         <item name="android:windowBackground">@color/background</item>
         <item name="android:statusBarColor">@android:color/transparent</item>

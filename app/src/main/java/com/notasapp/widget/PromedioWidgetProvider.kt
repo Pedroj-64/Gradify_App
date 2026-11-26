@@ -84,9 +84,9 @@ class PromedioWidgetProvider : AppWidgetProvider() {
                         } else {
                             "– –"
                         }
-                        promedioStr to "${materias.size} materia${if (materias.size != 1) "s" else ""}"
+                        promedioStr to context.resources.getQuantityString(R.plurals.home_count, materias.size, materias.size)
                     } else {
-                        "– –" to "Inicia sesión"
+                        "– –" to context.getString(R.string.w_open_app)
                     }
 
                     val views = RemoteViews(context.packageName, R.layout.widget_promedio)

@@ -1,5 +1,12 @@
 package com.notasapp.ui.materia.detail
 
+import com.notasapp.ui.components.pctText
+import androidx.compose.runtime.LaunchedEffect
+import com.notasapp.ui.components.Axo
+import com.notasapp.ui.components.AxoMood
+import com.notasapp.ui.components.GRADE_INPUT
+import com.notasapp.ui.components.isGradeInvalid
+import com.notasapp.ui.components.parseGrade
 import com.notasapp.ui.components.GradifySheet
 import com.notasapp.R
 import androidx.compose.ui.res.stringResource
@@ -145,12 +152,10 @@ private fun SimuladorContent(
                 OutlinedTextField(
                     value = notasInputs[comp.id] ?: "",
                     onValueChange = { raw ->
-                        val sanitized = raw.filter { it.isDigit() || it == '.' }
-                        if (sanitized.count { it == '.' } <= 1) {
-                            notasInputs[comp.id] = sanitized
-                        }
+                        if (GRADE_INPUT.matches(raw)) notasInputs[comp.id] = raw   // coma o punto
                     },
-                    label = { Text(stringResource(R.string.sim_comp_label, comp.nombre, kotlin.math.round(comp.porcentaje * 100).toInt())) },
+                    isError = isGradeInvalid(notasInputs[comp.id] ?: "", escalaMax, escalaMin),
+                    label = { Text(stringResource(R.string.sim_comp_label, comp.nombre, comp.porcentaje.pctText())) },
                     placeholder = { Text("0 - ${"%.1f".format(escalaMax)}") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -159,21 +164,12 @@ private fun SimuladorContent(
                 Spacer(Modifier.height(8.dp))
             }
 
-            Spacer(Modifier.height(12.dp))
-
-            Button(
-                onClick = {
-                    val notasMap = componentesFaltantes.associate { comp ->
-                        val valor = notasInputs[comp.id]?.toFloatOrNull() ?: 0f
-                        comp.id to valor.coerceIn(escalaMin, escalaMax)
-                    }
-                    onSimular(notasMap)
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.Science, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.sim_simulate))
+            // En vivo: en cuanto todas las pendientes tienen una nota válida, se proyecta la final.
+            val valores = componentesFaltantes.map { notasInputs[it.id] ?: "" }
+            LaunchedEffect(valores) {
+                if (valores.all { it.isNotEmpty() && !isGradeInvalid(it, escalaMax, escalaMin) }) {
+                    onSimular(componentesFaltantes.zip(valores) { c, v -> c.id to v.parseGrade()!! }.toMap())
+                }
             }
         }
 
@@ -208,7 +204,6 @@ private fun SimuladorResultCard(
 ) {
     val esAprobado = resultado.notaFinalProyectada >= notaAprobacion
 
-    val icon = if (esAprobado) Icons.Default.CheckCircle else Icons.Default.Warning
     val title = stringResource(R.string.sim_projected, resultado.notaFinalProyectada)
     val subtitle = if (esAprobado)
         stringResource(R.string.sim_pass)
@@ -231,17 +226,10 @@ private fun SimuladorResultCard(
             .clip(RoundedCornerShape(12.dp))
             .background(containerColor)
             .padding(16.dp),
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = contentColor,
-            modifier = Modifier
-                .size(28.dp)
-                .padding(top = 2.dp)
-        )
+        Axo(if (esAprobado) AxoMood.FELIZ else AxoMood.PREOCUPADO, size = 56.dp)
         Column {
             Text(
                 text = title,

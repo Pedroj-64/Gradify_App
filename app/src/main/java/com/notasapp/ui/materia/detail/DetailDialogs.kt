@@ -1,5 +1,16 @@
 package com.notasapp.ui.materia.detail
 
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+
+import com.notasapp.ui.components.GRADE_INPUT
+import com.notasapp.ui.components.isGradeInvalid
+import com.notasapp.ui.components.parseGrade
+import com.notasapp.ui.components.toInputString
+
 import com.notasapp.ui.components.GradifySheet
 import java.util.Locale
 import androidx.compose.animation.AnimatedVisibility
@@ -95,7 +106,7 @@ internal fun AgregarDetalleDialog(
 ) {
     var descripcion by remember { mutableStateOf("") }
     val disponible = (100f - porcentajeYaUsado * 100f).coerceIn(0f, 100f)
-    var porcentajeText by remember { mutableStateOf(disponible.toInt().toString()) }
+    var porcentajeText by remember { mutableStateOf(disponible.toInputString()) }
     val pct = porcentajeText.parseGrade()
     val valido = descripcion.isNotBlank() && pct != null && pct in 1f..disponible.coerceAtLeast(1f)
 
@@ -114,14 +125,14 @@ internal fun AgregarDetalleDialog(
                 )
                 OutlinedTextField(
                     value = porcentajeText,
-                    onValueChange = { porcentajeText = it },
+                    onValueChange = { if (GRADE_INPUT.matches(it)) porcentajeText = it },   // 0,5 % vale
                     label = { Text(stringResource(R.string.dd_weight_activity)) },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
                     supportingText = {
                         Text(
-                            text = stringResource(R.string.dd_available, disponible.toInt()),
+                            text = stringResource(R.string.dd_available, disponible.toInputString()),
                             color = if (pct != null && pct > disponible)
                                 MaterialTheme.colorScheme.error
                             else
@@ -165,11 +176,17 @@ internal fun QuickEntryBottomSheet(
         val escalaMin: Float
     )
 
+    // La lista se congela al abrir: si se recalculara, cada nota desaparecería en cuanto
+    // se escribe su primer dígito (deja de estar "pendiente") y no se podría teclear "4.5".
+    val pendingIds = remember {
+        materia.componentes.flatMap { c -> c.subNotas.filter { !it.esCompuesta && it.valor == null }.map { it.id } }.toSet()
+    }
     val pending = materia.componentes.flatMap { comp ->
         comp.subNotas
-            .filter { !it.esCompuesta && it.valor == null }
+            .filter { it.id in pendingIds }
             .map { PendingEntry(comp.nombre, it, materia.escalaMax, materia.escalaMin) }
     }
+    val faltan = pending.count { it.subNota.valor == null }
 
     GradifySheet(onDismiss = onDismiss, sheetState = sheetState) {
         Column(
@@ -196,26 +213,27 @@ internal fun QuickEntryBottomSheet(
             }
             Spacer(Modifier.height(4.dp))
             Text(
-                text = stringResource(R.string.dd_pending, pending.size),
+                text = if (faltan == 0) stringResource(R.string.detail_all_grades_entered)
+                else stringResource(R.string.dd_pending, faltan),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(16.dp))
 
             if (pending.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.detail_all_grades_entered),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 24.dp)
+                com.notasapp.ui.components.EmptyState(
+                    icon = null,
+                    mood = com.notasapp.ui.components.AxoMood.FELIZ,
+                    title = stringResource(R.string.detail_all_grades_entered)
                 )
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.weight(1f, fill = false)
                 ) {
-                    items(pending, key = { it.subNota.id }) { entry ->
+                    itemsIndexed(pending, key = { _, e -> e.subNota.id }) { i, entry ->
                         QuickEntryRow(
+                            isLast = i == pending.lastIndex,
                             componenteNombre = entry.componenteNombre,
                             subNota = entry.subNota,
                             escalaMax = entry.escalaMax,
@@ -236,11 +254,13 @@ internal fun QuickEntryRow(
     subNota: SubNota,
     escalaMax: Float,
     escalaMin: Float,
+    isLast: Boolean,
     onValueChange: (Float?) -> Unit
 ) {
-    var textValue by remember(subNota.valor) {
+    var textValue by remember(subNota.id) {
         mutableStateOf(subNota.valor?.toInputString() ?: "")
     }
+    val focus = LocalFocusManager.current
 
     Card(
         colors = CardDefaults.cardColors(
@@ -268,6 +288,7 @@ internal fun QuickEntryRow(
             OutlinedTextField(
                 value = textValue,
                 onValueChange = { input ->
+                    if (!GRADE_INPUT.matches(input)) return@OutlinedTextField
                     textValue = input
                     val parsed = input.parseGrade()
                     if (parsed != null && parsed in escalaMin..escalaMax) {
@@ -277,7 +298,15 @@ internal fun QuickEntryRow(
                     }
                 },
                 modifier = Modifier.width(90.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                isError = isGradeInvalid(textValue, escalaMax, escalaMin),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = if (isLast) ImeAction.Done else ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focus.moveFocus(FocusDirection.Down) },
+                    onDone = { focus.clearFocus() }
+                ),
                 singleLine = true,
                 placeholder = {
                     Text("${escalaMin.toInt()}-${escalaMax.toInt()}", style = MaterialTheme.typography.bodySmall)
@@ -298,7 +327,7 @@ internal fun AgregarSubNotaDialog(
 ) {
     var descripcion by remember { mutableStateOf("") }
     val disponible = (100f - porcentajeYaUsado * 100f).coerceIn(0f, 100f)
-    var porcentajeText by remember { mutableStateOf(disponible.toInt().toString()) }
+    var porcentajeText by remember { mutableStateOf(disponible.toInputString()) }
     val pct = porcentajeText.parseGrade()
     val valido = descripcion.isNotBlank() && pct != null && pct in 1f..disponible.coerceAtLeast(1f)
 
@@ -317,14 +346,14 @@ internal fun AgregarSubNotaDialog(
                 )
                 OutlinedTextField(
                     value = porcentajeText,
-                    onValueChange = { porcentajeText = it },
+                    onValueChange = { if (GRADE_INPUT.matches(it)) porcentajeText = it },   // 0,5 % vale
                     label = { Text(stringResource(R.string.dd_weight_cut)) },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
                     supportingText = {
                         Text(
-                            text = stringResource(R.string.dd_available, disponible.toInt()),
+                            text = stringResource(R.string.dd_available, disponible.toInputString()),
                             color = if (pct != null && pct > disponible)
                                 MaterialTheme.colorScheme.error
                             else

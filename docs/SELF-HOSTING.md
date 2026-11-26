@@ -8,6 +8,7 @@ Gradify es open source. El proyecto ofrece **el código y los APK de las release
 | Respaldo JSON | No | Carpeta que elige el usuario en Ajustes | El usuario |
 | Clave de IA (Gemini/Groq/OpenRouter) | No | Ajustes → Recomendaciones con IA (release) o `local.properties` (debug) | El usuario |
 | Backend proxy de IA (`backend/`) | No | `BACKEND_URL` y `BACKEND_TOKEN` en `local.properties` | Quien lo despliegue |
+| Aviso de versión nueva | No | `UPDATE_REPO=dueño/repo` en `local.properties` (por defecto `Pedroj-64/Gradify_App`; vacío lo apaga, obligatorio para Play Store y F-Droid) | Quien publique las releases |
 | Login con Google / Sheets | No | `app/google-services.json` + `GOOGLE_CLIENT_ID` | Quien compile |
 | Firma de release | Solo para publicar | `key.properties` (+ keystore) | Quien publique |
 

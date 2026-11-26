@@ -1,5 +1,16 @@
 package com.notasapp.ui.materia.detail
 
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.res.pluralStringResource
+import com.notasapp.ui.components.pctText
+import com.notasapp.ui.components.GRADE_INPUT
+import com.notasapp.ui.components.isGradeInvalid
+import com.notasapp.ui.components.parseGrade
+import com.notasapp.ui.components.toInputString
+
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.runtime.MutableState
@@ -137,7 +148,7 @@ internal fun ComponenteCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = stringResource(R.string.dc_of_total, componente.porcentajeDisplay, componente.progresoDisplay.toString()),
+                    text = stringResource(R.string.dc_of_total, componente.porcentaje.pctText(), pluralStringResource(R.plurals.dc_progress, componente.subNotas.size, componente.ingresados, componente.subNotas.size)),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -204,16 +215,6 @@ internal fun ComponenteCard(
     }
 }
 
-/** Solo dígitos con un decimal opcional (máx. 2): rechaza "NaN", "1e5", letras y signos al teclear. */
-internal val GRADE_INPUT = Regex("^\\d{0,3}([.,]\\d{0,2})?$")
-
-/** True si el texto no es una nota válida en 0..[max] (se pinta en rojo y NO se guarda). */
-internal fun isGradeInvalid(text: String, max: Float, min: Float = 0f): Boolean {
-    if (text.isEmpty()) return false
-    val v = text.parseGrade() ?: return true
-    return v !in min..max
-}
-
 /**
  * Texto de un campo de nota. Se sincroniza con el valor guardado SOLO cuando difiere de lo que el
  * usuario ya escribió (p. ej. entrada rápida); así no se reformatea mientras teclea ("4" → "4.0").
@@ -241,6 +242,7 @@ internal fun GradeField(
     modifier: Modifier = Modifier
 ) {
     val errorDesc = stringResource(R.string.grade_out_of_range)
+    val focus = LocalFocusManager.current
     BasicTextField(
         value = value,
         onValueChange = { input -> if (GRADE_INPUT.matches(input)) onValueChange(input) },
@@ -263,7 +265,11 @@ internal fun GradeField(
             textAlign = TextAlign.Center
         ),
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        // "Siguiente" salta a la próxima nota (de arriba abajo), como en la entrada rápida.
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
+        keyboardActions = KeyboardActions(onNext = {
+            if (!focus.moveFocus(FocusDirection.Down)) focus.clearFocus()
+        }),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         decorationBox = { inner ->
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
@@ -315,7 +321,7 @@ internal fun SubNotaRow(
                 )
                 Text(
                     text = buildString {
-                        append(stringResource(R.string.dc_of_cut, (subNota.porcentajeDelComponente * 100).toInt()))
+                        append(stringResource(R.string.dc_of_cut, subNota.porcentajeDelComponente.pctText()))
                         if (subNota.esCompuesta) append(stringResource(R.string.dc_parts, subNota.detalles.size))
                     },
                     style = MaterialTheme.typography.labelMedium,

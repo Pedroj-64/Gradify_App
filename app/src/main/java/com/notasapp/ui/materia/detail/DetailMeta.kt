@@ -1,5 +1,10 @@
 package com.notasapp.ui.materia.detail
 
+import com.notasapp.ui.components.GRADE_INPUT
+import com.notasapp.ui.components.isGradeInvalid
+import com.notasapp.ui.components.parseGrade
+import com.notasapp.ui.components.toInputString
+
 import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.minimumInteractiveComponentSize
 import com.notasapp.ui.components.GradifyDialog
@@ -206,6 +211,40 @@ internal fun MetaDialog(
     val isValid = metaText.isEmpty() || (parsedMeta != null && parsedMeta > 0f && parsedMeta in escalaMin..escalaMax)
 
     GradifyDialog(
+        title = stringResource(if (currentMeta == null) R.string.goal_set else R.string.dm_goal_edit),
+        onDismiss = onDismiss,
+        confirmText = stringResource(R.string.btn_save),
+        confirmEnabled = isValid,
+        onConfirm = { onSave(if (metaText.isEmpty()) null else parsedMeta) }
+    ) {
+        Text(
+            stringResource(R.string.goal_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        OutlinedTextField(
+            value = metaText,
+            onValueChange = { if (GRADE_INPUT.matches(it)) metaText = it },
+            label = { Text(stringResource(R.string.dm_goal_label)) },
+            placeholder = { Text("${escalaMin.toInputString()} – ${escalaMax.toInputString()}") },
+            singleLine = true,
+            isError = !isValid,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            supportingText = {
+                if (!isValid) Text(stringResource(R.string.calc_goal_max, escalaMax), color = MaterialTheme.colorScheme.error)
+                else Text(stringResource(R.string.dm_goal_hint))
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+        if (currentMeta != null) {
+            TextButton(onClick = { showDeleteConfirm = true }) {
+                Text(stringResource(R.string.goal_remove), color = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+
+    if (showDeleteConfirm) {
+        GradifyDialog(
             title = stringResource(R.string.goal_remove),
             onDismiss = { showDeleteConfirm = false },
             confirmText = stringResource(R.string.btn_delete),
@@ -215,31 +254,6 @@ internal fun MetaDialog(
                 showDeleteConfirm = false
             }
         ) { Text(stringResource(R.string.dm_goal_remove_q)) }
-
-    if (showDeleteConfirm) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirm = false },
-            title = { Text(stringResource(R.string.goal_remove)) },
-            text = { Text(stringResource(R.string.dm_goal_remove_q)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        onSave(null)
-                        showDeleteConfirm = false
-                    },
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text(stringResource(R.string.btn_delete))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text(stringResource(R.string.btn_cancel))
-                }
-            }
-        )
     }
 }
 

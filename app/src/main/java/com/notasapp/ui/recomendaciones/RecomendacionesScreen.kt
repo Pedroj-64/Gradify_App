@@ -1,5 +1,6 @@
 ﻿package com.notasapp.ui.recomendaciones
 
+import com.notasapp.ui.components.AxoMood
 import com.notasapp.ui.components.ErrorBanner
 import com.notasapp.ui.components.EmptyState
 import com.notasapp.ui.components.SectionLabel
@@ -139,7 +140,8 @@ fun RecomendacionesScreen(
             if (materias.isEmpty()) {
                 item {
                     EmptyState(
-                        icon = Icons.Default.School,
+                        icon = null,
+                        mood = AxoMood.ESTUDIANDO,
                         title = stringResource(R.string.recs_no_subjects),
                         hint = stringResource(R.string.recs_no_subjects_hint)
                     )

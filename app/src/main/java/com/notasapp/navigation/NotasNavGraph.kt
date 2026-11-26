@@ -27,8 +27,17 @@ import com.notasapp.ui.recomendaciones.RecomendacionesScreen
 @Composable
 fun NotasNavGraph(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Screen.Login.route
+    startDestination: String = Screen.Login.route,
+    abrirMateria: Long? = null,
+    onMateriaAbierta: () -> Unit = {}
 ) {
+    // Notificación o widget de una materia: ir directo a su detalle (Atrás vuelve a Inicio).
+    androidx.compose.runtime.LaunchedEffect(abrirMateria) {
+        if (abrirMateria != null) {
+            navController.navigate(Screen.MateriaDetail.createRoute(abrirMateria))
+            onMateriaAbierta()
+        }
+    }
     NavHost(
         navController = navController,
         startDestination = startDestination

@@ -105,6 +105,13 @@ class MateriaRepositoryImpl @Inject constructor(
         subNotaDao.delete(entity)
     }
 
+    override suspend fun restoreSubNota(subNota: SubNota) {
+        db.withTransaction {
+            subNotaDao.insert(subNota.toEntity())
+            subNotaDetailDao.insertAll(subNota.detalles.map { it.toEntity() })
+        }
+    }
+
     // ── Sub-Nota Detalles ────────────────────────────────────────
 
     override suspend fun insertSubNotaDetalle(detalle: SubNotaDetalle): Long =

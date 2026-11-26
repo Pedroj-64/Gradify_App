@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Axo, mascota de Gradify. Generado por docs/assets/axo/gen.py: no editar a mano. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp" android:height="120dp"
+    android:viewportWidth="120" android:viewportHeight="120">
+    <group android:rotation="-35" android:pivotX="22" android:pivotY="42">
+        <path android:fillColor="#EE6F9C" android:pathData="M9,42 a13,5.5 0 1,0 26,0 a13,5.5 0 1,0 -26,0 z"/>
+    </group>
+    <group android:rotation="0" android:pivotX="15" android:pivotY="58">
+        <path android:fillColor="#EE6F9C" android:pathData="M2,58 a13,5.5 0 1,0 26,0 a13,5.5 0 1,0 -26,0 z"/>
+    </group>
+    <group android:rotation="35" android:pivotX="22" android:pivotY="74">
+        <path android:fillColor="#EE6F9C" android:pathData="M9,74 a13,5.5 0 1,0 26,0 a13,5.5 0 1,0 -26,0 z"/>
+    </group>
+    <group android:rotation="35" android:pivotX="98" android:pivotY="42">
+        <path android:fillColor="#EE6F9C" android:pathData="M85,42 a13,5.5 0 1,0 26,0 a13,5.5 0 1,0 -26,0 z"/>
+    </group>
+    <group android:rotation="0" android:pivotX="105" android:pivotY="58">
+        <path android:fillColor="#EE6F9C" android:pathData="M92,58 a13,5.5 0 1,0 26,0 a13,5.5 0 1,0 -26,0 z"/>
+    </group>
+    <group android:rotation="-35" android:pivotX="98" android:pivotY="74">
+        <path android:fillColor="#EE6F9C" android:pathData="M85,74 a13,5.5 0 1,0 26,0 a13,5.5 0 1,0 -26,0 z"/>
+    </group>
+    <path android:fillColor="#FBB9D0" android:pathData="M20,64 a40,34 0 1,0 80,0 a40,34 0 1,0 -80,0 z"/>
+    <path android:fillColor="#FDD7E5" android:pathData="M36,80 a24,13 0 1,0 48,0 a24,13 0 1,0 -48,0 z"/>
+    <path android:fillColor="#F27FA8" android:pathData="M28.5,75 a6.5,5 0 1,0 13.0,0 a6.5,5 0 1,0 -13.0,0 z"/>
+    <path android:fillColor="#F27FA8" android:pathData="M78.5,75 a6.5,5 0 1,0 13.0,0 a6.5,5 0 1,0 -13.0,0 z"/>
+    <path android:fillColor="#3A2230" android:pathData="M38.5,61 a5.5,6 0 1,0 11.0,0 a5.5,6 0 1,0 -11.0,0 z"/>
+    <path android:fillColor="#3A2230" android:pathData="M70.5,61 a5.5,6 0 1,0 11.0,0 a5.5,6 0 1,0 -11.0,0 z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M44.1,58.5 a1.9,1.9 0 1,0 3.8,0 a1.9,1.9 0 1,0 -3.8,0 z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M76.1,58.5 a1.9,1.9 0 1,0 3.8,0 a1.9,1.9 0 1,0 -3.8,0 z"/>
+    <path android:strokeColor="#3A2230" android:strokeWidth="2.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M37,51 L49,47"/>
+    <path android:strokeColor="#3A2230" android:strokeWidth="2.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M71,47 L83,51"/>
+    <path android:strokeColor="#7A2E4A" android:strokeWidth="2.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M51,77 q4.5,-4 9,0 q4.5,4 9,0"/>
+    <path android:fillColor="#7EC8F2" android:pathData="M95,30 q6,9 0,13 q-6,-4 0,-13 z"/>
+</vector>

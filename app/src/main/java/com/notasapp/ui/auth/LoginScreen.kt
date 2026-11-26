@@ -1,5 +1,7 @@
 package com.notasapp.ui.auth
 
+import com.notasapp.ui.components.Axo
+import com.notasapp.ui.components.AxoMood
 import com.notasapp.ui.UiEvent
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.FilledTonalButton
@@ -120,6 +122,11 @@ fun LoginScreen(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+
+            // ── Axo saluda en el hueco central ─────────────────
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Axo(AxoMood.FELIZ, size = 180.dp)
             }
 
             // ── Acciones: lo local primero, Google es opcional ─

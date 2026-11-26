@@ -25,7 +25,7 @@
     <!-- Home -->
     <string name="home_title">Mis materias</string>
     <string name="home_empty">Aún no tienes materias</string>
-    <string name="home_empty_hint">Toca el botón + para agregar tu primera materia</string>
+    <string name="home_empty_hint">Toca el + y agrega tu primera materia</string>
     <string name="home_fab_add">Nueva materia</string>
     <string name="home_delete_title">¿Eliminar materia?</string>
     <string name="home_delete_message">Se eliminarán permanentemente todos los componentes y notas de esta materia.</string>
@@ -33,7 +33,7 @@
     <string name="home_sort">Ordenar</string>
     <string name="home_clear">Limpiar</string>
     <string name="home_filter_all">Todos</string>
-    <string name="home_no_results">No se encontraron materias</string>
+    <string name="home_no_results">Busqué por todas partes y nada. ¿Probamos con otro nombre?</string>
     <string name="home_summary">Resumen Académico</string>
     <string name="home_average">Promedio</string>
     <string name="home_subjects">Materias</string>
@@ -42,10 +42,10 @@
     <string name="home_status_passing">APROBANDO</string>
     <string name="home_status_at_risk">EN RIESGO</string>
     <string name="home_not_evaluated">Sin evaluar</string>
-    <string name="home_evaluated_pct">%1$d%% evaluado</string>
-    <string name="home_welcome">¡Bienvenido a Gradify!</string>
-    <string name="home_welcome_hint">Aquí verás el promedio de todas tus materias. ¡Empieza agregando la primera!</string>
-    <string name="home_add_first">Agregar primera materia</string>
+    <string name="home_evaluated_pct">%1$s%% evaluado</string>
+    <string name="home_welcome">¡Hola! Soy Axo 👋</string>
+    <string name="home_welcome_hint">Te ayudo a llevar tus notas sin hacer cuentas en servilletas. Agrega tu primera materia y yo calculo el resto.</string>
+    <string name="home_add_first">Agregar mi primera materia</string>
     <string name="home_search_placeholder">Buscar materia…</string>
 
     <!-- Crear Materia -->
@@ -109,7 +109,7 @@
     <string name="export_excel_desc">Elige la carpeta donde guardar el archivo</string>
     <string name="export_save_excel">Guardar como Excel</string>
     <string name="export_resave">Guardar de nuevo</string>
-    <string name="export_saved_ok">¡Archivo guardado exitosamente en la ubicación elegida!</string>
+    <string name="export_saved_ok">¡Listo! Archivo guardado donde elegiste.</string>
     <string name="export_pdf_title">Resumen PDF</string>
     <string name="export_pdf_desc">Genera un PDF con el resumen completo de tus notas</string>
     <string name="export_save_pdf">Guardar como PDF</string>
@@ -126,7 +126,7 @@
     <string name="export_processing">Procesando…</string>
 
     <!-- Errores generales -->
-    <string name="error_generic">Ocurrió un error inesperado. Por favor intenta nuevamente.</string>
+    <string name="error_generic">Algo salió mal. Intenta otra vez.</string>
     <string name="error_no_internet">Sin conexión a internet. Operando en modo offline.</string>
 
     <!-- Widgets -->
@@ -191,9 +191,6 @@
     <string name="calendar_update">Guardar</string>
     <string name="calendar_cancel">Cancelar</string>
     <string name="calendar_today">Hoy</string>
-    <string name="calendar_prev_day">- 1 día</string>
-    <string name="calendar_next_day">+ 1 día</string>
-    <string name="calendar_hour_label">Hora:</string>
     <string name="calendar_event_saved">Evento creado</string>
     <string name="calendar_event_updated">Evento actualizado</string>
     <string name="calendar_event_deleted">Evento eliminado</string>
@@ -205,8 +202,6 @@
     <string name="calendar_delete_title">Eliminar evento</string>
     <string name="calendar_delete_confirm">¿Eliminar este evento? Esta acción no se puede deshacer.</string>
     <string name="calendar_edit">Editar</string>
-    <string name="calendar_1h_plus">+1h</string>
-    <string name="calendar_1h_minus">-1h</string>
     <string name="calendar_n_min_before">%1$d min antes</string>
     <string name="calendar_import_gcal">Importar Google Calendar</string>
     <string name="calendar_day_mon">Lun</string>
@@ -250,7 +245,7 @@
     <string name="settings_back_to_login">Regresa a la pantalla de inicio de sesión</string>
     <string name="settings_exit">Salir</string>
     <string name="settings_share_backup">Compartir backup</string>
-    <string name="settings_app_description">Gestiona tus notas académicas de forma inteligente. Desarrollado con ❤️ para estudiantes.</string>
+    <string name="settings_app_description">Tus notas, claras y en tu teléfono. Hecha con ❤️ para estudiantes, con Axo, el ajolote que nunca se rinde.</string>
     <string name="settings_last_export">Última exportación: %1$s</string>
     <string name="settings_developed_by">Desarrollado por Pedro Jose Soto Rivera, MargaDev-Society y asociados</string>
     <string name="settings_acknowledgements">Agradecimientos especiales a los testers y colaboradores que hicieron posible esta app.
@@ -279,34 +274,33 @@ Dedicado a miripili &lt;3</string>
     <string name="recs_error">Error al generar</string>
     <string name="recs_key_needed">Clave Gemini necesaria</string>
     <string name="recs_will_generate">Gemini generará recursos personalizados para ti</string>
-    <string name="recs_no_subjects">Aún no tienes materias</string>
-    <string name="recs_no_subjects_hint">Agrega tu primera materia y vuelve aquí para obtener recomendaciones personalizadas</string>
+    <string name="recs_no_subjects">Primero, una materia</string>
+    <string name="recs_no_subjects_hint">Agrega una materia y te busco videos, libros y páginas para estudiarla.</string>
     <string name="recs_key_setup_steps">Pega tu clave gratuita de Gemini en Ajustes → Recomendaciones con IA.
 La consigues en aistudio.google.com/app/apikey</string>
 
     <string name="detail_elements_of">Elementos de «%1$s»</string>
     <string name="detail_example_first_attempt">Ej: Primer intento</string>
     <string name="detail_weight_in_activity">Peso (%% dentro de la actividad)</string>
-    <string name="detail_available_pct">Disponible: %1$d%%</string>
     <string name="detail_pending_grades_count">%1$d nota(s) pendiente(s)</string>
-    <string name="detail_all_grades_entered">¡Todas las notas están ingresadas!</string>
+    <string name="detail_all_grades_entered">¡Todas las notas están puestas!</string>
     <string name="detail_add_grade_for_component">Agregar nota · %1$s</string>
     <string name="detail_example_partial_1">Ej: Parcial 1</string>
     <string name="detail_weight_in_component">Peso (%% del corte)</string>
 
     <!-- Simulador -->
-    <string name="sim_what_if">¿Qué pasa si saco…?</string>
-    <string name="sim_hint">Ingresa notas hipotéticas para los componentes pendientes</string>
-    <string name="sim_all_graded">Todos los componentes ya tienen nota.</string>
-    <string name="sim_title">¿Qué pasa si saco…?</string>
+    <string name="sim_what_if">¿Y si saco…?</string>
+    <string name="sim_hint">Escribe notas imaginarias y te digo con cuánto terminarías.</string>
+    <string name="sim_all_graded">Ya todo tiene nota: no queda nada por imaginar.</string>
+    <string name="sim_title">¿Y si saco…?</string>
     <string name="sim_simulate">Simular</string>
-    <string name="sim_pass">¡Con estas notas aprobarías! 🎉</string>
+    <string name="sim_pass">¡Con esas notas pasas! 🎉</string>
     <string name="sim_fail">Con estas notas no alcanzarías el mínimo…</string>
 
     <!-- Calculadora -->
-    <string name="calc_enter_target">Ingresa la nota final que deseas alcanzar</string>
+    <string name="calc_enter_target">¿Con cuánto quieres terminar?</string>
     <string name="calc_calculate">Calcular</string>
-    <string name="calc_goal_reached">¡Meta ya alcanzada!</string>
+    <string name="calc_goal_reached">¡Ya lo lograste!</string>
     <string name="calc_unreachable">Meta inalcanzable</string>
     <string name="calc_error">No se pudo calcular</string>
     <string name="calc_invalid_grade">Ingresa una nota válida</string>
@@ -350,8 +344,8 @@ La consigues en aistudio.google.com/app/apikey</string>
     <string name="stats_performance">Rendimiento por materia</string>
     <string name="stats_evolution">Evolución por semestre</string>
     <string name="stats_history">Historial por semestre</string>
-    <string name="stats_empty">Sin estadísticas</string>
-    <string name="stats_empty_hint">Agrega materias y empieza a ingresar notas para ver tus estadísticas</string>
+    <string name="stats_empty">Aquí van a vivir tus gráficas</string>
+    <string name="stats_empty_hint">En cuanto pongas tus primeras notas, te muestro cómo vas.</string>
 
     <!-- Eliminación general -->
     <string name="delete_subject">Eliminar materia</string>
@@ -371,13 +365,13 @@ La consigues en aistudio.google.com/app/apikey</string>
     <string name="goal_remove">Quitar meta</string>
     <string name="goal_current">Meta: %.1f</string>
     <string name="goal_needed">Necesitas %.2f en lo restante</string>
-    <string name="goal_achieved">¡Meta alcanzada!</string>
-    <string name="goal_on_track">Vas bien encaminado</string>
-    <string name="goal_effort_needed">Necesitas esforzarte más</string>
-    <string name="goal_unreachable">Meta inalcanzable</string>
-    <string name="goal_no_goal">Sin meta definida</string>
+    <string name="goal_achieved">¡Meta cumplida!</string>
+    <string name="goal_on_track">Vas bien</string>
+    <string name="goal_effort_needed">Toca apretar</string>
+    <string name="goal_unreachable">Fuera de alcance</string>
+    <string name="goal_no_goal">Ponte una meta</string>
     <string name="goal_progress">Progreso: %d%%</string>
-    <string name="goal_hint">Define la nota que deseas alcanzar en esta materia</string>
+    <string name="goal_hint">¿Con cuánto quieres terminar esta materia? Te aviso si vas bien.</string>
 
     <string name="notes_title">Notas personales</string>
     <string name="notes_add">Agregar nota</string>
@@ -385,7 +379,7 @@ La consigues en aistudio.google.com/app/apikey</string>
     <string name="notes_placeholder">Escribe tus notas aquí…</string>
     <string name="notes_hint">Guarda información importante: temas de examen, horarios de tutoría, etc.</string>
 
-    <string name="home_deleted">Materia eliminada</string>
+    <string name="home_deleted">Materia borrada</string>
     <string name="btn_undo">Deshacer</string>
     <string name="settings_ai">Recomendaciones con IA</string>
     <string name="settings_ai_desc">Las recomendaciones usan Gemini. Pega tu propia clave gratuita (se guarda solo en este teléfono).</string>
@@ -404,7 +398,10 @@ La consigues en aistudio.google.com/app/apikey</string>
     <string name="settings_dynamic_color">Colores del sistema (Material You)</string>
     <string name="settings_dynamic_color_desc">Usa los colores de tu fondo de pantalla en lugar de la paleta de Gradify.</string>
     <string name="login_continue_offline">Continuar sin cuenta</string>
-    <string name="home_count">%1$d materias</string>
+    <plurals name="home_count">
+        <item quantity="one">%d materia</item>
+        <item quantity="other">%d materias</item>
+    </plurals>
     <string name="home_overall_average">Promedio general</string>
     <string name="home_n_at_risk">%1$d en riesgo</string>
     <string name="home_all_good">Todo en orden</string>
@@ -416,7 +413,7 @@ La consigues en aistudio.google.com/app/apikey</string>
     <string name="stats_weighted">ponderado</string>
     <string name="stats_credits">créditos aprobados</string>
     <string name="recs_go_settings">Ir a Ajustes</string>
-    <string name="login_tagline">Tus notas, claras y en tu teléfono.</string>
+    <string name="login_tagline">Tus notas claras, sin cuentas en servilletas.</string>
     <string name="login_privacy">Todo se guarda en tu dispositivo. Inicia sesión con Google solo si quieres subir tus exportaciones a Drive.</string>
     <string name="backup_folder_title">Carpeta de respaldos automáticos</string>
     <string name="backup_folder_none">Crea o elige una carpeta propia (p. ej. «Gradify» dentro de Documentos) para que tus notas sobrevivan aunque desinstales la app</string>
@@ -425,7 +422,7 @@ La consigues en aistudio.google.com/app/apikey</string>
     <string name="backup_now">Respaldar ahora</string>
     <string name="backup_now_subtitle">Guarda una copia en la carpeta elegida</string>
     <string name="backup_started">Respaldo en curso…</string>
-    <string name="restore_nothing_new">No hay materias nuevas: ya estaban en la app</string>
+    <string name="restore_nothing_new">Nada nuevo: esas materias ya estaban aquí.</string>
     <plurals name="restore_done">
         <item quantity="one">%d materia restaurada</item>
         <item quantity="other">%d materias restauradas</item>
@@ -435,7 +432,7 @@ La consigues en aistudio.google.com/app/apikey</string>
     <string name="home_archived">Archivados</string>
     <string name="home_close_semester">Cerrar semestre %1$s</string>
     <string name="home_reopen_semester">Reabrir semestre %1$s</string>
-    <string name="home_all_closed">Todos tus semestres están cerrados. Toca «Archivados» para verlos o crea una materia nueva.</string>
+    <string name="home_all_closed">Semestre cerrado. ¡A descansar! Tus materias están en «Archivados».</string>
     <string name="err_save_grade">No se pudo guardar la nota</string>
     <string name="err_add_grade">No se pudo agregar la nota</string>
     <string name="err_delete_grade">No se pudo eliminar la nota</string>
@@ -486,89 +483,91 @@ La consigues en aistudio.google.com/app/apikey</string>
     <string name="dm_notes_delete_q">¿Eliminar todas las notas personales?</string>
     <string name="dd_items_of">Elem. de «%1$s»</string>
     <string name="dd_weight_activity">Peso (%% dentro de la actividad)</string>
-    <string name="dd_available">Disponible: %1$d%%</string>
+    <string name="dd_available">Disponible: %1$s%%</string>
     <string name="dd_pending">%1$d nota(s) pendiente(s)</string>
     <string name="dd_add_grade">Agregar nota · %1$s</string>
     <string name="dd_weight_cut">Peso (%% del corte)</string>
     <string name="dp_min">Mínimo %1$s</string>
-    <string name="dp_evaluated">Evaluado %1$d%%</string>
+    <string name="dp_evaluated">Evaluado %1$s%%</string>
     <string name="dp_accum">Acumulado %1$s</string>
-    <string name="dp_needed_avg">es lo que necesitas en promedio en lo que falta para aprobar</string>
-    <string name="dc_of_total">%1$d%% del total · %2$s</string>
+    <string name="dp_needed_avg">es lo que necesitas en promedio en lo que falta para pasar</string>
+    <string name="dc_of_total">%1$s%% del total · %2$s</string>
     <string name="dc_contributes">aporta %1$.2f</string>
-    <string name="sim_comp_label">%1$s (%2$d%%)</string>
+    <string name="sim_comp_label">%1$s (%2$s%%)</string>
     <string name="sim_projected">Nota final proyectada: %1$.2f</string>
     <string name="sim_line">· %1$s: %2$.2f → aporte: %3$.2f</string>
     <string name="calc_goal_label">Meta final (máx %1$.1f)</string>
-    <string name="calc_need">Necesitas: %1$.2f</string>
-    <string name="calc_avg_pending">Promedio en las %1$d evaluación(es) pendiente(s).</string>
-    <string name="calc_unreachable_sub">Se necesitaría %1$.2f puntos, lo cual supera la nota máxima.</string>
+    <string name="calc_need">Necesitas %1$.2f</string>
+    <string name="calc_avg_pending">En promedio, en las %1$d evaluación(es) que faltan.</string>
+    <string name="calc_unreachable_sub">Haría falta %1$.2f, más que la nota máxima. Prueba con una meta más baja.</string>
     <string name="cw_step">Paso %1$d de 3</string>
     <string name="cw_name_ex">Ej: Matemáticas</string>
     <string name="cw_credits">Créditos: %1$d</string>
     <string name="cw_scale_q">¿Qué escala de notas usa esta materia?</string>
-    <string name="cw_pass">Nota mínima para aprobar: %1$.1f</string>
-    <string name="cw_total_ok">Total: %1$d%% ✓</string>
-    <string name="cw_total_bad">Total: %1$d%% (debe ser 100%%)</string>
-    <string name="ep_total_ok">Total: %1$d%%  ✓</string>
-    <string name="ep_total_bad">Total: %1$d%%  ≠ 100%%</string>
+    <string name="cw_pass_label">Nota mínima para aprobar</string>
+    <string name="cw_weight_label">Peso</string>
+    <string name="cw_fill_rest">Repartir lo que falta</string>
+    <string name="cw_total_ok">Total: %1$s%% ✓</string>
+    <string name="cw_total_bad">Total: %1$s%% (debe ser 100%%)</string>
+    <string name="ep_total_ok">Total: %1$s%%  ✓</string>
+    <string name="ep_total_bad">Total: %1$s%%  ≠ 100%%</string>
     <string name="st_sem_summary">%1$d materias · %2$d créditos</string>
     <string name="st_sem_passed">%1$d/%2$d aprobadas</string>
-    <string name="ob1_title">Bienvenido a Gradify</string>
-    <string name="ob1_desc">Tu compañero académico para gestionar materias, notas y promedios de forma organizada.</string>
-    <string name="ob1_highlight">Registra tus materias, componentes y calificaciones en un solo lugar.</string>
-    <string name="ob2_title">Estadísticas inteligentes</string>
-    <string name="ob2_desc">Visualiza tu rendimiento con gráficos y promedios en tiempo real.</string>
-    <string name="ob2_highlight">Obtén recomendaciones de estudio personalizadas con inteligencia artificial.</string>
-    <string name="ob3_title">Calendario de exámenes</string>
-    <string name="ob3_desc">Programa tus evaluaciones y recibe recordatorios antes de cada examen.</string>
-    <string name="ob3_highlight">Nunca más olvides una fecha importante.</string>
-    <string name="ob4_title">Respaldo seguro</string>
-    <string name="ob4_desc">Exporta tus notas a Excel o PDF. Sincroniza con Google Drive para no perder nada.</string>
-    <string name="ob4_highlight">Tus datos siempre protegidos y accesibles.</string>
+    <string name="ob1_title">¡Hola! Soy Axo</string>
+    <string name="ob1_desc">Voy a llevar tus notas por ti: promedios, porcentajes y cuánto te falta para pasar.</string>
+    <string name="ob1_highlight">Tú pones las notas, yo hago las cuentas.</string>
+    <string name="ob2_title">Sabe cómo vas</string>
+    <string name="ob2_desc">Promedios al instante, gráficas por semestre y la nota exacta que necesitas.</string>
+    <string name="ob2_highlight">Con tu clave de IA te recomiendo videos, libros y páginas para estudiar.</string>
+    <string name="ob3_title">Cero sustos</string>
+    <string name="ob3_desc">Anota tus parciales y entregas: te aviso antes para que nada te agarre desprevenido.</string>
+    <string name="ob3_highlight">Nunca más «¿el parcial era hoy?».</string>
+    <string name="ob4_title">Tus notas son tuyas</string>
+    <string name="ob4_desc">Todo se guarda en tu teléfono. Respáldalas en una carpeta o expórtalas a PDF y Excel.</string>
+    <string name="ob4_highlight">Sin cuenta obligatoria y sin anuncios.</string>
     <string name="ob_skip">Saltar</string>
     <string name="ob_prev">Anterior</string>
     <string name="perm_notif_title">Notificaciones</string>
-    <string name="perm_notif_expl">Gradify necesita tu permiso para enviarte notificaciones cuando se acerque un examen o entrega.</string>
+    <string name="perm_notif_expl">¿Te aviso antes de cada examen o entrega? Para eso necesito permiso de notificaciones.</string>
     <string name="perm_notif_use">Recordatorios de exámenes y evaluaciones programadas en tu calendario académico.</string>
-    <string name="perm_notif_denied">No recibirás alertas de exámenes próximos. Podrás seguir usando la app normalmente.</string>
+    <string name="perm_notif_denied">Sin problema: no te llegarán avisos, pero todo lo demás funciona igual.</string>
     <string name="perm_why">¿Para qué lo usamos?</string>
     <string name="perm_if_no">¿Qué pasa si dices que no?</string>
     <string name="perm_privacy">Tus datos permanecen en tu dispositivo. No compartimos nada con terceros.</string>
     <string name="perm_not_now">Ahora no</string>
-    <string name="mm_01">¡Completaste todas las evaluaciones y aprobaste! Excelente semestre.</string>
-    <string name="mm_02">Completaste todas las evaluaciones. Revisa las áreas donde puedes mejorar.</string>
-    <string name="mm_03">¡Gran inicio! Arrancaste con todo. Mantén ese ritmo y el semestre será tuyo.</string>
-    <string name="mm_04">Buen comienzo, vas por buen camino. ¡Sigue así y cada vez será más fácil!</string>
-    <string name="mm_05">Es solo el inicio, hay mucho camino por recorrer. ¡Cada nota cuenta, tú puedes!</string>
-    <string name="mm_06">¡Llevas un rendimiento excelente! Ya vas por la mitad, sigue destacándote.</string>
-    <string name="mm_07">Vas bien, ya pasaste la primera mitad. ¡Mantén el enfoque y lo lograrás!</string>
-    <string name="mm_08">Aún puedes remontar, queda bastante por evaluar. ¡Enfócate en lo que viene!</string>
-    <string name="mm_09">¡Vas volando! Más de la mitad evaluada y tu rendimiento es sobresaliente.</string>
-    <string name="mm_10">¡Ya se ve la meta! Mantén la concentración en la recta final.</string>
-    <string name="mm_11">Queda poco, pero cada punto cuenta. ¡Da lo mejor de ti en lo que resta!</string>
-    <string name="mm_12">¡Casi terminas y vas increíble! Un último empujón para cerrar con broche de oro.</string>
-    <string name="mm_13">¡Ya casi llegas! Falta poco para terminar el semestre con éxito.</string>
-    <string name="mm_14">El último tramo es clave. ¡Concéntrate y da todo, aún es posible!</string>
-    <string name="dp_congrats">Ya superaste el mínimo de %1$s. Llevas %2$s acumulado.</string>
-    <string name="calc_done_pass">Ya tienes nota suficiente para aprobar.</string>
-    <string name="calc_done_goal">Ya cumpliste tu meta propuesta.</string>
+    <string name="mm_01">¡Materia cerrada y aprobada! Semestre bien jugado. 🏆</string>
+    <string name="mm_02">Materia terminada. No salió como querías, pero ya sabes qué reforzar para la próxima.</string>
+    <string name="mm_03">¡Arrancaste volando! Si sigues así, esta materia es tuya.</string>
+    <string name="mm_04">Buen comienzo: vas pasando. Sigue con ese ritmo.</string>
+    <string name="mm_05">Arranque flojo, pero apenas empieza: queda casi todo por jugar.</string>
+    <string name="mm_06">Vas en la mitad y con nota de sobra. ¡Qué nivel!</string>
+    <string name="mm_07">Mitad del camino y vas pasando. Constancia y listo.</string>
+    <string name="mm_08">Todavía se puede remontar: queda mucho por evaluar. Los ajolotes regeneran, tú también. 💪</string>
+    <string name="mm_09">Más de la mitad evaluada y vas sobrado. Tranqui, pero sin dormirte.</string>
+    <string name="mm_10">Ya se ve la meta. Mantén el foco en la recta final.</string>
+    <string name="mm_11">Queda poco y cada punto cuenta. Mira cuánto necesitas y a por ello.</string>
+    <string name="mm_12">¡Casi terminas y vas increíble! Último empujón.</string>
+    <string name="mm_13">Ya casi. Un último esfuerzo y la pasas.</string>
+    <string name="mm_14">Último tramo y está apretado. Aún se puede: concéntrate en lo que falta.</string>
+    <string name="dp_congrats">¡Ya pasaste! Superaste el %1$s con %2$s acumulado. Lo que venga es ganancia.</string>
+    <string name="calc_done_pass">Ya tienes nota suficiente para pasar. Lo demás es ganancia.</string>
+    <string name="calc_done_goal">Ya cumpliste tu meta. 🎯</string>
     <string name="calc_goal_positive">La meta debe ser mayor que 0</string>
     <string name="calc_goal_max">La meta no puede superar %1$.1f</string>
     <string name="recs_loading_for">Analizando %1$s…</string>
     <string name="recs_loading">Generando recomendaciones…</string>
-    <string name="sim_fail_min">Con estas notas no alcanzarías el mínimo de %1$.2f</string>
-    <string name="ob_start">Empezar</string>
+    <string name="sim_fail_min">Con esas notas no llegarías al %1$.2f. Prueba subiendo alguna.</string>
+    <string name="ob_start">¡Vamos!</string>
     <string name="dm_add">Añadir</string>
     <string name="dc_parts"> · %1$d partes</string>
-    <string name="sn_generic">Tienes un evento académico %1$s. ¡Prepárate!</string>
-    <string name="sn_inicio">Es tu primera evaluación en %1$s. ¡Da lo mejor de ti!</string>
-    <string name="sn_excelente">Llevas %1$s/%2$s en %3$s. ¡Ya la tienes aprobada, sigue así!</string>
+    <string name="sn_generic">Tienes algo académico %1$s. ¡Prepárate!</string>
+    <string name="sn_inicio">Primera evaluación de %1$s. ¡A estrenarse con todo!</string>
+    <string name="sn_excelente">Llevas %1$s/%2$s en %3$s y ya la tienes aprobada. Esto es pura ganancia.</string>
     <string name="sn_muy_bien">Vas muy bien en %1$s con %2$s. ¡Mantén el ritmo!</string>
-    <string name="sn_aprobando">Llevas %1$s en %2$s, justo en el límite. Este evento es clave para asegurar.</string>
-    <string name="sn_recuperable">Necesitas %1$s en lo que queda de %2$s. ¡Aún es posible, enfoca tu estudio!</string>
-    <string name="sn_riesgo">Necesitas %1$s para aprobar %2$s. Este evento es crucial — ¡dale con todo!</string>
-    <string name="sn_critico">La situación en %1$s es difícil (%2$s/%3$s). Cada punto cuenta, ¡no te rindas!</string>
+    <string name="sn_aprobando">Vas con %1$s en %2$s, justo en el límite. Este es clave.</string>
+    <string name="sn_recuperable">Necesitas %1$s en lo que queda de %2$s. Se puede: a estudiar.</string>
+    <string name="sn_riesgo">Necesitas %1$s para pasar %2$s. Este cuenta mucho: dale con todo.</string>
+    <string name="sn_critico">%1$s está difícil (%2$s/%3$s). Cada punto suma, no te rindas.</string>
     <string name="sn_progress">
 📊 Progreso: %1$d%% del curso evaluado.</string>
     <string name="sn_attention">%1$s ¡Atención! %2$s</string>
@@ -584,7 +583,7 @@ La consigues en aistudio.google.com/app/apikey</string>
     <string name="nch_sync_desc">Estado de la sincronización automática</string>
     <string name="nch_exams">Recordatorios de Exámenes</string>
     <string name="nch_exams_desc">Alertas de exámenes, entregas y evaluaciones programadas</string>
-    <string name="dc_of_cut">%1$d%% del corte</string>
+    <string name="dc_of_cut">%1$s%% del corte</string>
     <string name="home_credits_short"> · %1$d cr</string>
     <string name="calc_err_percent">Los porcentajes de los cortes no suman 100 %</string>
     <string name="cal_select_day">Seleccionar día</string>
@@ -603,4 +602,55 @@ La consigues en aistudio.google.com/app/apikey</string>
     <string name="scale_br">Brasil · 0 – 10 (aprueba 6.0)</string>
     <string name="scale_cr">Costa Rica · 0 – 100 (aprueba 70)</string>
     <string name="scale_custom">Personalizada</string>
+    <!-- Personalidad y calidad de vida (v3) -->
+    <string name="calc_chip_pass">Pasar (%1$s)</string>
+    <string name="calc_chip_goal">Mi meta (%1$s)</string>
+    <string name="detail_chip_quick">Poner notas (%1$d)</string>
+    <string name="undo_grade_deleted">«%1$s» borrada</string>
+    <string name="home_card_options">Opciones de la materia</string>
+    <string name="home_card_open">Abrir</string>
+    <string name="settings_updates">Actualizaciones</string>
+    <string name="settings_update_check">Avisarme de versiones nuevas</string>
+    <string name="settings_update_check_desc">Al abrir la app pregunta a GitHub si hay una versión nueva. No envía tus notas ni datos.</string>
+    <string name="update_title">¡Hay versión nueva! v%1$s</string>
+    <string name="update_desc">Se instala encima de la actual sin perder tus notas.</string>
+    <string name="update_download">Descargar</string>
+    <string name="update_later">Ahora no</string>
+    <string name="sort_name">Nombre</string>
+    <string name="sort_avg_asc">Promedio ↑</string>
+    <string name="sort_avg_desc">Promedio ↓</string>
+    <string name="sort_period">Semestre</string>
+    <string name="notif_exam_fallback">Evaluación próxima</string>
+    <string name="notif_rem_title">📚 Recordatorio de evaluación</string>
+    <string name="notif_rem_today">¡Hoy es la evaluación: %1$s!</string>
+    <string name="notif_rem_tomorrow">Mañana tienes: %1$s</string>
+    <string name="notif_rem_days">En %1$d días: %2$s</string>
+    <string name="cw_default_c1">Primer corte</string>
+    <string name="cw_default_c2">Segundo corte</string>
+    <string name="cw_default_c3">Examen final</string>
+    <string name="cw_component_n">Componente %1$d</string>
+    <plurals name="dc_progress">
+        <item quantity="one">%1$d de %2$d evaluada</item>
+        <item quantity="other">%1$d de %2$d evaluadas</item>
+    </plurals>
+    <string name="cw_copy_from">Copiar cortes y pesos de…</string>
+    <string name="cw_save_and_next">Guardar y crear otra</string>
+    <string name="cw_saved_next">«%1$s» guardada. Vamos con la siguiente 👇</string>
+    <string name="backup_nag_title">Protege tus notas</string>
+    <string name="backup_nag_desc">Si desinstalas la app sin una carpeta de respaldo, se pierden. Elige una y yo guardo copias solito.</string>
+    <string name="notif_exam_generic">Tienes un evento académico pronto</string>
+    <string name="w_open_app">Abre Gradify para empezar</string>
+    <string name="wr_progress">%1$d%% del semestre evaluado</string>
+    <string name="wr_evaluated">%1$d%% evaluado</string>
+    <string name="wr_msg_empty">✏️ Registra tus primeras notas</string>
+    <string name="wr_msg_top">🌟 ¡Rendimiento excepcional!</string>
+    <string name="wr_msg_great">🔥 ¡Vas muy bien, sigue así!</string>
+    <string name="wr_msg_good">💪 Buen trabajo, puedes mejorar</string>
+    <string name="wr_msg_ok">📚 Mantén el esfuerzo</string>
+    <string name="wr_msg_push">⚡ ¡No te rindas, tú puedes!</string>
+    <string name="wm_passed">✅ Aprobada</string>
+    <string name="wm_passing">📗 Aprobando</string>
+    <string name="wm_needs">⚠️ Necesita %1$.1f</string>
+    <string name="wm_at_risk">🔴 En riesgo</string>
+    <string name="wm_no_grades">Sin notas aún</string>
 </resources>

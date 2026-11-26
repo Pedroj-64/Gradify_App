@@ -120,15 +120,16 @@ class NotificationHelper @Inject constructor(
      * Usa el canal de alta prioridad [CHANNEL_EXAMS].
      */
     @SuppressLint("MissingPermission") // notify() va dentro de runCatching
-    fun sendExamReminder(title: String, message: String, notificationId: Int) {
+    fun sendExamReminder(title: String, message: String, notificationId: Int, materiaId: Long = -1) {
+        // requestCode propio: con 0 en todas, Android reutilizaba el mismo PendingIntent y sus extras viejos.
         val pendingIntent = PendingIntent.getActivity(
             context,
-            0,
+            notificationId,
             Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                putExtra("navigate_to", "calendar")
+                if (materiaId > 0) putExtra(MainActivity.EXTRA_OPEN_MATERIA, materiaId)
             },
-            PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_EXAMS)

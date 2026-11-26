@@ -119,9 +119,13 @@ class MateriaDetailViewModel @Inject constructor(
      * Elimina una sub-nota por su ID.
      */
     fun eliminarSubNota(subNotaId: Long) {
+        val copia = materia.value?.componentes?.flatMap { it.subNotas }?.find { it.id == subNotaId }
         viewModelScope.launch {
             try {
                 materiaRepository.deleteSubNota(subNotaId)
+                if (copia != null) ofrecerDeshacer(UiText(R.string.undo_grade_deleted, copia.descripcion)) {
+                    materiaRepository.restoreSubNota(copia)
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Error al eliminar sub-nota $subNotaId")
                 _error.value = UiText(R.string.err_delete_grade)
@@ -175,9 +179,13 @@ class MateriaDetailViewModel @Inject constructor(
      * Elimina un detalle por su ID.
      */
     fun eliminarDetalle(detalleId: Long) {
+        val copia = materia.value?.componentes?.flatMap { it.subNotas }?.flatMap { it.detalles }?.find { it.id == detalleId }
         viewModelScope.launch {
             try {
                 materiaRepository.deleteSubNotaDetalle(detalleId)
+                if (copia != null) ofrecerDeshacer(UiText(R.string.undo_grade_deleted, copia.descripcion)) {
+                    materiaRepository.insertSubNotaDetalle(copia)
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Error al eliminar detalle $detalleId")
                 _error.value = UiText(R.string.err_delete_detail)
@@ -185,10 +193,26 @@ class MateriaDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Calcula la nota necesaria en los componentes faltantes
-     * para alcanzar [meta] en esta materia.
-     */
+    // ── Deshacer borrados ──────────────────────────────────────
+    // Se borra al instante (el promedio se actualiza ya) y se guarda una copia para restaurarla.
+
+    data class Deshacer(val mensaje: UiText, val restaurar: suspend () -> Unit)
+
+    private val _deshacer = MutableStateFlow<Deshacer?>(null)
+    val deshacer: StateFlow<Deshacer?> = _deshacer.asStateFlow()
+
+    private fun ofrecerDeshacer(mensaje: UiText, restaurar: suspend () -> Unit) {
+        _deshacer.value = Deshacer(mensaje, restaurar)
+    }
+
+    /** [aplicar] = true si el usuario pulsó "Deshacer"; false si el aviso se cerró. */
+    fun resolverDeshacer(aplicar: Boolean) {
+        val d = _deshacer.value ?: return
+        _deshacer.value = null
+        if (aplicar) guardar(R.string.err_save_changes) { d.restaurar() }
+    }
+
+    /** Calcula la nota necesaria en lo pendiente para llegar a [meta]. */
     fun calcularNotaNecesaria(meta: Float) {
         val materiaActual = materia.value ?: return
         _notaNecesariaResult.value = calcularNotaNecesaria(

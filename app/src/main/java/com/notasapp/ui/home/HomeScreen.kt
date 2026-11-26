@@ -1,5 +1,20 @@
 package com.notasapp.ui.home
 
+import com.notasapp.ui.components.onContainer
+import com.notasapp.ui.components.container
+import androidx.compose.ui.graphics.Color
+import com.notasapp.ui.components.toInputString
+import com.notasapp.ui.components.materiaColor
+import com.notasapp.ui.components.MateriaAvatar
+import com.notasapp.ui.components.HeroPill
+import com.notasapp.ui.components.HeroCard
+import com.notasapp.ui.components.pctText
+import com.notasapp.ui.components.Axo
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+
+import com.notasapp.ui.components.AxoMood
 import com.notasapp.ui.components.EmptyState
 import com.notasapp.ui.components.gradifyChipColors
 import androidx.compose.material.icons.filled.Check
@@ -79,6 +94,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -90,7 +106,6 @@ import com.notasapp.ui.components.AnimatedText
 import com.notasapp.ui.components.EstadoBadge
 import com.notasapp.ui.components.GradeLinearIndicator
 import com.notasapp.ui.components.MateriaCardShimmer
-import com.notasapp.ui.components.SwipeToDeleteWrapper
 import kotlinx.coroutines.delay
 
 /**
@@ -98,7 +113,7 @@ import kotlinx.coroutines.delay
  *
  * - Shimmer skeleton mientras llega el primer dato del Flow.
  * - Animación de entrada escalonada (stagger) por cada card.
- * - Swipe-to-delete integrado con [SwipeToDeleteWrapper].
+ * - Mantener pulsada una materia abre un menú (abrir / eliminar con Deshacer).
  * - Acceso rápido a la pantalla de estadísticas desde el TopAppBar.
  *
  * @param onNavigateToCreateMateria  Abre el Wizard de nueva materia.
@@ -112,9 +127,23 @@ fun HomeScreen(
     onNavigateToMateria: (Long) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
+    val ctxHome = androidx.compose.ui.platform.LocalContext.current
     val materias by viewModel.materias.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val update by viewModel.update.collectAsStateWithLifecycle()
+    val faltaRespaldo by viewModel.faltaRespaldo.collectAsStateWithLifecycle()
+    val folderLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        uri?.let {
+            ctxHome.contentResolver.takePersistableUriPermission(
+                it,
+                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+            viewModel.elegirCarpetaRespaldo(it)
+        }
+    }
     val filtroSemestre by viewModel.filtroSemestre.collectAsStateWithLifecycle()
     val orden by viewModel.orden.collectAsStateWithLifecycle()
     val semestres by viewModel.semestresDisponibles.collectAsStateWithLifecycle()
@@ -122,6 +151,7 @@ fun HomeScreen(
     val promedioGeneral by viewModel.promedioGeneral.collectAsStateWithLifecycle()
     val verArchivadas by viewModel.verArchivadas.collectAsStateWithLifecycle()
     val hayArchivadas by viewModel.hayArchivadas.collectAsStateWithLifecycle()
+    val vacia = materias.isEmpty() && searchQuery.isBlank() && !hayArchivadas
     val scope = rememberCoroutineScope()
     val deletedMsg = stringResource(R.string.home_deleted)
     val undoLabel = stringResource(R.string.btn_undo)
@@ -151,8 +181,10 @@ fun HomeScreen(
         topBar = {
             ScreenHeader(
                 title = stringResource(R.string.home_title),
-                subtitle = stringResource(R.string.home_count, materias.size),
+                // Sin materias: ni "0 materias" ni buscar/ordenar (no hay nada que buscar).
+                subtitle = if (vacia) null else pluralStringResource(R.plurals.home_count, materias.size, materias.size),
                 actions = {
+                  if (!vacia) {
                     IconButton(onClick = { showSearch = !showSearch }) {
                         Icon(Icons.Default.Search, contentDescription = stringResource(R.string.home_search))
                     }
@@ -164,7 +196,7 @@ fun HomeScreen(
                         DropdownMenu(expanded = showSortMenu, onDismissRequest = { showSortMenu = false }) {
                             OrdenMateria.entries.forEach { o ->
                                 DropdownMenuItem(
-                                    text = { Text(o.label) },
+                                    text = { Text(stringResource(o.label)) },
                                     onClick = {
                                         viewModel.updateOrden(o)
                                         showSortMenu = false
@@ -176,6 +208,7 @@ fun HomeScreen(
                             }
                         }
                     }
+                  }
                 }
             )
         },
@@ -209,7 +242,8 @@ fun HomeScreen(
             // --- Lista vacía (sin materias reales, no solo sin filtro) ---
             materias.isEmpty() && searchQuery.isBlank() && filtroSemestre == null && !verArchivadas && !hayArchivadas -> {
                 EmptyState(
-                    icon = Icons.Default.School,
+                    icon = null,
+                    mood = AxoMood.TRANQUI,
                     title = stringResource(R.string.home_welcome),
                     hint = stringResource(R.string.home_welcome_hint),
                     modifier = Modifier
@@ -312,16 +346,44 @@ fun HomeScreen(
                         }
                     }
 
+                    // ── Versión nueva en GitHub ───────────────────
+                    update?.let { u ->
+                        item(key = "update") {
+                            AvisoCard(
+                                mood = AxoMood.FELIZ,
+                                tone = Tone.NONE,
+                                title = stringResource(R.string.update_title, u.version),
+                                text = stringResource(R.string.update_desc),
+                                action = stringResource(R.string.update_download),
+                                onAction = {
+                                    context.startActivity(
+                                        android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(u.apkUrl))
+                                    )
+                                },
+                                onDismiss = viewModel::descartarUpdate
+                            )
+                        }
+                    }
+
+                    // ── Sin carpeta de respaldo ───────────────────
+                    if (faltaRespaldo) {
+                        item(key = "respaldo") {
+                            AvisoCard(
+                                mood = AxoMood.PREOCUPADO,
+                                tone = Tone.WARN,
+                                title = stringResource(R.string.backup_nag_title),
+                                text = stringResource(R.string.backup_nag_desc),
+                                action = stringResource(R.string.backup_folder_choose),
+                                onAction = { folderLauncher.launch(null) },
+                                onDismiss = viewModel::descartarRespaldo
+                            )
+                        }
+                    }
+
                     // ── Todo cerrado ──────────────────────────────
                     if (materias.isEmpty() && !verArchivadas && hayArchivadas && searchQuery.isBlank()) {
                         item {
-                            Text(
-                                text = stringResource(R.string.home_all_closed),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.fillMaxWidth().padding(24.dp),
-                                textAlign = TextAlign.Center
-                            )
+                            EmptyState(icon = null, mood = AxoMood.FELIZ, title = stringResource(R.string.home_all_closed))
                         }
                     }
 
@@ -340,15 +402,7 @@ fun HomeScreen(
                     // ── Resultado de búsqueda vacío ───────────────
                     if (materias.isEmpty() && (searchQuery.isNotBlank() || filtroSemestre != null || verArchivadas)) {
                         item {
-                            Text(
-                                text = stringResource(R.string.home_no_results),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(32.dp),
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            EmptyState(icon = null, mood = AxoMood.PREOCUPADO, title = stringResource(R.string.home_no_results))
                         }
                     }
 
@@ -372,7 +426,13 @@ fun HomeScreen(
                                 )
                             ) { it / 3 } + fadeIn(tween(400))
                         ) {
-                            SwipeToDeleteWrapper(
+                            // Mantener pulsado → menú. Antes era swipe y se borraban materias sin querer.
+                            MateriaCard(
+                                materia = materia,
+                                onClick = { onNavigateToMateria(materia.id) },
+                                onCerrarSemestre = if (verArchivadas) null else {
+                                    { viewModel.setSemestreArchivado(materia.periodo, archivado = true) }
+                                },
                                 onDelete = {
                                     viewModel.softDelete(materia.id)
                                     scope.launch {
@@ -384,12 +444,7 @@ fun HomeScreen(
                                         if (r == SnackbarResult.ActionPerformed) viewModel.undoDelete(materia.id)
                                     }
                                 }
-                            ) {
-                                MateriaCard(
-                                    materia = materia,
-                                    onClick = { onNavigateToMateria(materia.id) }
-                                )
-                            }
+                            )
                         }
                     }
                 }
@@ -400,6 +455,32 @@ fun HomeScreen(
 
 // ── Componentes internos ──────────────────────────────────────
 
+/** Aviso con Axo, fondo del tono, una acción y "Ahora no" (versión nueva, respaldo…). */
+@Composable
+private fun AvisoCard(
+    mood: AxoMood,
+    tone: Tone,
+    title: String,
+    text: String,
+    action: String,
+    onAction: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    SurfaceCard(container = tone.container()) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Axo(mood, size = 56.dp)
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tone.onContainer())
+                Text(text, style = MaterialTheme.typography.bodySmall, color = tone.onContainer())
+            }
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.update_later), color = tone.onContainer()) }
+            Button(onClick = onAction) { Text(action) }
+        }
+    }
+}
+
 /** Promedio general como protagonista: sin tarjeta, número grande y una línea de contexto. */
 @Composable
 private fun SummaryHero(
@@ -409,35 +490,44 @@ private fun SummaryHero(
     sinNotas: Int,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp)) {
-        Text(
-            text = stringResource(R.string.home_overall_average),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                text = promedioGeneral?.let { "%.2f".format(it) } ?: "--",
-                style = gradeStyle(64)
-            )
-            Text(
-                text = " / ${escalaMax.toInt()}",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 10.dp)
+    HeroCard(modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.home_overall_average),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.White.copy(alpha = 0.85f)
+                )
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = promedioGeneral?.let { "%.2f".format(it) } ?: "--",
+                        style = gradeStyle(56),
+                        color = Color.White
+                    )
+                    Text(
+                        text = " / ${escalaMax.toInputString()}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White.copy(alpha = 0.8f),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+            }
+            Axo(
+                when {
+                    promedioGeneral == null -> AxoMood.TRANQUI
+                    enRiesgo > 0 -> AxoMood.PREOCUPADO
+                    else -> AxoMood.FELIZ
+                },
+                size = 84.dp
             )
         }
-        Spacer(Modifier.height(4.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (enRiesgo > 0) StatusLabel(stringResource(R.string.home_n_at_risk, enRiesgo), Tone.BAD)
-            else StatusLabel(stringResource(R.string.home_all_good), Tone.OK)
-            if (sinNotas > 0) {
-                Text(
-                    text = stringResource(R.string.home_n_pending, sinNotas),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            HeroPill(
+                if (enRiesgo > 0) stringResource(R.string.home_n_at_risk, enRiesgo)
+                else stringResource(R.string.home_all_good)
+            )
+            if (sinNotas > 0) HeroPill(stringResource(R.string.home_n_pending, sinNotas))
         }
     }
 }
@@ -447,8 +537,13 @@ private fun SummaryHero(
 private fun MateriaCard(
     materia: Materia,
     onClick: () -> Unit,
+    onDelete: () -> Unit,
+    onCerrarSemestre: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
+    var menu by remember { mutableStateOf(false) }
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+  Box {
     val progreso = materia.porcentajeEvaluado.coerceIn(0f, 1f)
     val tone = when {
         materia.promedio == null -> Tone.NONE
@@ -462,8 +557,18 @@ private fun MateriaCard(
         else -> stringResource(R.string.home_status_at_risk)
     }.lowercase().replaceFirstChar { it.titlecase() }
 
-    SurfaceCard(modifier = modifier, onClick = onClick) {
+    SurfaceCard(
+        modifier = modifier,
+        onClick = onClick,
+        onLongClick = {
+            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+            menu = true
+        },
+        onLongClickLabel = stringResource(R.string.home_card_options)
+    ) {
         Row(verticalAlignment = Alignment.Top) {
+            MateriaAvatar(materia.nombre, materia.id)
+            Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = materia.nombre,
@@ -493,7 +598,7 @@ private fun MateriaCard(
                     color = if (tone == Tone.NONE) MaterialTheme.colorScheme.outline else tone.color()
                 )
                 Text(
-                    text = "/ ${materia.escalaMax.toInt()}",
+                    text = "/ ${materia.escalaMax.toInputString()}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -505,16 +610,16 @@ private fun MateriaCard(
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(4.dp)
+                .height(6.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
         ) {
             Box(
                 Modifier
                     .fillMaxWidth(progreso)
-                    .height(4.dp)
+                    .height(6.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary)
+                    .background(materiaColor(materia.id))
             )
         }
 
@@ -527,11 +632,31 @@ private fun MateriaCard(
         ) {
             StatusLabel(statusText, tone)
             Text(
-                text = stringResource(R.string.home_evaluated_pct, (progreso * 100).toInt()),
+                text = stringResource(R.string.home_evaluated_pct, progreso.pctText()),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
+    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.home_card_open)) },
+            leadingIcon = { Icon(Icons.AutoMirrored.Filled.OpenInNew, null) },
+            onClick = { menu = false; onClick() }
+        )
+        if (onCerrarSemestre != null && materia.periodo.isNotBlank()) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.home_close_semester, materia.periodo)) },
+                leadingIcon = { Icon(Icons.Default.Archive, null) },
+                onClick = { menu = false; onCerrarSemestre() }
+            )
+        }
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.delete_subject), color = MaterialTheme.colorScheme.error) },
+            leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
+            onClick = { menu = false; onDelete() }
+        )
+    }
+  }
 }
 

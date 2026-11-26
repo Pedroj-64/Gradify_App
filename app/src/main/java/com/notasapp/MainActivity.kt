@@ -35,6 +35,20 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
+    companion object {
+        /** Extra con el id de una materia para abrir su detalle (notificaciones y widgets). */
+        const val EXTRA_OPEN_MATERIA = "open_materia"
+    }
+
+    /** Materia pedida por la notificación o el widget que abrió la app; null = ninguna. */
+    private var abrirMateria by androidx.compose.runtime.mutableStateOf<Long?>(null)
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        abrirMateria = intent.getLongExtra(EXTRA_OPEN_MATERIA, -1).takeIf { it > 0 }
+    }
+
+
     @Inject
     lateinit var userPrefsRepository: UserPreferencesRepository
 
@@ -42,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     private var startDestination by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (savedInstanceState == null) abrirMateria = intent.getLongExtra(EXTRA_OPEN_MATERIA, -1).takeIf { it > 0 }
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -73,7 +88,11 @@ class MainActivity : AppCompatActivity() {
                     // Sólo se compone el NavGraph cuando ya conocemos el destino
                     val dest = startDestination
                     if (dest != null) {
-                        NotasNavGraph(startDestination = dest)
+                        NotasNavGraph(
+                            startDestination = dest,
+                            abrirMateria = abrirMateria.takeIf { dest == Screen.Main.route },
+                            onMateriaAbierta = { abrirMateria = null }
+                        )
                     }
                 }
             }

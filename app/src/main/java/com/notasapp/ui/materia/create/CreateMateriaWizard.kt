@@ -1,5 +1,15 @@
 package com.notasapp.ui.materia.create
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ExposedDropdownMenuBox
+import com.notasapp.domain.model.Materia
+import com.notasapp.ui.components.MateriaAvatar
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.material3.AssistChip
 import com.notasapp.domain.model.ScaleTemplate
 import com.notasapp.R
 import androidx.compose.ui.res.stringResource
@@ -38,7 +48,9 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
+import androidx.compose.material3.OutlinedButton
+import com.notasapp.ui.components.DecimalField
+import com.notasapp.ui.components.toInputString
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -79,6 +91,12 @@ fun CreateMateriaWizard(
     viewModel: CreateMateriaViewModel = hiltViewModel()
 ) {
     val state by viewModel.wizardState.collectAsStateWithLifecycle()
+    val otras by viewModel.otrasMaterias.collectAsStateWithLifecycle()
+    val porDefecto = listOf(
+        stringResource(R.string.cw_default_c1), stringResource(R.string.cw_default_c2), stringResource(R.string.cw_default_c3)
+    )
+    LaunchedEffect(Unit) { viewModel.ponerComponentesPorDefecto(porDefecto) }
+    val nombreNuevo = stringResource(R.string.cw_component_n, state.componentes.size + 1)
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val ctx = LocalContext.current
@@ -154,11 +172,15 @@ fun CreateMateriaWizard(
                     3 -> Step3Componentes(
                         state = state,
                         isSaving = saveState is SaveState.Loading,
-                        onAddComponente = viewModel::addComponente,
+                        onAddComponente = { viewModel.addComponente(nombreNuevo) },
                         onRemoveComponente = viewModel::removeComponente,
                         onNombreChange = viewModel::updateComponenteNombre,
                         onPorcentajeChange = viewModel::updateComponentePorcentaje,
-                        onGuardar = viewModel::guardarMateria
+                        onRepartir = viewModel::repartirRestante,
+                        otras = otras,
+                        onCopiar = viewModel::copiarEstructura,
+                        onGuardarOtra = { viewModel.guardarMateria(otra = true) },
+                        onGuardar = { viewModel.guardarMateria() }
                     )
                 }
             }
@@ -262,6 +284,7 @@ private fun Step1BasicInfo(
 
 // ── Paso 2: Escala ─────────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Step2Escala(
     state: WizardState,
@@ -288,29 +311,42 @@ private fun Step2Escala(
             style = MaterialTheme.typography.bodyLarge
         )
 
-        // Chips de selección de tipo de escala
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ScaleTemplate.entries.forEach { t ->
-                FilterChip(
-                    colors = gradifyChipColors(),
-                    selected = state.escalaMin == t.min && state.escalaMax == t.max && state.notaAprobacion == t.aprobacion,
-                    onClick = { onTemplateChange(t) },
-                    label = { Text(stringResource(t.label)) },
-                    modifier = Modifier.fillMaxWidth()
-                )
+        // País/escala en lista desplegable: antes eran 10 chips que empujaban el campo de
+        // aprobación fuera de la pantalla.
+        var escalaAbierta by remember { mutableStateOf(false) }
+        val actual = ScaleTemplate.entries.firstOrNull {
+            state.escalaMin == it.min && state.escalaMax == it.max && state.notaAprobacion == it.aprobacion
+        } ?: ScaleTemplate.entries.firstOrNull { state.escalaMin == it.min && state.escalaMax == it.max }
+        ExposedDropdownMenuBox(expanded = escalaAbierta, onExpandedChange = { escalaAbierta = it }) {
+            OutlinedTextField(
+                value = actual?.let { stringResource(it.label) } ?: stringResource(R.string.scale_custom),
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(stringResource(R.string.wizard_step2_title)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(escalaAbierta) },
+                modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+            ExposedDropdownMenu(expanded = escalaAbierta, onDismissRequest = { escalaAbierta = false }) {
+                ScaleTemplate.entries.forEach { t ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(t.label)) },
+                        onClick = { onTemplateChange(t); escalaAbierta = false },
+                        leadingIcon = if (t == actual) { { Icon(Icons.Default.Check, null) } } else null
+                    )
+                }
             }
         }
 
-        // Nota mínima de aprobación
-        Text(
-            text = stringResource(R.string.cw_pass, state.notaAprobacion),
-            style = MaterialTheme.typography.titleMedium
-        )
-        Slider(
+        // Nota mínima de aprobación: escrita, la plantilla ya pone el valor típico.
+        DecimalField(
             value = state.notaAprobacion,
             onValueChange = onNotaAprobacionChange,
-            valueRange = state.escalaMin..state.escalaMax,
-            steps = ((state.escalaMax - state.escalaMin) * 10 - 1).toInt().coerceAtLeast(0)
+            label = stringResource(R.string.cw_pass_label),
+            min = state.escalaMin,
+            max = state.escalaMax,
+            suffix = "/ ${state.escalaMax.toInputString()}",
+            imeAction = ImeAction.Done,
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -334,6 +370,10 @@ private fun Step3Componentes(
     onRemoveComponente: (Int) -> Unit,
     onNombreChange: (Int, String) -> Unit,
     onPorcentajeChange: (Int, Float) -> Unit,
+    onRepartir: () -> Unit,
+    otras: List<Materia>,
+    onCopiar: (Materia) -> Unit,
+    onGuardarOtra: () -> Unit,
     onGuardar: () -> Unit
 ) {
     Column(
@@ -353,6 +393,23 @@ private fun Step3Componentes(
             text = stringResource(R.string.wizard_step3_hint),
             style = MaterialTheme.typography.bodyLarge
         )
+
+        // Copiar la estructura de otra materia: 1 toque en vez de reescribir cortes y pesos.
+        if (otras.isNotEmpty()) {
+            Text(stringResource(R.string.cw_copy_from), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.horizontalScroll(rememberScrollState())
+            ) {
+                otras.take(10).forEach { m ->
+                    AssistChip(
+                        onClick = { onCopiar(m) },
+                        label = { Text(m.nombre, maxLines = 1) },
+                        leadingIcon = { MateriaAvatar(m.nombre, m.id, size = 22.dp) }
+                    )
+                }
+            }
+        }
 
         // Lista de componentes
         state.componentes.forEachIndexed { index, componente ->
@@ -394,19 +451,14 @@ private fun Step3Componentes(
                             .padding(top = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Slider(
-                            value = componente.porcentaje,
-                            onValueChange = { onPorcentajeChange(index, it) },
-                            valueRange = 0f..1f,
-                            steps = 99,
+                        DecimalField(
+                            value = componente.porcentaje * 100f,
+                            onValueChange = { onPorcentajeChange(index, it / 100f) },
+                            label = stringResource(R.string.cw_weight_label),
+                            min = 0f,
+                            max = 100f,
+                            suffix = "%",
                             modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = "${componente.porcentajeDisplay}%",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                 }
@@ -420,11 +472,17 @@ private fun Step3Componentes(
             MaterialTheme.colorScheme.error
 
         Text(
-            text = stringResource(if (state.porcentajesValidos) R.string.cw_total_ok else R.string.cw_total_bad, kotlin.math.round(state.sumaPorcentajes * 100).toInt()),
+            text = stringResource(if (state.porcentajesValidos) R.string.cw_total_ok else R.string.cw_total_bad, (Math.round(state.sumaPorcentajes * 10_000.0) / 100.0).toFloat().toInputString()),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = totalColor
         )
+
+        if (!state.porcentajesValidos && state.sumaPorcentajes < 1f) {
+            OutlinedButton(onClick = onRepartir, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.cw_fill_rest))
+            }
+        }
 
         // Botón agregar componente
         TextButton(
@@ -449,5 +507,10 @@ private fun Step3Componentes(
                 Text(stringResource(R.string.btn_guardar_materia))
             }
         }
+        OutlinedButton(
+            onClick = onGuardarOtra,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            enabled = !isSaving && state.porcentajesValidos
+        ) { Text(stringResource(R.string.cw_save_and_next)) }
     }
 }

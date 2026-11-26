@@ -44,9 +44,11 @@ data class Materia(
      */
     val promedio: Float?
         get() {
-            val conNota = componentes.filter { it.aporteAlFinal != null }
-            if (conNota.isEmpty()) return null
-            return conNota.sumOf { it.aporteAlFinal!!.toDouble() }.toFloat()
+            // Rendimiento en lo evaluado (acumulado ÷ peso evaluado). Antes era igual al acumulado,
+            // así que con 4.5 en un corte del 20 % salía "0.90, en riesgo" en vez de "4.50".
+            val peso = porcentajeEvaluado
+            if (peso <= 0f) return null
+            return acumulado / peso
         }
 
     /**
@@ -75,14 +77,13 @@ data class Materia(
             .toFloat()
 
     /**
-     * Porcentaje del curso que ya fue evaluado (0.0 – 1.0).
-     * Considera un componente "evaluado" si tiene al menos una sub-nota ingresada.
+     * Porcentaje del curso que ya fue evaluado (0.0 – 1.0): peso real de las notas puestas.
+     * Un corte con 1 de sus 2 notas cuenta a medias, no entero.
      */
     val porcentajeEvaluado: Float
-        get() = componentes
-            .filter { it.promedio != null }
-            .sumOf { it.porcentaje.toDouble() }
-            .toFloat()
+        get() = componentes.sumOf { c ->
+            c.porcentaje.toDouble() * c.subNotas.filter { it.ingresada }.sumOf { it.porcentajeDelComponente.toDouble() }
+        }.toFloat()
 
     /**
      * Acumulado redondeado a 2 decimales, para la UI.
@@ -140,10 +141,10 @@ data class Materia(
     val tieneMeta: Boolean get() = notaMeta != null
 
     /**
-     * True si el promedio actual ya alcanzó o superó la meta definida.
+     * True si los puntos ya acumulados alcanzan la meta (pase lo que pase en lo que falta).
      */
     val metaAlcanzada: Boolean
-        get() = notaMeta != null && (promedio ?: 0f) >= notaMeta
+        get() = notaMeta != null && acumulado >= notaMeta   // asegurada: ya no puede bajar
 
     /**
      * Progreso hacia la meta (0.0 – 1.0).

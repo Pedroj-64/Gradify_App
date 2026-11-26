@@ -1,5 +1,8 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package com.notasapp.ui.components
 
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.TextButton
@@ -77,6 +80,23 @@ fun Tone.color(): Color = when (this) {
     Tone.NONE -> MaterialTheme.colorScheme.onSurfaceVariant
 }
 
+/** Fondo suave del tono, para tarjetas de resultado y avisos. */
+@Composable
+fun Tone.container(): Color = when (this) {
+    Tone.OK -> MaterialTheme.colorScheme.secondaryContainer
+    Tone.WARN -> MaterialTheme.colorScheme.tertiaryContainer
+    Tone.BAD -> MaterialTheme.colorScheme.errorContainer
+    Tone.NONE -> MaterialTheme.colorScheme.primaryContainer
+}
+
+@Composable
+fun Tone.onContainer(): Color = when (this) {
+    Tone.OK -> MaterialTheme.colorScheme.onSecondaryContainer
+    Tone.WARN -> MaterialTheme.colorScheme.onTertiaryContainer
+    Tone.BAD -> MaterialTheme.colorScheme.onErrorContainer
+    Tone.NONE -> MaterialTheme.colorScheme.onPrimaryContainer
+}
+
 /** Cifras de notas: negrita, anchos tabulares para que no "bailen" al cambiar. */
 @Composable
 fun gradeStyle(size: Int, weight: FontWeight = FontWeight.Bold): TextStyle =
@@ -140,6 +160,8 @@ fun SurfaceCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     container: Color = MaterialTheme.colorScheme.surfaceContainerLow,
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val shape = RoundedCornerShape(22.dp)
@@ -148,42 +170,124 @@ fun SurfaceCard(
             .fillMaxWidth()
             .clip(shape)
             .background(container)
-            .let { if (onClick != null) it.clickable(role = Role.Button, onClick = onClick) else it }
+            .let {
+                when {
+                    onLongClick != null -> it.combinedClickable(
+                        role = Role.Button,
+                        onLongClickLabel = onLongClickLabel,
+                        onLongClick = onLongClick,
+                        onClick = onClick ?: {}
+                    )
+                    onClick != null -> it.clickable(role = Role.Button, onClick = onClick)
+                    else -> it
+                }
+            }
             .padding(18.dp),
         content = content
     )
 }
 
-/** Rótulo de sección en minúsculas y sobrio (nada de MAYÚSCULAS ni color de marca). */
+/** Rótulo de sección en color de marca, con una barrita de acento a la izquierda. */
 @Composable
 fun SectionLabel(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text = text,
-        modifier = modifier.padding(start = 4.dp, top = 8.dp),
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
+    Row(modifier = modifier.padding(start = 4.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(width = 4.dp, height = 16.dp).clip(CircleShape).background(BrandGradient))
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
 }
 
-/** Punto + texto de estado. Sin fondo de píldora. */
+/** Píldora de estado: fondo suave del tono, punto y texto. */
 @Composable
 fun StatusLabel(text: String, tone: Tone, modifier: Modifier = Modifier) {
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(tone.container())
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Box(
             Modifier
-                .size(8.dp)
+                .size(7.dp)
                 .clip(CircleShape)
-                .background(tone.color())
+                .background(tone.onContainer())
         )
         Spacer(Modifier.width(6.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
-            color = tone.color()
+            color = tone.onContainer()
         )
     }
+}
+
+// ── Identidad: degradado de marca y color por materia ──────────────────────
+
+/** Azul Gradify → violeta → rosa Axo. Fijo en claro, oscuro y Material You: es la firma de la app. */
+val BrandGradient = androidx.compose.ui.graphics.Brush.linearGradient(
+    listOf(Color(0xFF2B59C3), Color(0xFF6F4BD1), Color(0xFFC9508A))
+)
+
+/**
+ * Paleta de materias: tonos medios que llevan texto blanco con contraste AA y se ven en claro y oscuro.
+ * ponytail: se elige por id (estable, sin migración); si el usuario quiere elegirlo, columna `colorIndex` en Room.
+ */
+val MateriaPalette = listOf(
+    Color(0xFF2B59C3), Color(0xFF6F4BD1), Color(0xFFB8407A), Color(0xFF0F7C7C),
+    Color(0xFFC0570C), Color(0xFF2E7D32), Color(0xFF3949AB), Color(0xFF8E3FA8)
+)
+
+fun materiaColor(id: Long): Color = MateriaPalette[(id % MateriaPalette.size).toInt().let { if (it < 0) -it else it }]
+
+/** Círculo con la inicial de la materia en su color. */
+@Composable
+fun MateriaAvatar(nombre: String, id: Long, modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 44.dp) {
+    Box(
+        modifier = modifier.size(size).clip(CircleShape).background(materiaColor(id)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = nombre.trim().firstOrNull()?.uppercase() ?: "·",
+            color = Color.White,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+/** Tarjeta protagonista con el degradado de marca y texto blanco. */
+@Composable
+fun HeroCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(BrandGradient)
+            .padding(22.dp),
+        content = content
+    )
+}
+
+/** Píldora translúcida para usar sobre [HeroCard]. */
+@Composable
+fun HeroPill(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        modifier = modifier
+            .clip(CircleShape)
+            .background(Color.White.copy(alpha = 0.2f))
+            .padding(horizontal = 12.dp, vertical = 5.dp),
+        color = Color.White,
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.SemiBold
+    )
 }
 
 /** Separador de pares etiqueta / valor en una sola línea. */
@@ -243,20 +347,42 @@ fun gradifyChipColors() = androidx.compose.material3.FilterChipDefaults.filterCh
     selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer
 )
 
+// ── Axo, la mascota ─────────────────────────────────────────────────────────
+
+/** Estados de ánimo de Axo (dibujos en `res/drawable/axo_*.xml`, generados por `docs/assets/axo/gen.py`). */
+enum class AxoMood(@androidx.annotation.DrawableRes val res: Int) {
+    FELIZ(R.drawable.axo_feliz),
+    TRANQUI(R.drawable.axo_tranqui),
+    PREOCUPADO(R.drawable.axo_preocupado),
+    ESTUDIANDO(R.drawable.axo_estudiando)
+}
+
+/** Axo decorativo: el texto de al lado ya dice lo importante, así que TalkBack lo ignora. */
+@Composable
+fun Axo(mood: AxoMood, modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 72.dp) {
+    androidx.compose.foundation.Image(
+        painter = androidx.compose.ui.res.painterResource(mood.res),
+        contentDescription = null,
+        modifier = modifier.size(size)
+    )
+}
+
 // ── Estados y contenedores compartidos ──────────────────────────────────────
 
 /** Estado vacío: icono tonal, título, pista y acción opcional. */
 @Composable
 fun EmptyState(
-    icon: ImageVector,
+    icon: ImageVector?,
     title: String,
     hint: String? = null,
     modifier: Modifier = Modifier,
+    mood: AxoMood? = null,
     action: (@Composable () -> Unit)? = null
 ) {
     Box(modifier = modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 48.dp), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(56.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (mood != null) Axo(mood, size = 112.dp)
+            else if (icon != null) Icon(icon, contentDescription = null, modifier = Modifier.size(56.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
             if (hint != null) {
                 Text(hint, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
@@ -285,13 +411,21 @@ fun ErrorBanner(message: String, modifier: Modifier = Modifier, onRetry: (() -> 
 
 /** Resultado de un cálculo: icono con el color del estado, título y detalle. */
 @Composable
-fun ResultCard(icon: ImageVector, title: String, subtitle: String, tone: Tone, modifier: Modifier = Modifier) {
-    SurfaceCard(modifier = modifier) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
-            Icon(icon, contentDescription = null, tint = tone.color(), modifier = Modifier.size(28.dp))
+fun ResultCard(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    tone: Tone,
+    modifier: Modifier = Modifier,
+    mood: AxoMood? = null
+) {
+    SurfaceCard(modifier = modifier, container = tone.container()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (mood != null) Axo(mood, size = 56.dp)
+            else Icon(icon, contentDescription = null, tint = tone.onContainer(), modifier = Modifier.size(28.dp))
             Column {
-                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = tone.onContainer())
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = tone.onContainer().copy(alpha = 0.85f))
             }
         }
     }

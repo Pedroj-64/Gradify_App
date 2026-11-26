@@ -1,5 +1,11 @@
 package com.notasapp.ui.materia.detail
 
+import com.notasapp.ui.components.toInputString
+import com.notasapp.ui.components.MateriaAvatar
+import com.notasapp.ui.components.materiaColor
+import com.notasapp.ui.components.pctText
+import com.notasapp.ui.components.Axo
+import com.notasapp.ui.components.AxoMood
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Box
@@ -107,16 +113,26 @@ internal fun PromedioResumen(
     }
     val estado = when {
         materia.promedio == null -> stringResource(R.string.home_not_evaluated)
-        materia.aprobado -> stringResource(R.string.estado_aprobado)
+        materia.yaAprobo -> stringResource(R.string.estado_aprobado)
+        materia.aprobado -> stringResource(R.string.home_status_passing)
         else -> stringResource(R.string.estado_en_riesgo)
     }.lowercase().replaceFirstChar { it.titlecase() }
 
-    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 6.dp)) {
-        Text(
-            text = stringResource(R.string.promedio_actual),
+    // Cabecera teñida con el color de la materia: cada materia tiene su propia cara.
+    val acento = materiaColor(materia.id)
+    SurfaceCard(
+        modifier = modifier,
+        container = androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.surfaceContainerLow, acento, 0.14f)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            MateriaAvatar(materia.nombre, materia.id, size = 36.dp)
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = stringResource(R.string.promedio_actual),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        }
         Row(verticalAlignment = Alignment.Bottom) {
             AnimatedText(
                 text = materia.promedioDisplay,
@@ -124,7 +140,7 @@ internal fun PromedioResumen(
                 color = if (tone == Tone.NONE) MaterialTheme.colorScheme.outline else tone.color()
             )
             Text(
-                text = " / ${materia.escalaMax.toInt()}",
+                text = " / ${materia.escalaMax.toInputString()}",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 10.dp)
@@ -134,7 +150,7 @@ internal fun PromedioResumen(
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             StatusLabel(estado, tone)
             Text(
-                text = stringResource(R.string.dp_min, materia.notaAprobacion.toString()),
+                text = stringResource(R.string.dp_min, materia.notaAprobacion.toInputString()),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -152,7 +168,7 @@ internal fun PromedioResumen(
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
-                text = stringResource(R.string.dp_evaluated, kotlin.math.round(materia.porcentajeEvaluado * 100).toInt()),
+                text = stringResource(R.string.dp_evaluated, materia.porcentajeEvaluado.pctText()),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -165,13 +181,23 @@ internal fun PromedioResumen(
 
         // ── Un solo recuadro de lectura: qué necesito + ánimo ─────
         val necesita = materia.notaNecesariaParaAprobar
-        val mensaje = getMensajeMotivacional(materia)?.second?.let { stringResource(it) }
+        val motivacion = getMensajeMotivacional(materia)
+        val mensaje = motivacion?.second?.let { stringResource(it) }
         val felicitacion = if (materia.yaAprobo && !materia.completa)
             stringResource(R.string.dp_congrats, materia.notaAprobacion.toString(), materia.acumuladoDisplay.toString())
         else null
         if (necesita != null || mensaje != null || felicitacion != null) {
             Spacer(Modifier.height(18.dp))
+            val mood = when {
+                felicitacion != null -> AxoMood.FELIZ
+                motivacion != null -> motivacion.first
+                else -> AxoMood.ESTUDIANDO
+            }
             SurfaceCard(modifier = Modifier.animateContentSize()) {
+              Row(verticalAlignment = Alignment.CenterVertically) {
+                Axo(mood, size = 56.dp)
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
                 if (necesita != null) {
                     Text(
                         text = "≈ ${"%.2f".format(necesita)}",
@@ -189,6 +215,8 @@ internal fun PromedioResumen(
                     if (necesita != null) Spacer(Modifier.height(10.dp))
                     Text(text = texto, style = MaterialTheme.typography.bodyMedium)
                 }
+                }
+              }
             }
         }
     }
@@ -226,10 +254,10 @@ private fun GradeTrack(fill: Float, mark: Float, tone: Tone) {
 }
 
 /**
- * Devuelve un par (emoji, mensaje) motivacional según el progreso del estudiante.
+ * Devuelve un par (cara de Axo, mensaje) motivacional según el progreso del estudiante.
  * Null si no hay notas ingresadas aún.
  */
-internal fun getMensajeMotivacional(materia: Materia): Pair<String, Int>? {
+internal fun getMensajeMotivacional(materia: Materia): Pair<AxoMood, Int>? {
     val pct = materia.porcentajeEvaluado
 
     // Sin notas todavía
@@ -238,9 +266,9 @@ internal fun getMensajeMotivacional(materia: Materia): Pair<String, Int>? {
     // Ya completó todo
     if (materia.completa) {
         return if (materia.aprobado) {
-            "🏆" to R.string.mm_01
+            AxoMood.FELIZ to R.string.mm_01
         } else {
-            "📋" to R.string.mm_02
+            AxoMood.ESTUDIANDO to R.string.mm_02
         }
     }
 
@@ -255,38 +283,38 @@ internal fun getMensajeMotivacional(materia: Materia): Pair<String, Int>? {
         // Primer corte (0-25%)
         pct <= 0.25f -> when {
             rendimiento >= aprobacionRatio * 1.2f ->
-                "🚀" to R.string.mm_03
+                AxoMood.FELIZ to R.string.mm_03
             rendimiento >= aprobacionRatio ->
-                "💪" to R.string.mm_04
+                AxoMood.TRANQUI to R.string.mm_04
             else ->
-                "📚" to R.string.mm_05
+                AxoMood.ESTUDIANDO to R.string.mm_05
         }
         // Segundo corte (25-50%)
         pct <= 0.50f -> when {
             rendimiento >= aprobacionRatio * 1.2f ->
-                "⭐" to R.string.mm_06
+                AxoMood.FELIZ to R.string.mm_06
             rendimiento >= aprobacionRatio ->
-                "📈" to R.string.mm_07
+                AxoMood.TRANQUI to R.string.mm_07
             else ->
-                "🔥" to R.string.mm_08
+                AxoMood.PREOCUPADO to R.string.mm_08
         }
         // Tercer corte (50-75%)
         pct <= 0.75f -> when {
             rendimiento >= aprobacionRatio * 1.2f ->
-                "🌟" to R.string.mm_09
+                AxoMood.FELIZ to R.string.mm_09
             rendimiento >= aprobacionRatio ->
-                "✨" to R.string.mm_10
+                AxoMood.TRANQUI to R.string.mm_10
             else ->
-                "💡" to R.string.mm_11
+                AxoMood.PREOCUPADO to R.string.mm_11
         }
         // Recta final (75-99%)
         else -> when {
             rendimiento >= aprobacionRatio * 1.2f ->
-                "🎯" to R.string.mm_12
+                AxoMood.FELIZ to R.string.mm_12
             rendimiento >= aprobacionRatio ->
-                "🏁" to R.string.mm_13
+                AxoMood.TRANQUI to R.string.mm_13
             else ->
-                "⚡" to R.string.mm_14
+                AxoMood.PREOCUPADO to R.string.mm_14
         }
     }
 }

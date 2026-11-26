@@ -46,6 +46,7 @@ data class SettingsUiState(
     val configuracionNota: ConfiguracionNota = ConfiguracionNota(),
     val geminiApiKey:     String  = "",
     val dynamicColor:     Boolean = false,
+    val updateCheck:      Boolean = true,
     val backupFolder:     String? = null,
     val lastBackupMs:     Long?   = null
 )
@@ -78,6 +79,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             userPrefsRepository.useDynamicColor.collect { on ->
                 _uiState.update { it.copy(dynamicColor = on) }
+            }
+        }
+        viewModelScope.launch {
+            userPrefsRepository.updateCheck.collect { on ->
+                _uiState.update { it.copy(updateCheck = on) }
             }
         }
         viewModelScope.launch {
@@ -187,6 +193,10 @@ class SettingsViewModel @Inject constructor(
     fun respaldarAhora() {
         WorkManager.getInstance(context).enqueue(OneTimeWorkRequestBuilder<AutoBackupWorker>().build())
         _uiState.update { it.copy(successMessage = context.getString(R.string.backup_started)) }
+    }
+
+    fun setUpdateCheck(on: Boolean) {
+        viewModelScope.launch { userPrefsRepository.setUpdateCheck(on) }
     }
 
     fun setDynamicColor(on: Boolean) {

@@ -1,5 +1,7 @@
 package com.notasapp.ui.calendar
 
+import com.notasapp.utils.getDisplayNameRes
+import com.notasapp.ui.components.MateriaPalette
 import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.minimumInteractiveComponentSize
 import com.notasapp.ui.components.GradifyDialog
@@ -506,7 +508,8 @@ private fun EventCard(
             )
             Text(
                 text = buildString {
-                    append(event.tipoEvento.name.lowercase().replaceFirstChar { it.uppercase() })
+                    append(event.tipoEvento.emoji).append(' ')
+                    append(androidx.compose.ui.res.stringResource(event.tipoEvento.getDisplayNameRes()))
                     append(" · ")
                     append(event.horaDisplay)
                     if (event.materiaNombre.isNotBlank()) append(" · ${event.materiaNombre}")
@@ -567,8 +570,12 @@ private fun EventCard(
 
 @Composable
 private fun eventTypeColor(tipo: TipoEvento): Color = when (tipo) {
-    TipoEvento.PARCIAL, TipoEvento.FINAL -> MaterialTheme.colorScheme.error
+    // Un color por tipo para distinguirlos de un vistazo en el mes.
+    TipoEvento.PARCIAL -> MaterialTheme.colorScheme.error
+    TipoEvento.FINAL -> MateriaPalette[2]        // rosa Axo
     TipoEvento.QUIZ -> MaterialTheme.colorScheme.tertiary
-    TipoEvento.TAREA, TipoEvento.PROYECTO, TipoEvento.EXPOSICION -> MaterialTheme.colorScheme.primary
+    TipoEvento.TAREA -> MateriaPalette[3]        // turquesa
+    TipoEvento.PROYECTO -> MateriaPalette[1]     // violeta
+    TipoEvento.EXPOSICION -> MateriaPalette[4]   // naranja
     TipoEvento.OTRO -> MaterialTheme.colorScheme.outline
 }

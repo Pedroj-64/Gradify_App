@@ -64,13 +64,6 @@ data class Componente(
                 .toFloat()
         }
 
-    /**
-     * Texto de progreso del componente: «2 de 4 evaluados».
-     */
-    val progresoDisplay: String
-        get() {
-            val total = subNotas.size
-            val ingresados = subNotas.count { it.ingresada }
-            return "$ingresados de $total evaluado${if (total != 1) "s" else ""}"
-        }
+    /** Notas puestas de este componente (el texto «2 de 4 evaluadas» lo arma la UI, traducido). */
+    val ingresados: Int get() = subNotas.count { it.ingresada }
 }

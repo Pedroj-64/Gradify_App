@@ -1,5 +1,7 @@
 package com.notasapp.ui.onboarding
 
+import com.notasapp.ui.components.Axo
+import com.notasapp.ui.components.AxoMood
 import com.notasapp.R
 import androidx.compose.ui.res.stringResource
 import androidx.annotation.StringRes
@@ -25,11 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.CloudSync
-import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -44,7 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -55,7 +51,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
  * Datos de cada página del onboarding.
  */
 private data class OnboardingPage(
-    val icon: ImageVector,
+    val mood: AxoMood,
     @StringRes val title: Int,
     @StringRes val description: Int,
     @StringRes val highlight: Int
@@ -63,25 +59,25 @@ private data class OnboardingPage(
 
 private val pages = listOf(
     OnboardingPage(
-        icon = Icons.Default.School,
+        mood = AxoMood.FELIZ,
         title = R.string.ob1_title,
         description = R.string.ob1_desc,
         highlight = R.string.ob1_highlight
     ),
     OnboardingPage(
-        icon = Icons.Default.BarChart,
+        mood = AxoMood.ESTUDIANDO,
         title = R.string.ob2_title,
         description = R.string.ob2_desc,
         highlight = R.string.ob2_highlight
     ),
     OnboardingPage(
-        icon = Icons.Default.CalendarMonth,
+        mood = AxoMood.PREOCUPADO,
         title = R.string.ob3_title,
         description = R.string.ob3_desc,
         highlight = R.string.ob3_highlight
     ),
     OnboardingPage(
-        icon = Icons.Default.CloudSync,
+        mood = AxoMood.TRANQUI,
         title = R.string.ob4_title,
         description = R.string.ob4_desc,
         highlight = R.string.ob4_highlight
@@ -154,21 +150,8 @@ fun OnboardingScreen(
                 horizontalAlignment = Alignment.Start,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Icono grande
-                Box(
-                    modifier = Modifier
-                        .size(96.dp)
-                        .clip(RoundedCornerShape(30.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = p.icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
+                // Axo, la mascota, con una cara distinta en cada paso
+                Axo(p.mood, size = 136.dp)
 
                 Spacer(Modifier.height(36.dp))
 

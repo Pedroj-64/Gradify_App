@@ -1,5 +1,6 @@
 package com.notasapp.ui.calendar
 
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.minimumInteractiveComponentSize
 import com.notasapp.ui.components.GradifyDialog
@@ -198,59 +199,33 @@ internal fun EventFormDialog(
                     }
                 }
 
-                // Fecha — botón que muestra el valor actual
-                OutlinedButton(
-                    onClick = {
-                        // Simple: usar días +/- para navegar
-                        // En una implementación completa usarías un DatePicker
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.Event, null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        formState.fecha.let {
-                            "${it.dayOfMonth}/${it.monthValue}/${it.year}"
-                        }
-                    )
-                }
-
-                // Navegación simple de fecha
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
+                // Fecha y hora con los selectores nativos (idioma y 12/24 h del teléfono).
+                // Antes eran botones ±1 día / ±1 h: 21 toques para un parcial en 3 semanas y sin minutos.
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     OutlinedButton(
-                        onClick = { onUpdateFecha(formState.fecha.minusDays(1)) }
-                    ) { Text(stringResource(R.string.calendar_prev_day)) }
-                    OutlinedButton(
-                        onClick = { onUpdateFecha(LocalDate.now()) }
-                    ) { Text(stringResource(R.string.calendar_today)) }
-                    OutlinedButton(
-                        onClick = { onUpdateFecha(formState.fecha.plusDays(1)) }
-                    ) { Text(stringResource(R.string.calendar_next_day)) }
-                }
-
-                // Hora
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(stringResource(R.string.calendar_hour_label), style = MaterialTheme.typography.bodyMedium)
-                    OutlinedButton(
-                        onClick = { onUpdateHora(formState.hora.minusHours(1)) }
-                    ) { Text(stringResource(R.string.calendar_1h_minus)) }
-                    Text(
-                        text = formState.hora.let {
-                            "%02d:%02d".format(it.hour, it.minute)
+                        onClick = {
+                            val f = formState.fecha
+                            android.app.DatePickerDialog(context, { _, y, m, d -> onUpdateFecha(LocalDate.of(y, m + 1, d)) },
+                                f.year, f.monthValue - 1, f.dayOfMonth).show()
                         },
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                        modifier = Modifier.weight(1.4f)
+                    ) {
+                        Icon(Icons.Default.Event, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(formState.fecha.format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)))
+                    }
                     OutlinedButton(
-                        onClick = { onUpdateHora(formState.hora.plusHours(1)) }
-                    ) { Text(stringResource(R.string.calendar_1h_plus)) }
+                        onClick = {
+                            val h = formState.hora
+                            android.app.TimePickerDialog(context, { _, hh, mm -> onUpdateHora(java.time.LocalTime.of(hh, mm)) },
+                                h.hour, h.minute, android.text.format.DateFormat.is24HourFormat(context)).show()
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.Schedule, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(formState.hora.format(java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)))
+                    }
                 }
 
                 // Recordatorio

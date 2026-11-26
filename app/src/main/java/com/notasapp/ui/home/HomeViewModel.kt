@@ -1,5 +1,8 @@
 package com.notasapp.ui.home
 
+import com.notasapp.data.local.UserPreferencesRepository
+import com.notasapp.data.remote.UpdateChecker
+import kotlinx.coroutines.flow.first
 import androidx.lifecycle.SavedStateHandle
 import com.notasapp.ui.savedFlow
 import com.notasapp.ui.UiText
@@ -29,11 +32,11 @@ import javax.inject.Inject
 /**
  * Orden de listado para materias en Home.
  */
-enum class OrdenMateria(val label: String) {
-    NOMBRE("Nombre"),
-    PROMEDIO_ASC("Promedio ↑"),
-    PROMEDIO_DESC("Promedio ↓"),
-    PERIODO("Semestre")
+enum class OrdenMateria(@androidx.annotation.StringRes val label: Int) {
+    NOMBRE(R.string.sort_name),
+    PROMEDIO_ASC(R.string.sort_avg_asc),
+    PROMEDIO_DESC(R.string.sort_avg_desc),
+    PERIODO(R.string.sort_period)
 }
 
 /**
@@ -47,8 +50,47 @@ enum class OrdenMateria(val label: String) {
 class HomeViewModel @Inject constructor(
     private val usuarioDao: UsuarioDao,
     private val materiaRepository: MateriaRepository,
+    private val prefs: UserPreferencesRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    // ── Versión nueva en GitHub ────────────────────────────────
+
+    private val _update = MutableStateFlow<UpdateChecker.Release?>(null)
+    /** Release más nueva que la instalada, o null (sin red, apagado en Ajustes o ya descartada). */
+    val update: StateFlow<UpdateChecker.Release?> = _update.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            if (!prefs.updateCheck.first()) return@launch
+            val nueva = UpdateChecker.nuevaVersion() ?: return@launch
+            if (nueva.version != prefs.updateDismissed.first()) _update.value = nueva
+        }
+    }
+
+    // ── Aviso de respaldo ──────────────────────────────────────
+    // Sin carpeta elegida, desinstalar la app borra todas las notas: se avisa desde 3 materias.
+
+    private val _respaldoDescartado = MutableStateFlow(false)
+
+    fun descartarRespaldo() { _respaldoDescartado.value = true }
+
+    /** Guarda la carpeta elegida y hace el primer respaldo ya (igual que en Ajustes). */
+    fun elegirCarpetaRespaldo(uri: android.net.Uri) {
+        viewModelScope.launch {
+            prefs.setBackupFolderUri(uri.toString())
+            androidx.work.WorkManager.getInstance(context)
+                .enqueue(androidx.work.OneTimeWorkRequestBuilder<com.notasapp.data.worker.AutoBackupWorker>().build())
+        }
+    }
+
+    /** "Ahora no": no volver a ofrecer esta versión. */
+    fun descartarUpdate() {
+        val v = _update.value ?: return
+        _update.value = null
+        viewModelScope.launch { prefs.setUpdateDismissed(v.version) }
+    }
 
     // ── Filtros y búsqueda ─────────────────────────────────────
 
@@ -136,6 +178,11 @@ class HomeViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Materias en riesgo académico (nota proyectada < mínima). */
+    /** true = 3+ materias y ninguna carpeta de respaldo elegida (y no lo descartó en esta sesión). */
+    val faltaRespaldo: StateFlow<Boolean> = combine(prefs.backupFolderUri, todas, _respaldoDescartado) { uri, lista, descartado ->
+        uri == null && !descartado && lista.size >= 3
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     val materiasEnRiesgo: StateFlow<List<Materia>> = allMaterias
         .map { materias -> materias.filter { m -> m.promedio != null && !m.aprobado } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())

@@ -1,5 +1,6 @@
 package com.notasapp.ui.materia.edit
 
+import com.notasapp.domain.util.GradeCalculator
 import com.notasapp.ui.UiText
 import com.notasapp.R
 import androidx.lifecycle.SavedStateHandle
@@ -58,8 +59,7 @@ class EditPorcentajesViewModel @Inject constructor(
      * La suma al 100 % se avisa en la UI y además se exige al guardar ([guardar]).
      */
     fun onPorcentajeChange(componenteId: Long, nuevoPorcentaje: Float) {
-        // Redondear a múltiplos de 1% para evitar imprecisión de punto flotante
-        val snapped = kotlin.math.round(nuevoPorcentaje * 100f) / 100f
+        val snapped = GradeCalculator.snapPct(nuevoPorcentaje.toDouble())
         _uiState.update { state ->
             state.copy(
                 componentes = state.componentes.map { componente ->
@@ -70,6 +70,12 @@ class EditPorcentajesViewModel @Inject constructor(
                 }
             )
         }
+    }
+
+    /** Pone lo que falta para 100 % en los componentes vacíos (o en el último). */
+    fun repartirRestante() = _uiState.update { state ->
+        val nuevos = GradeCalculator.repartirRestante(state.componentes.map { it.porcentaje })
+        state.copy(componentes = state.componentes.zip(nuevos) { c, p -> c.copy(porcentaje = p) })
     }
 
     /**

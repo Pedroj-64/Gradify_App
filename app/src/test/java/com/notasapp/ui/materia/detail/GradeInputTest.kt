@@ -1,5 +1,9 @@
 package com.notasapp.ui.materia.detail
 
+import com.notasapp.ui.components.GRADE_INPUT
+import com.notasapp.ui.components.isGradeInvalid
+import com.notasapp.ui.components.parseGrade
+import com.notasapp.ui.components.toInputString
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -23,6 +27,9 @@ class GradeInputTest {
         assertTrue(isGradeInvalid("5.01", 5f))
         assertTrue(isGradeInvalid("50", 5f))
         assertTrue(isGradeInvalid(".", 5f))        // aún sin dígitos
+        assertFalse(isGradeInvalid("33,33", 100f)) // porcentaje con decimales
+        assertFalse(isGradeInvalid("1", 7f, min = 1f))
+        assertTrue(isGradeInvalid("0.5", 7f, min = 1f)) // bajo el mínimo de la escala
     }
 
     @Test fun `el formato de edicion no inventa ceros ni redondea`() {
@@ -30,5 +37,7 @@ class GradeInputTest {
         org.junit.Assert.assertEquals("3.75", 3.75f.toInputString())
         org.junit.Assert.assertEquals("0", 0f.toInputString())
         org.junit.Assert.assertEquals("4.2", 4.2f.toInputString())
+        org.junit.Assert.assertEquals("30", (0.3f * 100f).toInputString())   // ruido de Float
+        org.junit.Assert.assertEquals("33.33", (0.3333f * 100f).toInputString())
     }
 }

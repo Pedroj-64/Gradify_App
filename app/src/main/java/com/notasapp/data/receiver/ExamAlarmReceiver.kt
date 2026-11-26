@@ -1,5 +1,7 @@
 package com.notasapp.data.receiver
 
+import com.notasapp.R
+
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
@@ -42,7 +44,7 @@ class ExamAlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val eventId = intent.getLongExtra(EXTRA_EVENT_ID, -1)
-        val title = intent.getStringExtra(EXTRA_TITLE) ?: "Examen próximo"
+        val title = intent.getStringExtra(EXTRA_TITLE) ?: context.getString(R.string.notif_exam_fallback)
         val description = intent.getStringExtra(EXTRA_DESCRIPTION) ?: ""
         val type = intent.getStringExtra(EXTRA_TYPE) ?: ""
         val materiaId = intent.getLongExtra(EXTRA_MATERIA_ID, -1)
@@ -84,7 +86,8 @@ class ExamAlarmReceiver : BroadcastReceiver() {
                     } else {
                         smartContent.message
                     },
-                    notificationId = (REQUEST_CODE_BASE + eventId).toInt()
+                    notificationId = (REQUEST_CODE_BASE + eventId).toInt(),
+                    materiaId = materiaId
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Error al generar notificación inteligente, usando genérica")
@@ -94,8 +97,9 @@ class ExamAlarmReceiver : BroadcastReceiver() {
                 notificationHelper.sendExamReminder(
                     title = "$emoji $title",
                     message = if (description.isNotBlank()) description
-                    else "Tienes un evento académico próximamente",
-                    notificationId = (REQUEST_CODE_BASE + eventId).toInt()
+                    else context.getString(R.string.notif_exam_generic),
+                    notificationId = (REQUEST_CODE_BASE + eventId).toInt(),
+                    materiaId = materiaId
                 )
             } finally {
                 pending.finish()

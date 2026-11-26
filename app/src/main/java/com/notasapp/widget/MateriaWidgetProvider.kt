@@ -58,6 +58,7 @@ class MateriaWidgetProvider : AppWidgetProvider() {
                     val usuario = db.usuarioDao().getUsuarioActivoOnce()
 
                     val views = RemoteViews(context.packageName, R.layout.widget_materia)
+                    var abrirId = -1L
 
                     if (usuario != null) {
                         val materias = db.materiaDao()
@@ -80,36 +81,39 @@ class MateriaWidgetProvider : AppWidgetProvider() {
                             val progreso = kotlin.math.round(destacada.porcentajeEvaluado * 100).toInt()
 
                             val estado = when {
-                                destacada.yaAprobo -> "✅ Aprobada"
-                                destacada.aprobado -> "📗 Aprobando"
+                                destacada.yaAprobo -> context.getString(R.string.wm_passed)
+                                destacada.aprobado -> context.getString(R.string.wm_passing)
                                 destacada.notaNecesariaParaAprobar != null ->
-                                    "⚠️ Necesita %.1f".format(destacada.notaNecesariaParaAprobar)
-                                else -> "🔴 En riesgo"
+                                    context.getString(R.string.wm_needs, destacada.notaNecesariaParaAprobar)
+                                else -> context.getString(R.string.wm_at_risk)
                             }
 
                             views.setTextViewText(R.id.tv_materia_nombre, destacada.nombre)
+                            abrirId = destacada.id
                             views.setTextViewText(R.id.tv_materia_nota, nota)
                             views.setTextViewText(R.id.tv_materia_estado, estado)
                             views.setProgressBar(R.id.pb_materia_progreso, 100, progreso, false)
-                            views.setTextViewText(R.id.tv_materia_progreso_label, "$progreso% evaluado")
+                            views.setTextViewText(R.id.tv_materia_progreso_label, context.getString(R.string.wr_evaluated, progreso))
                         } else {
-                            views.setTextViewText(R.id.tv_materia_nombre, "Sin notas aún")
+                            views.setTextViewText(R.id.tv_materia_nombre, context.getString(R.string.wm_no_grades))
                             views.setTextViewText(R.id.tv_materia_nota, "–")
-                            views.setTextViewText(R.id.tv_materia_estado, "Registra tus notas")
+                            views.setTextViewText(R.id.tv_materia_estado, context.getString(R.string.wr_msg_empty))
                             views.setProgressBar(R.id.pb_materia_progreso, 100, 0, false)
                             views.setTextViewText(R.id.tv_materia_progreso_label, "")
                         }
                     } else {
                         views.setTextViewText(R.id.tv_materia_nombre, "Gradify")
                         views.setTextViewText(R.id.tv_materia_nota, "– –")
-                        views.setTextViewText(R.id.tv_materia_estado, "Inicia sesión")
+                        views.setTextViewText(R.id.tv_materia_estado, context.getString(R.string.w_open_app))
                         views.setProgressBar(R.id.pb_materia_progreso, 100, 0, false)
                         views.setTextViewText(R.id.tv_materia_progreso_label, "")
                     }
 
                     // Click en el widget abre la app
+                    // Tocar el widget abre esa materia (antes solo abría la app en Inicio).
                     val launchIntent = Intent(context, MainActivity::class.java).apply {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        if (abrirId > 0) putExtra(MainActivity.EXTRA_OPEN_MATERIA, abrirId)
                     }
                     val pendingIntent = PendingIntent.getActivity(
                         context, 1, launchIntent,

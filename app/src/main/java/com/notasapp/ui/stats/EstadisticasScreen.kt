@@ -1,5 +1,6 @@
 package com.notasapp.ui.stats
 
+import com.notasapp.ui.components.AxoMood
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.notasapp.ui.components.EmptyState
@@ -111,7 +112,8 @@ fun EstadisticasScreen(
     ) { paddingValues ->
         if (stats.totalMaterias == 0) {
             EmptyState(
-                icon = Icons.Default.BarChart,
+                icon = null,
+                mood = AxoMood.ESTUDIANDO,
                 title = stringResource(R.string.stats_empty),
                 hint = stringResource(R.string.stats_empty_hint),
                 modifier = Modifier.padding(paddingValues).fillMaxSize()

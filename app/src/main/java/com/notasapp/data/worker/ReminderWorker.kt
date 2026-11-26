@@ -1,5 +1,7 @@
 package com.notasapp.data.worker
 
+import com.notasapp.R
+
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -60,12 +62,12 @@ class ReminderWorker @AssistedInject constructor(
                     componente.fechaLimite!! - nowMs
                 )
                 val mensaje = when (diasRestantes) {
-                    0L   -> "¡Hoy es la evaluación: ${componente.nombre}!"
-                    1L   -> "Mañana tienes: ${componente.nombre}"
-                    else -> "En $diasRestantes días: ${componente.nombre}"
+                    0L   -> applicationContext.getString(R.string.notif_rem_today, componente.nombre)
+                    1L   -> applicationContext.getString(R.string.notif_rem_tomorrow, componente.nombre)
+                    else -> applicationContext.getString(R.string.notif_rem_days, diasRestantes.toInt(), componente.nombre)
                 }
                 notificationHelper.sendReminder(
-                    title          = "📚 Recordatorio de evaluación",
+                    title          = applicationContext.getString(R.string.notif_rem_title),
                     message        = mensaje,
                     notificationId = (componente.id % 10_000L).toInt() + index
                 )

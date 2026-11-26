@@ -1,5 +1,7 @@
 package com.notasapp.ui.materia.create
 
+import kotlinx.coroutines.flow.first
+import com.notasapp.domain.util.GradeCalculator
 import com.notasapp.domain.model.ScaleTemplate
 import androidx.lifecycle.SavedStateHandle
 import com.notasapp.ui.savedFlow
@@ -49,6 +51,31 @@ class CreateMateriaViewModel @Inject constructor(
     private val _events = Channel<UiEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
+    // ── Crear varias seguidas (típico al empezar semestre) ─────
+
+    /** Materias ya creadas: para "Copiar estructura de…" en el paso 3. */
+    private val _otras = MutableStateFlow<List<Materia>>(emptyList())
+    val otrasMaterias: StateFlow<List<Materia>> = _otras.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val usuario = usuarioDao.getUsuarioActivoOnce() ?: return@launch
+            val todas = materiaRepository.getMateriasByUsuario(usuario.googleId).first()
+            _otras.value = todas.filter { it.componentes.isNotEmpty() }.sortedByDescending { it.id }
+            // Recordar periodo y escala de la última materia, salvo que el usuario ya haya escrito algo.
+            val ultima = todas.maxByOrNull { it.id } ?: return@launch
+            _wizardState.update {
+                if (it.nombre.isNotEmpty() || it.periodo.isNotEmpty()) it
+                else it.conBaseDe(ultima)
+            }
+        }
+    }
+
+    /** Copia nombres y pesos de los componentes de [materia] (sin notas). */
+    fun copiarEstructura(materia: Materia) = _wizardState.update { state ->
+        state.copy(componentes = materia.componentes.sortedBy { it.orden }.map { ComponenteInput(it.nombre, it.porcentaje) })
+    }
+
     // ── Paso 1: Información básica ─────────────────────────────
 
     fun updateNombre(nombre: String) = _wizardState.update { it.copy(nombre = nombre) }
@@ -77,14 +104,15 @@ class CreateMateriaViewModel @Inject constructor(
 
     // ── Paso 3: Componentes ────────────────────────────────────
 
-    fun addComponente() = _wizardState.update { state ->
-        val newIndex = state.componentes.size + 1
-        state.copy(
-            componentes = state.componentes + ComponenteInput(
-                nombre = "Componente $newIndex",
-                porcentaje = 0f
-            )
-        )
+    /** [nombre] llega traducido desde la UI ("Componente 4" / "Component 4"). */
+    fun addComponente(nombre: String) = _wizardState.update { state ->
+        state.copy(componentes = state.componentes + ComponenteInput(nombre = nombre, porcentaje = 0f))
+    }
+
+    /** Estructura típica 30/30/40 con nombres traducidos; solo si aún no hay componentes. */
+    fun ponerComponentesPorDefecto(nombres: List<String>) = _wizardState.update { state ->
+        if (state.componentes.isNotEmpty()) state
+        else state.copy(componentes = nombres.zip(listOf(0.30f, 0.30f, 0.40f)) { n, p -> ComponenteInput(n, p) })
     }
 
     fun updateComponenteNombre(index: Int, nombre: String) = _wizardState.update { state ->
@@ -96,13 +124,17 @@ class CreateMateriaViewModel @Inject constructor(
     }
 
     fun updateComponentePorcentaje(index: Int, porcentaje: Float) = _wizardState.update { state ->
-        // Redondear a múltiplos de 1% para evitar imprecisión de punto flotante
-        val snapped = kotlin.math.round(porcentaje * 100f) / 100f
+        val snapped = GradeCalculator.snapPct(porcentaje.toDouble())
         state.copy(
             componentes = state.componentes.toMutableList().apply {
                 this[index] = this[index].copy(porcentaje = snapped)
             }
         )
+    }
+
+    fun repartirRestante() = _wizardState.update { state ->
+        val nuevos = GradeCalculator.repartirRestante(state.componentes.map { it.porcentaje })
+        state.copy(componentes = state.componentes.zip(nuevos) { c, p -> c.copy(porcentaje = p) })
     }
 
     fun removeComponente(index: Int) = _wizardState.update { state ->
@@ -111,7 +143,8 @@ class CreateMateriaViewModel @Inject constructor(
 
     // ── Guardar Materia ────────────────────────────────────────
 
-    fun guardarMateria() {
+    /** [otra] = "Guardar y crear otra": vuelve al paso 1 con el mismo periodo, escala y estructura. */
+    fun guardarMateria(otra: Boolean = false) {
         viewModelScope.launch {
             _saveState.value = SaveState.Loading
             val state = _wizardState.value
@@ -159,7 +192,7 @@ class CreateMateriaViewModel @Inject constructor(
                     materiaRepository.insertSubNota(
                         SubNota(
                             componenteId = componenteId,
-                            descripcion = "Nota ${input.nombre}",
+                            descripcion = input.nombre,
                             porcentajeDelComponente = 1.0f
                         )
                     )
@@ -167,7 +200,15 @@ class CreateMateriaViewModel @Inject constructor(
 
                 Timber.i("Materia creada: ${state.nombre} (id=$materiaId)")
                 _saveState.value = SaveState.Idle
-                _events.trySend(UiEvent.Done)
+                if (otra) {
+                    val guardada = state
+                    _wizardState.value = WizardState(componentes = guardada.componentes).conBaseDe(guardada)
+                    _otras.update { listOf(materia.copy(id = materiaId, componentes = guardada.componentes.mapIndexed { i, c ->
+                        Componente(materiaId = materiaId, nombre = c.nombre, porcentaje = c.porcentaje, orden = i) })) + it }
+                    _events.trySend(UiEvent.Message(UiText(R.string.cw_saved_next, guardada.nombre.trim())))
+                } else {
+                    _events.trySend(UiEvent.Done)
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Error al guardar materia")
                 fail(UiText(R.string.error_generic))
@@ -201,13 +242,20 @@ data class WizardState(
     val escalaMax: Float = 5f,
     val notaAprobacion: Float = 3f,
     // Paso 3
-    val componentes: List<ComponenteInput> = listOf(
-        ComponenteInput("Primer corte", 0.30f),
-        ComponenteInput("Segundo corte", 0.30f),
-        ComponenteInput("Examen final", 0.40f)
-    )
+    val componentes: List<ComponenteInput> = emptyList()   // los pone la UI ya traducidos
 ) : java.io.Serializable {
     val sumaPorcentajes: Float get() = componentes.sumOf { it.porcentaje.toDouble() }.toFloat()
+
+    /** Mismo periodo, créditos y escala que [m] (para la siguiente materia del semestre). */
+    fun conBaseDe(m: Materia) = copy(
+        periodo = m.periodo, creditos = m.creditos, tipoEscala = m.tipoEscala,
+        escalaMin = m.escalaMin, escalaMax = m.escalaMax, notaAprobacion = m.notaAprobacion
+    )
+
+    fun conBaseDe(w: WizardState) = copy(
+        periodo = w.periodo, creditos = w.creditos, tipoEscala = w.tipoEscala,
+        escalaMin = w.escalaMin, escalaMax = w.escalaMax, notaAprobacion = w.notaAprobacion
+    )
     val porcentajesValidos: Boolean get() = kotlin.math.abs(sumaPorcentajes - 1f) <= 0.01f
 }
 

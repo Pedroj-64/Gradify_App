@@ -160,4 +160,25 @@ class GradeCalculatorTest {
         val r = GradeCalculator.notaNecesaria(3.0f, 0.5f, 5.0f, 7.0f, escalaMin = 1.0f)
         assertEquals(4.0f, r!!, 0.01f)
     }
+
+    @Test
+    fun `repartir lo que falta llena los componentes en cero`() {
+        val r = GradeCalculator.repartirRestante(listOf(0.3f, 0f, 0f))
+        assertEquals(0.35f, r[1], 0.0001f)
+        assertEquals(1.0, r.sumOf { it.toDouble() }, 0.0001)
+    }
+
+    @Test
+    fun `sin ceros el resto va al ultimo y tercios suman 100`() {
+        assertEquals(0.5f, GradeCalculator.repartirRestante(listOf(0.3f, 0.2f, 0.2f))[2], 0.0001f)
+        val tercios = GradeCalculator.repartirRestante(listOf(0f, 0f, 0f))
+        assertEquals(0.3333f, tercios[0], 0.0001f)
+        assertEquals(1.0, tercios.sumOf { it.toDouble() }, 0.0001)
+    }
+
+    @Test
+    fun `si se pasa de 100 se lo quita al ultimo`() {
+        val r = GradeCalculator.repartirRestante(listOf(0.6f, 0.6f))
+        assertEquals(0.4f, r[1], 0.0001f)
+    }
 }

@@ -1,5 +1,10 @@
 package com.notasapp.ui.materia.detail
 
+import androidx.compose.material3.AssistChip
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenu
@@ -93,14 +98,6 @@ import com.notasapp.ui.components.GradeLinearIndicator
 import com.notasapp.ui.components.MateriaDetailShimmer
 import kotlinx.coroutines.launch
 
-/**
- * Formatea un Float con punto decimal (invariant) para que sea parseable.
- * Acepta tanto punto como coma al parsear.
- */
-/** 4.0 → "4", 3.75 → "3.75" (sin redondear ni añadir ceros que estorben al teclear). */
-internal fun Float.toInputString(): String =
-    java.math.BigDecimal(this.toString()).stripTrailingZeros().toPlainString()
-internal fun String.parseGrade(): Float? = this.replace(',', '.').toFloatOrNull()
 
 /**
  * Pantalla de detalle de una materia.
@@ -149,6 +146,17 @@ fun MateriaDetailScreen(
             snackbarHostState.showSnackbar(it.asString(context))
             viewModel.clearError()
         }
+    }
+    val deshacer by viewModel.deshacer.collectAsStateWithLifecycle()
+    val undoLabel = stringResource(R.string.btn_undo)
+    LaunchedEffect(deshacer) {
+        val d = deshacer ?: return@LaunchedEffect
+        val r = snackbarHostState.showSnackbar(
+            message = d.mensaje.asString(context),
+            actionLabel = undoLabel,
+            duration = androidx.compose.material3.SnackbarDuration.Long   // 10 s: tiempo de sobra para arrepentirse
+        )
+        viewModel.resolverDeshacer(r == androidx.compose.material3.SnackbarResult.ActionPerformed)
     }
 
     androidx.compose.runtime.CompositionLocalProvider(
@@ -249,6 +257,38 @@ fun MateriaDetailScreen(
                         PromedioResumen(materia = mat)
                     }
 
+                    // ── Atajos visibles (antes escondidos en el menú ⋮) ──
+                    val pendientes = mat.componentes.sumOf { c -> c.subNotas.count { !it.esCompuesta && it.valor == null } }
+                    val faltanComponentes = mat.componentes.any { it.aporteAlFinal == null }
+                    if (pendientes > 0 || faltanComponentes) {
+                        item {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.horizontalScroll(rememberScrollState())
+                            ) {
+                                if (pendientes > 0) {
+                                    AssistChip(
+                                        onClick = { showQuickEntry = true },
+                                        label = { Text(stringResource(R.string.detail_chip_quick, pendientes)) },
+                                        leadingIcon = { Icon(Icons.Default.FlashOn, null, Modifier.size(18.dp)) }
+                                    )
+                                }
+                                if (faltanComponentes) {
+                                    AssistChip(
+                                        onClick = { showSimulador = true },
+                                        label = { Text(stringResource(R.string.sim_title)) },
+                                        leadingIcon = { Icon(Icons.Default.Science, null, Modifier.size(18.dp)) }
+                                    )
+                                }
+                                AssistChip(
+                                    onClick = { showCalculadora = true },
+                                    label = { Text(stringResource(R.string.detail_what_grade_needed)) },
+                                    leadingIcon = { Icon(Icons.Default.Calculate, null, Modifier.size(18.dp)) }
+                                )
+                            }
+                        }
+                    }
+
                     // ── Sección: Meta y Notas ──────────────────────
                     item {
                         MetaYNotasSection(
@@ -299,6 +339,8 @@ fun MateriaDetailScreen(
         materia?.let { mat ->
             CalculadoraBottomSheet(
                 escalaMax = mat.escalaMax,
+                notaAprobacion = mat.notaAprobacion,
+                notaMeta = mat.notaMeta,
                 resultado = notaNecesariaResult,
                 onCalcular = { meta ->
                     viewModel.calcularNotaNecesaria(meta)
