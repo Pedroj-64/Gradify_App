@@ -57,7 +57,6 @@
     <string name="wizard_step3_hint">Define the terms or midterms with their weight in the final grade.</string>
     <string name="wizard_component_name">Name</string>
     <string name="wizard_delete_component">Delete component</string>
-    <string name="wizard_must_be_100">(must be 100%%)</string>
 
     <!-- Validations -->
     <string name="error_nombre_obligatorio">Subject name is required</string>
@@ -270,12 +269,10 @@ Get it at aistudio.google.com/app/apikey</string>
 
     <string name="detail_elements_of">Items in "%1$s"</string>
     <string name="detail_example_first_attempt">E.g.: First attempt</string>
-    <string name="detail_weight_in_activity">Weight (%% inside activity)</string>
     <string name="detail_pending_grades_count">%1$d pending grade(s)</string>
     <string name="detail_all_grades_entered">All grades are in!</string>
     <string name="detail_add_grade_for_component">Add grade · %1$s</string>
     <string name="detail_example_partial_1">E.g.: Midterm 1</string>
-    <string name="detail_weight_in_component">Weight (%% of component)</string>
 
     <!-- Simulator -->
     <string name="sim_what_if">What if I get…?</string>
@@ -471,11 +468,11 @@ Get it at aistudio.google.com/app/apikey</string>
     <string name="dm_notes_delete">Delete notes</string>
     <string name="dm_notes_delete_q">Delete all personal notes?</string>
     <string name="dd_items_of">Items of «%1$s»</string>
-    <string name="dd_weight_activity">Weight (%% within the activity)</string>
+    <string name="dd_weight_activity">Weight (% within the activity)</string>
     <string name="dd_available">Available: %1$s%%</string>
     <string name="dd_pending">%1$d pending grade(s)</string>
     <string name="dd_add_grade">Add grade · %1$s</string>
-    <string name="dd_weight_cut">Weight (%% of the section)</string>
+    <string name="dd_weight_cut">Weight (% of the section)</string>
     <string name="dp_min">Minimum %1$s</string>
     <string name="dp_evaluated">Evaluated %1$s%%</string>
     <string name="dp_accum">Accumulated %1$s</string>

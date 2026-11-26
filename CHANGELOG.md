@@ -2,8 +2,10 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
-## [3.0.0] - 2026-11-26
+## [3.0.1] - 2026-11-26
 
+> Primera versión publicada de la 3.x (el tag `v3.0.0` no llegó a publicarse por un fallo del CI al verificar la firma).
+>
 > **Al actualizar:** el número grande de cada materia ahora es tu **rendimiento en lo evaluado** (antes mostraba el acumulado). Si llevas 4.5 en un corte del 20 %, verás 4.5 y no 0.9 «en riesgo». El acumulado sigue a la vista debajo. Se instala encima de la 2.2.0 sin perder nada.
 
 ### Añadido
@@ -32,6 +34,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 - Un corte con solo parte de sus notas contaba como evaluado entero.
 - El widget de resumen usaba umbrales de la escala 0–5 en todas las escalas.
 - «1 materias» y otros plurales.
+- La etiqueta del peso al agregar una nota o dividirla en partes mostraba «%%» en vez de «%», y el peso de cada parte se mostraba redondeado (20,5 % salía como 20 %).
 
 ### Eliminado
 - Borrar materias deslizando la tarjeta (se borraban sin querer); ahora es desde el menú de mantener pulsado.

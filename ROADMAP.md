@@ -1,6 +1,6 @@
 # Gradify – Roadmap público
 
-> Actualizado: 2026-11-26. Estado real: v3.0.0 en `main`. Plan de la 3.x: [`tasks/plan-mejora-ui.md`](tasks/plan-mejora-ui.md). El historial de análisis anterior está en [CHANGELOG.md](CHANGELOG.md) y en `git log`.
+> Actualizado: 2026-11-26. Estado real: v3.0.1 en `main`. Plan de la 3.x: [`tasks/plan-mejora-ui.md`](tasks/plan-mejora-ui.md). El historial de análisis anterior está en [CHANGELOG.md](CHANGELOG.md) y en `git log`.
 > Plan y razonamiento: [`tasks/plan.md`](tasks/plan.md) · Tareas con criterios de aceptación: [`tasks/todo.md`](tasks/todo.md).
 
 **Misión:** que cualquier estudiante de Latinoamérica lleve sus notas con la escala de su país, sin cuenta obligatoria, sin anuncios y sin enviar sus datos a nadie salvo que él lo decida.
@@ -11,7 +11,7 @@
 - IA: Gemini/Groq/OpenRouter con clave del propio usuario; backend proxy opcional (rate-limit por IP, token opcional).
 - CI (gitleaks, tests, lint, build, backend) y release firmado por tag.
 - Rediseño con sistema de diseño propio en Inicio, Detalle, Estadísticas, Calendario, Recursos, Ajustes, Login y Onboarding.
-- v3.0.0: Axo (mascota) y color por materia, entrada escrita con decimales, aviso de versión nueva desde GitHub, crear materias en lote, deshacer al borrar notas, promedio = rendimiento en lo evaluado.
+- v3.0.1: Axo (mascota) y color por materia, entrada escrita con decimales, aviso de versión nueva desde GitHub, crear materias en lote, deshacer al borrar notas, promedio = rendimiento en lo evaluado.
 
 ## Fase 0 – Seguridad y legal (antes de promocionar el repo)
 - [x] Rotar/restringir la API key de Google que quedó en el historial (`4415198`…`25427de`): ya cambiada (2026-10-16)
@@ -68,6 +68,6 @@ Pomodoro, metas por materia, multi-estudiante, historial gráfico, colores de no
 ## Versiones
 | Versión | Contenido |
 |---|---|
-| v3.0.0 | Personalidad (Axo), color e identidad, calidad de vida (ver CHANGELOG) |
+| v3.0.1 | Personalidad (Axo), color e identidad, calidad de vida (ver CHANGELOG) |
 | v3.1.0 | Fases 0-4 y 6 pendientes (limpia, coherente, publicable) |
 | v2.4.0 | Fase 5 (escalas por país, simulador, tests UI) |

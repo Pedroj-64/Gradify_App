@@ -263,7 +263,6 @@ data class ComponenteInput(
     val nombre: String = "",
     val porcentaje: Float = 0f
 ) : java.io.Serializable {
-    val porcentajeDisplay: Int get() = kotlin.math.round(porcentaje * 100).toInt()
 }
 
 sealed class SaveState {

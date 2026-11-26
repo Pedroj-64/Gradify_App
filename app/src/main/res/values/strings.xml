@@ -63,7 +63,6 @@
     <string name="wizard_step3_hint">Define los cortes o parciales con su peso en la nota final.</string>
     <string name="wizard_component_name">Nombre</string>
     <string name="wizard_delete_component">Eliminar componente</string>
-    <string name="wizard_must_be_100">(debe ser 100%%)</string>
 
     <!-- Validaciones -->
     <string name="error_nombre_obligatorio">El nombre de la materia es obligatorio</string>
@@ -281,12 +280,10 @@ La consigues en aistudio.google.com/app/apikey</string>
 
     <string name="detail_elements_of">Elementos de «%1$s»</string>
     <string name="detail_example_first_attempt">Ej: Primer intento</string>
-    <string name="detail_weight_in_activity">Peso (%% dentro de la actividad)</string>
     <string name="detail_pending_grades_count">%1$d nota(s) pendiente(s)</string>
     <string name="detail_all_grades_entered">¡Todas las notas están puestas!</string>
     <string name="detail_add_grade_for_component">Agregar nota · %1$s</string>
     <string name="detail_example_partial_1">Ej: Parcial 1</string>
-    <string name="detail_weight_in_component">Peso (%% del corte)</string>
 
     <!-- Simulador -->
     <string name="sim_what_if">¿Y si saco…?</string>
@@ -482,11 +479,11 @@ La consigues en aistudio.google.com/app/apikey</string>
     <string name="dm_notes_delete">Eliminar notas</string>
     <string name="dm_notes_delete_q">¿Eliminar todas las notas personales?</string>
     <string name="dd_items_of">Elem. de «%1$s»</string>
-    <string name="dd_weight_activity">Peso (%% dentro de la actividad)</string>
+    <string name="dd_weight_activity">Peso (% dentro de la actividad)</string>
     <string name="dd_available">Disponible: %1$s%%</string>
     <string name="dd_pending">%1$d nota(s) pendiente(s)</string>
     <string name="dd_add_grade">Agregar nota · %1$s</string>
-    <string name="dd_weight_cut">Peso (%% del corte)</string>
+    <string name="dd_weight_cut">Peso (% del corte)</string>
     <string name="dp_min">Mínimo %1$s</string>
     <string name="dp_evaluated">Evaluado %1$s%%</string>
     <string name="dp_accum">Acumulado %1$s</string>

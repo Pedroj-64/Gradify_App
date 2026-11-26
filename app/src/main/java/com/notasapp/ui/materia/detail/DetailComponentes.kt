@@ -435,7 +435,7 @@ internal fun DetalleRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(text = detalle.descripcion, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(
-                text = "${kotlin.math.round(detalle.porcentaje * 100).toInt()}%",
+                text = "${detalle.porcentaje.pctText()}%",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
