@@ -12,7 +12,7 @@ jobs:
     name: Escaneo de secretos
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: gitleaks/gitleaks-action@v2
@@ -22,7 +22,7 @@ jobs:
   android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17 }
       - uses: gradle/actions/setup-gradle@v4
@@ -37,7 +37,7 @@ jobs:
   backend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17 }
       - uses: gradle/actions/setup-gradle@v4
@@ -53,7 +53,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17 }
       - uses: gradle/actions/setup-gradle@v4
